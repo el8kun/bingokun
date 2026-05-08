@@ -15,7 +15,8 @@ import {
   updateDoc,
   serverTimestamp,
   collection,
-  onSnapshot
+  onSnapshot,
+  runTransaction
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
 const firebaseApp = initializeApp(firebaseConfig);
@@ -24,6 +25,8 @@ const db = getFirestore(firebaseApp);
 
 const BOARD_SIZE = 25;
 const AUTO_SECONDS = 15;
+const MAX_DECK_PLAYERS = 75;
+const MIN_PLAYABLE_PLAYERS = 60;
 
 const $ = (id) => document.getElementById(id);
 
@@ -35,13 +38,13 @@ const playerNameInput = $("playerName");
 const joinCodeInput = $("joinCode");
 const boardEl = $("board");
 const currentPlayerNameEl = $("currentPlayerName");
-const currentPlayerBadgesEl = $("currentPlayerBadges");
 const globalTimerTextEl = $("globalTimerText");
 const globalTimerBarEl = $("globalTimerBar");
 const circleTimerTextEl = $("circleTimerText");
 const nextPlayerBtn = $("nextPlayerBtn");
 const gameMessageEl = $("gameMessage");
 const myFilledEl = $("myFilled");
+const playersRemainingEl = $("playersRemaining");
 const hiddenResultBox = $("hiddenResultBox");
 const finalResultBox = $("finalResultBox");
 const myResultEl = $("myResult");
@@ -84,14 +87,18 @@ async function createRoom() {
   if (!uid) return alert("Connexion Firebase en cours, réessaie dans 2 secondes.");
 
   const code = generateRoomCode();
-  const grid = shuffle(CATEGORIES).slice(0, BOARD_SIZE);
-  const deck = shuffle(PLAYERS).map((player) => player.id);
+  const setup = generateGameSetup();
+  const grid = setup.grid;
+  const deck = setup.deck.map((player) => player.id);
 
   await setDoc(doc(db, "rooms", code), {
     code,
     hostUid: uid,
     grid,
     deck,
+    playableCount: setup.playableCount,
+    maxDeckPlayers: MAX_DECK_PLAYERS,
+    minPlayablePlayers: MIN_PLAYABLE_PLAYERS,
     currentIndex: 0,
     currentStartedAt: serverTimestamp(),
     secondsPerPlayer: AUTO_SECONDS,
@@ -215,10 +222,13 @@ function renderGame() {
   nextPlayerBtn.classList.toggle("hidden", !isHost);
 
   currentPlayerNameEl.textContent = currentPlayer ? currentPlayer.name : "Fin du deck";
-  currentPlayerBadgesEl.innerHTML = "";
-  if (currentPlayer) currentPlayerBadgesEl.append(...makeBadges(currentPlayer.logos || []));
+
+  const deckLength = roomData.deck?.length || 0;
+  const currentIndex = roomData.currentIndex || 0;
+  const remainingPlayers = currentPlayer ? Math.max(0, deckLength - currentIndex - 1) : 0;
 
   myFilledEl.textContent = `${filledCount} / 25`;
+  playersRemainingEl.textContent = `${remainingPlayers} / ${deckLength}`;
 
   if (finished) {
     scoreDisplayEl.textContent = myData.finalScore || 0;
@@ -326,23 +336,39 @@ async function placeCurrentPlayer(cellIndex) {
   }
 
   await updateDoc(doc(db, "rooms", currentRoomCode, "participants", uid), updatePayload);
+
+  // Dès qu'un joueur est placé, on passe au joueur suivant.
+  // Le currentIndexAtPlacement évite de sauter plusieurs joueurs si plusieurs personnes cliquent presque en même temps.
+  await advancePlayer(false, roomData.currentIndex || 0);
 }
 
-async function advancePlayer(manual = false) {
-  if (!roomData || roomData.hostUid !== uid || !currentRoomCode) return;
+async function advancePlayer(manual = false, expectedIndex = null) {
+  if (!roomData || !currentRoomCode) return;
+  if (manual && roomData.hostUid !== uid) return;
 
-  const currentIndex = roomData.currentIndex || 0;
-  const deckLength = roomData.deck?.length || 0;
+  const roomRef = doc(db, "rooms", currentRoomCode);
 
-  if (currentIndex >= deckLength - 1) return;
+  const advanced = await runTransaction(db, async (transaction) => {
+    const roomSnap = await transaction.get(roomRef);
+    if (!roomSnap.exists()) return false;
 
-  await updateDoc(doc(db, "rooms", currentRoomCode), {
-    currentIndex: currentIndex + 1,
-    currentStartedAt: serverTimestamp(),
-    updatedAt: serverTimestamp()
+    const liveRoom = roomSnap.data();
+    const currentIndex = liveRoom.currentIndex || 0;
+    const deckLength = liveRoom.deck?.length || 0;
+
+    if (expectedIndex !== null && currentIndex !== expectedIndex) return false;
+    if (currentIndex >= deckLength - 1) return false;
+
+    transaction.update(roomRef, {
+      currentIndex: currentIndex + 1,
+      currentStartedAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    });
+
+    return true;
   });
 
-  if (manual) setMessage("Joueur suivant envoyé.", "good");
+  if (manual && advanced) setMessage("Joueur suivant envoyé.", "good");
 }
 
 function startTimers() {
@@ -429,15 +455,6 @@ function getLineCells(lineId) {
   return [];
 }
 
-function makeBadges(keys) {
-  return keys.slice(0, 5).map((key) => {
-    const badge = document.createElement("span");
-    badge.className = "badge";
-    badge.textContent = TEAMS[key]?.short || key.toUpperCase();
-    return badge;
-  });
-}
-
 function iconForCategory(id) {
   const icons = {
     premierleague: "PL",
@@ -456,6 +473,100 @@ function iconForCategory(id) {
   };
 
   return icons[id] || "★";
+}
+
+
+function generateGameSetup() {
+  const maxDeckSize = Math.min(MAX_DECK_PLAYERS, PLAYERS.length);
+  const requiredPlayable = Math.min(MIN_PLAYABLE_PLAYERS, maxDeckSize);
+
+  let bestSetup = null;
+
+  for (let attempt = 0; attempt < 1200; attempt++) {
+    const grid = shuffle(CATEGORIES).slice(0, BOARD_SIZE);
+    const playablePlayers = PLAYERS.filter((player) => canPlayerFillAnyCell(player, grid));
+    const coveredCells = grid.filter((category) => playablePlayers.some((player) => canPlayerFillCategory(player, category))).length;
+
+    const deck = buildDeck(grid, playablePlayers, maxDeckSize);
+    const deckPlayableCount = deck.filter((player) => canPlayerFillAnyCell(player, grid)).length;
+    const deckCoversEveryCell = grid.every((category) => deck.some((player) => canPlayerFillCategory(player, category)));
+
+    const score = deckPlayableCount * 100 + coveredCells;
+
+    if (!bestSetup || score > bestSetup.score) {
+      bestSetup = {
+        grid,
+        deck,
+        playableCount: deckPlayableCount,
+        score
+      };
+    }
+
+    if (
+      deck.length <= MAX_DECK_PLAYERS &&
+      deckPlayableCount >= requiredPlayable &&
+      deckCoversEveryCell
+    ) {
+      return {
+        grid,
+        deck,
+        playableCount: deckPlayableCount
+      };
+    }
+  }
+
+  console.warn("Bingo Kun : impossible de garantir parfaitement 60 joueurs jouables avec cette base. Meilleure configuration utilisée.", bestSetup);
+  return {
+    grid: bestSetup.grid,
+    deck: bestSetup.deck,
+    playableCount: bestSetup.playableCount
+  };
+}
+
+function buildDeck(grid, playablePlayers, maxDeckSize) {
+  const selected = new Map();
+
+  // On garantit d'abord que chaque case de la grille peut être remplie par au moins un joueur du deck.
+  grid.forEach((category) => {
+    const candidates = shuffle(playablePlayers).filter((player) => canPlayerFillCategory(player, category));
+    if (candidates[0]) selected.set(candidates[0].id, candidates[0]);
+  });
+
+  const requiredPlayable = Math.min(MIN_PLAYABLE_PLAYERS, maxDeckSize);
+  const remainingPlayable = shuffle(playablePlayers.filter((player) => !selected.has(player.id)));
+
+  for (const player of remainingPlayable) {
+    if (selected.size >= requiredPlayable) break;
+    selected.set(player.id, player);
+  }
+
+  const selectedIds = new Set(selected.keys());
+  const nonPlayablePlayers = shuffle(
+    PLAYERS.filter((player) => !selectedIds.has(player.id) && !canPlayerFillAnyCell(player, grid))
+  );
+
+  const deck = [...selected.values()];
+
+  for (const player of nonPlayablePlayers) {
+    if (deck.length >= maxDeckSize) break;
+    deck.push(player);
+  }
+
+  // Si la base n'a pas assez de joueurs non jouables, on complète avec d'autres joueurs jouables.
+  for (const player of shuffle(PLAYERS.filter((player) => !deck.some((item) => item.id === player.id)))) {
+    if (deck.length >= maxDeckSize) break;
+    deck.push(player);
+  }
+
+  return shuffle(deck).slice(0, maxDeckSize);
+}
+
+function canPlayerFillAnyCell(player, grid) {
+  return grid.some((category) => canPlayerFillCategory(player, category));
+}
+
+function canPlayerFillCategory(player, category) {
+  return category.tags.some((tag) => player.tags.includes(tag));
 }
 
 function getPlayerName() {
