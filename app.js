@@ -1,5 +1,5 @@
 import { firebaseConfig } from "./firebase-config.js";
-import { CATEGORIES, PLAYERS } from "./data.js";
+import { CATEGORIES, PLAYERS, TEAMS } from "./data.js";
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
 import {
@@ -20,6 +20,9 @@ import {
   orderBy
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
+const AUTO_ADVANCE_MS = 15000;
+const GRID_SIZE = 25;
+
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
@@ -35,9 +38,13 @@ const joinCodeInput = $("joinCode");
 const boardEl = $("board");
 const currentPlayerNameEl = $("currentPlayerName");
 const currentPlayerMetaEl = $("currentPlayerMeta");
+const currentPlayerBadgesEl = $("currentPlayerBadges");
+const countdownTextEl = $("countdownText");
 const gameMessageEl = $("gameMessage");
 const myScoreEl = $("myScore");
 const myBingosEl = $("myBingos");
+const scoreLabelEl = $("scoreLabel");
+const bingoLabelEl = $("bingoLabel");
 const leaderboardEl = $("leaderboard");
 const nextPlayerBtn = $("nextPlayerBtn");
 
@@ -48,6 +55,8 @@ let myData = null;
 let unsubscribeRoom = null;
 let unsubscribeMe = null;
 let unsubscribeLeaderboard = null;
+let autoAdvanceInterval = null;
+let countdownInterval = null;
 
 const safeLocalName = localStorage.getItem("kun-bingo-name");
 if (safeLocalName) playerNameInput.value = safeLocalName;
@@ -64,14 +73,14 @@ $("createRoomBtn").addEventListener("click", createRoom);
 $("joinRoomBtn").addEventListener("click", () => joinRoom(joinCodeInput.value.trim().toUpperCase()));
 $("copyRoomBtn").addEventListener("click", copyRoomInfo);
 $("leaveRoomBtn").addEventListener("click", leaveRoom);
-nextPlayerBtn.addEventListener("click", nextPlayer);
+nextPlayerBtn.addEventListener("click", () => advancePlayer(false));
 
 async function createRoom() {
   const name = getPlayerName();
   if (!name || !uid) return;
 
   const code = generateRoomCode();
-  const grid = shuffle(CATEGORIES).slice(0, 25);
+  const grid = shuffle(CATEGORIES).slice(0, GRID_SIZE);
   const deck = shuffle(PLAYERS).slice(0, 60).map(p => p.id);
 
   const roomRef = doc(db, "rooms", code);
@@ -82,6 +91,7 @@ async function createRoom() {
     deck,
     currentIndex: 0,
     status: "playing",
+    autoAdvanceMs: AUTO_ADVANCE_MS,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp()
   });
@@ -89,8 +99,11 @@ async function createRoom() {
   await setDoc(doc(db, "rooms", code, "participants", uid), {
     name,
     score: 0,
+    filledCount: 0,
+    correctCount: 0,
     bingos: [],
     board: {},
+    isComplete: false,
     isHost: true,
     joinedAt: serverTimestamp()
   });
@@ -119,8 +132,11 @@ async function joinRoom(code, alreadyJoined = false) {
     await setDoc(doc(db, "rooms", code, "participants", uid), {
       name,
       score: 0,
+      filledCount: 0,
+      correctCount: 0,
       bingos: [],
       board: {},
+      isComplete: false,
       isHost: snapshot.data().hostUid === uid,
       joinedAt: serverTimestamp()
     }, { merge: true });
@@ -130,6 +146,7 @@ async function joinRoom(code, alreadyJoined = false) {
   localStorage.setItem("kun-bingo-name", name);
   showGameView(code);
   subscribeToRoom(code);
+  startCountdown();
 }
 
 function showGameView(code) {
@@ -140,7 +157,7 @@ function showGameView(code) {
 }
 
 function subscribeToRoom(code) {
-  cleanupSubscriptions();
+  cleanupSubscriptions(false);
 
   unsubscribeRoom = onSnapshot(doc(db, "rooms", code), (snapshot) => {
     if (!snapshot.exists()) {
@@ -162,8 +179,13 @@ function subscribeToRoom(code) {
     leaderboardEl.innerHTML = "";
     snapshot.forEach((docSnap, index) => {
       const player = docSnap.data();
+      const isComplete = player.isComplete || (player.filledCount || 0) >= GRID_SIZE;
+      const visibleScore = isComplete
+        ? `${player.correctCount || 0}/25 justes`
+        : `${player.filledCount || player.score || 0}/25 remplies`;
+
       const li = document.createElement("li");
-      li.innerHTML = `<strong>${escapeHtml(player.name || "Joueur")}</strong> — ${player.score || 0}/25`;
+      li.innerHTML = `<strong>${escapeHtml(player.name || "Joueur")}</strong> — ${visibleScore}`;
       if (index === 0 && (player.score || 0) > 0) li.innerHTML = "👑 " + li.innerHTML;
       leaderboardEl.appendChild(li);
     });
@@ -175,48 +197,82 @@ function renderGame() {
 
   const currentPlayer = getCurrentPlayer();
   const isHost = roomData.hostUid === uid;
+  const myBoard = myData.board || {};
+  const filledCount = Object.keys(myBoard).length;
+  const isComplete = myData.isComplete || filledCount >= GRID_SIZE;
+
+  manageAutoAdvance(isHost);
 
   nextPlayerBtn.classList.toggle("hidden", !isHost);
   currentPlayerNameEl.textContent = currentPlayer ? currentPlayer.name : "Fin de la manche";
   currentPlayerMetaEl.textContent = currentPlayer
-    ? "Clique une case vide compatible avec ce joueur."
+    ? "15 secondes par joueur. Place-le où tu veux : le verdict reste caché jusqu’à ta grille complète."
     : "Plus aucun joueur dans le deck.";
 
-  myScoreEl.textContent = `${myData.score || 0} / 25`;
-  myBingosEl.textContent = `${(myData.bingos || []).length}`;
+  renderTeamBadges(currentPlayerBadgesEl, currentPlayer ? getPlayerTeams(currentPlayer) : []);
 
-  renderBoard(currentPlayer);
+  if (isComplete) {
+    scoreLabelEl.textContent = "Score final";
+    bingoLabelEl.textContent = "Bingos validés";
+    myScoreEl.textContent = `${myData.correctCount || 0} / 25`;
+    myBingosEl.textContent = `${(myData.bingos || []).length}`;
+  } else {
+    scoreLabelEl.textContent = "Cases remplies";
+    bingoLabelEl.textContent = "Bingos";
+    myScoreEl.textContent = `${filledCount} / 25`;
+    myBingosEl.textContent = "?";
+  }
+
+  renderBoard(currentPlayer, isComplete);
+  updateCountdown();
 }
 
-function renderBoard(currentPlayer) {
+function renderBoard(currentPlayer, isComplete) {
   boardEl.innerHTML = "";
 
   const board = myData.board || {};
-  const bingoCells = new Set((myData.bingos || []).flatMap(line => getLineCells(line)));
+  const bingoCells = isComplete
+    ? new Set((myData.bingos || []).flatMap(line => getLineCells(line)))
+    : new Set();
 
   roomData.grid.forEach((category, index) => {
     const move = board[index];
     const cell = document.createElement("button");
     cell.className = "cell";
-    if (move) cell.classList.add(move.isValid ? "filled" : "invalid");
+
+    if (move) {
+      cell.classList.add("filled");
+      cell.classList.add(isComplete ? (move.isValid ? "correct" : "wrong") : "pending");
+    }
+
     if (bingoCells.has(index)) cell.classList.add("bingo");
+
+    const head = document.createElement("div");
+    head.className = "category-head";
+
+    if (category.logo) {
+      head.appendChild(createTeamBadge(category.logo));
+    }
 
     const categoryDiv = document.createElement("div");
     categoryDiv.className = "category-name";
     categoryDiv.textContent = category.name;
+    head.appendChild(categoryDiv);
 
     const hint = document.createElement("small");
-    hint.textContent = move ? "Rempli" : "Case vide";
+    hint.textContent = move
+      ? (isComplete ? (move.isValid ? "Validé" : "Faux") : "Réponse masquée")
+      : "Case vide";
 
     const placed = document.createElement("div");
     placed.className = "placed-player";
     placed.textContent = move ? move.playerName : "";
 
-    cell.appendChild(categoryDiv);
+    cell.appendChild(head);
     cell.appendChild(hint);
     cell.appendChild(placed);
 
-    cell.disabled = Boolean(move) || !currentPlayer;
+    cell.disabled = Boolean(move) || !currentPlayer || isComplete;
     cell.addEventListener("click", () => placeCurrentPlayer(index));
 
     boardEl.appendChild(cell);
@@ -235,13 +291,13 @@ async function placeCurrentPlayer(cellIndex) {
     return;
   }
 
-  const category = roomData.grid[cellIndex];
-  const isValid = category.tags.some(tag => currentPlayer.tags.includes(tag));
-
-  if (!isValid) {
-    setMessage(`${currentPlayer.name} ne correspond pas à “${category.name}”.`, "bad");
+  if (Object.keys(board).length >= GRID_SIZE) {
+    setMessage("Ta grille est déjà complète.", "bad");
     return;
   }
+
+  const category = roomData.grid[cellIndex];
+  const isValid = category.tags.some(tag => currentPlayer.tags.includes(tag));
 
   const newBoard = {
     ...board,
@@ -255,38 +311,127 @@ async function placeCurrentPlayer(cellIndex) {
     }
   };
 
-  const newBingos = calculateBingos(newBoard);
-  const newScore = Object.keys(newBoard).length;
+  const filledCount = Object.keys(newBoard).length;
+  const isComplete = filledCount >= GRID_SIZE;
+  const correctCount = Object.values(newBoard).filter(move => move.isValid).length;
+  const newBingos = isComplete ? calculateBingos(newBoard) : [];
 
   await updateDoc(doc(db, "rooms", currentRoomCode, "participants", uid), {
     board: newBoard,
-    score: newScore,
+    filledCount,
+    correctCount,
+    isComplete,
+    score: isComplete ? correctCount : filledCount,
     bingos: newBingos
   });
 
-  if (newBingos.length > (myData.bingos || []).length) {
-    setMessage("BINGO ! Nouvelle ligne complétée 🔥", "good");
+  if (isComplete) {
+    setMessage(`Grille complète ! Verdict : ${correctCount}/25 bonnes réponses.`, correctCount >= 18 ? "good" : "bad");
   } else {
-    setMessage(`${currentPlayer.name} placé sur “${category.name}”.`, "good");
+    setMessage(`${currentPlayer.name} placé. Verdict caché jusqu’à la fin.`, "good");
   }
 }
 
-async function nextPlayer() {
-  if (!roomData || roomData.hostUid !== uid) return;
+async function advancePlayer(showMessage = true) {
+  if (!roomData || roomData.hostUid !== uid || !currentRoomCode) return;
 
   const nextIndex = Math.min((roomData.currentIndex || 0) + 1, (roomData.deck || []).length);
+
   await updateDoc(doc(db, "rooms", currentRoomCode), {
     currentIndex: nextIndex,
     updatedAt: serverTimestamp()
   });
 
-  setMessage("Joueur suivant envoyé à toute la room.", "good");
+  if (showMessage) setMessage("Joueur suivant envoyé à toute la room.", "good");
+}
+
+function manageAutoAdvance(isHost) {
+  const shouldRun = isHost
+    && currentRoomCode
+    && roomData?.status === "playing"
+    && (roomData.currentIndex || 0) < (roomData.deck || []).length;
+
+  if (shouldRun && !autoAdvanceInterval) {
+    autoAdvanceInterval = setInterval(() => advancePlayer(false), AUTO_ADVANCE_MS);
+  }
+
+  if (!shouldRun && autoAdvanceInterval) {
+    clearInterval(autoAdvanceInterval);
+    autoAdvanceInterval = null;
+  }
+}
+
+function startCountdown() {
+  if (countdownInterval) clearInterval(countdownInterval);
+  countdownInterval = setInterval(updateCountdown, 250);
+}
+
+function updateCountdown() {
+  if (!countdownTextEl || !roomData) return;
+  const currentPlayer = getCurrentPlayer();
+
+  if (!currentPlayer) {
+    countdownTextEl.textContent = "fin";
+    return;
+  }
+
+  const updatedMs = getRoomUpdatedMs();
+  const remainingMs = Math.max(0, updatedMs + AUTO_ADVANCE_MS - Date.now());
+  const seconds = Math.ceil(remainingMs / 1000);
+  countdownTextEl.textContent = `${seconds}s`;
+}
+
+function getRoomUpdatedMs() {
+  const updatedAt = roomData?.updatedAt;
+  if (updatedAt?.toDate) return updatedAt.toDate().getTime();
+  if (typeof updatedAt?.seconds === "number") return updatedAt.seconds * 1000;
+  return Date.now();
 }
 
 function getCurrentPlayer() {
   if (!roomData?.deck) return null;
   const playerId = roomData.deck[roomData.currentIndex || 0];
   return PLAYERS.find(p => p.id === playerId) || null;
+}
+
+function getPlayerTeams(player) {
+  return (player.tags || []).filter(tag => TEAMS[tag]).slice(0, 10);
+}
+
+function renderTeamBadges(container, teamIds) {
+  container.innerHTML = "";
+
+  if (!teamIds.length) {
+    const empty = document.createElement("small");
+    empty.textContent = "Aucun logo dispo pour ce joueur.";
+    container.appendChild(empty);
+    return;
+  }
+
+  teamIds.forEach(teamId => container.appendChild(createTeamBadge(teamId)));
+}
+
+function createTeamBadge(teamId) {
+  const team = TEAMS[teamId];
+  const badge = document.createElement("span");
+  badge.className = "team-badge";
+  badge.title = team?.name || teamId;
+
+  const fallback = document.createElement("span");
+  fallback.className = "fallback-logo";
+  fallback.textContent = team?.short || teamId.toUpperCase();
+  badge.appendChild(fallback);
+
+  if (team?.file) {
+    const img = document.createElement("img");
+    img.alt = team.name;
+    img.src = `./logos/${team.file}`;
+    img.addEventListener("load", () => badge.classList.add("has-img"));
+    img.addEventListener("error", () => img.remove());
+    badge.appendChild(img);
+  }
+
+  return badge;
 }
 
 function calculateBingos(board) {
@@ -353,7 +498,7 @@ function copyRoomInfo() {
 }
 
 function leaveRoom() {
-  cleanupSubscriptions();
+  cleanupSubscriptions(true);
   currentRoomCode = null;
   roomData = null;
   myData = null;
@@ -363,7 +508,7 @@ function leaveRoom() {
   setupView.classList.remove("hidden");
 }
 
-function cleanupSubscriptions() {
+function cleanupSubscriptions(stopTimers = true) {
   if (unsubscribeRoom) unsubscribeRoom();
   if (unsubscribeMe) unsubscribeMe();
   if (unsubscribeLeaderboard) unsubscribeLeaderboard();
@@ -371,6 +516,13 @@ function cleanupSubscriptions() {
   unsubscribeRoom = null;
   unsubscribeMe = null;
   unsubscribeLeaderboard = null;
+
+  if (stopTimers) {
+    if (autoAdvanceInterval) clearInterval(autoAdvanceInterval);
+    if (countdownInterval) clearInterval(countdownInterval);
+    autoAdvanceInterval = null;
+    countdownInterval = null;
+  }
 }
 
 function generateRoomCode() {

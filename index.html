@@ -55,9 +55,14 @@
           <div class="current-card">
             <p class="eyebrow">Joueur actuel</p>
             <h2 id="currentPlayerName">—</h2>
-            <p id="currentPlayerMeta">Sélectionne une case compatible.</p>
+            <p id="currentPlayerMeta">Sélectionne une case. Le verdict reste caché jusqu’à la fin.</p>
+            <div id="currentPlayerBadges" class="team-strip"></div>
+            <div class="timer-box">
+              <span>Prochain joueur</span>
+              <strong id="countdownText">15s</strong>
+            </div>
             <div class="current-actions">
-              <button id="nextPlayerBtn" class="primary-btn hidden">Joueur suivant</button>
+              <button id="nextPlayerBtn" class="primary-btn hidden">Passer maintenant</button>
               <button id="leaveRoomBtn" class="ghost-btn">Quitter</button>
             </div>
           </div>
@@ -65,14 +70,14 @@
           <div class="status-card">
             <p class="eyebrow">Ta partie</p>
             <div class="stat-line">
-              <span>Score</span>
+              <span id="scoreLabel">Cases remplies</span>
               <strong id="myScore">0 / 25</strong>
             </div>
             <div class="stat-line">
-              <span>Bingos</span>
-              <strong id="myBingos">0</strong>
+              <span id="bingoLabel">Bingos</span>
+              <strong id="myBingos">?</strong>
             </div>
-            <p id="gameMessage" class="message">Clique une case vide pour placer le joueur.</p>
+            <p id="gameMessage" class="message">Clique une case vide pour placer le joueur. Verdict caché jusqu’à la grille complète.</p>
           </div>
 
           <div class="leaderboard-card">

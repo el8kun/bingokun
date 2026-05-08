@@ -80,3 +80,51 @@ Cette version est un prototype. La validation des réponses est faite côté nav
 - créer un vrai panel streamer/admin,
 - ajouter un import CSV pour tes propres joueurs,
 - ajouter une meilleure base de données joueurs/catégories.
+
+
+## V2 ajoutée
+
+Cette version ajoute :
+
+- défilement automatique du joueur toutes les 15 secondes ;
+- bouton "Passer maintenant" pour le créateur de la room ;
+- verdict caché : le site ne dit plus si la réponse est juste ou fausse avant que la grille soit complète ;
+- score final affiché seulement quand les 25 cases sont remplies ;
+- badges/logos d'équipes et de sélections.
+
+## Logos réels
+
+Le dossier `logos` est optionnel. Si tu ajoutes des vrais fichiers PNG dedans, ils seront affichés automatiquement.
+
+Exemples de noms attendus :
+
+```text
+logos/om.png
+logos/psg.png
+logos/lyon.png
+logos/monaco.png
+logos/barca.png
+logos/real.png
+logos/milan.png
+logos/inter.png
+logos/juve.png
+logos/manutd.png
+logos/arsenal.png
+logos/chelsea.png
+logos/liverpool.png
+logos/bayern.png
+logos/france.png
+logos/brazil.png
+logos/argentina.png
+logos/spain.png
+logos/italy.png
+logos/germany.png
+logos/netherlands.png
+logos/portugal.png
+```
+
+Si un fichier n'existe pas, le site affiche un badge texte automatiquement.
+
+## Important pour le défilement automatique
+
+Pour ce prototype, le défilement automatique est lancé par l'onglet du créateur de la room. Donc pendant le live, il faut garder l'onglet de l'hôte ouvert.
