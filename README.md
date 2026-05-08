@@ -1,130 +1,98 @@
-# Kun Foot Bingo — MVP 5x5
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kun Foot Bingo</title>
+  <link rel="preconnect" href="https://www.gstatic.com">
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Multijoueur · 5x5</p>
+        <h1>Kun Foot Bingo</h1>
+      </div>
+      <div class="room-pill hidden" id="roomPill">
+        Room <strong id="roomCodeDisplay">----</strong>
+        <button id="copyRoomBtn" class="ghost-btn">Copier</button>
+      </div>
+    </header>
 
-Première version testable d’un bingo foot multijoueur.
+    <main>
+      <section id="setupView" class="setup-card">
+        <div class="hero-copy">
+          <p class="eyebrow">Prototype test</p>
+          <h2>Crée une room, partage le code, tout le monde joue sur la même grille.</h2>
+          <p>
+            Chaque joueur a sa propre grille à remplir. Le streamer peut passer au joueur suivant.
+            Les scores se mettent à jour en direct.
+          </p>
+        </div>
 
-## Ce qui est déjà inclus
+        <div class="setup-panel">
+          <label for="playerName">Ton pseudo</label>
+          <input id="playerName" maxlength="20" placeholder="Ex : Kun" />
 
-- Grille 5x5 commune à toute la room
-- Création d’une room avec code
-- Rejoindre une room avec pseudo
-- Même joueur actuel pour tout le monde
-- Placement d’un joueur dans une case
-- Validation automatique selon les tags du joueur
-- Score personnel
-- Détection des lignes/colonnes/diagonales
-- Classement live
-- Bouton "Joueur suivant" réservé au créateur de la room côté interface
+          <div class="divider"></div>
 
-## Installation Firebase
+          <button id="createRoomBtn" class="primary-btn">Créer une partie</button>
 
-### 1. Crée un projet Firebase
+          <div class="join-row">
+            <input id="joinCode" maxlength="6" placeholder="Code room" />
+            <button id="joinRoomBtn" class="secondary-btn">Rejoindre</button>
+          </div>
 
-Va sur Firebase Console, crée un projet, puis ajoute une application Web.
+          <p class="tiny">
+            Besoin de Firebase configuré pour le vrai multijoueur. Voir README.
+          </p>
+        </div>
+      </section>
 
-### 2. Active l’authentification anonyme
+      <section id="gameView" class="game-layout hidden">
+        <aside class="side-panel">
+          <div class="current-card">
+            <p class="eyebrow">Joueur actuel</p>
+            <h2 id="currentPlayerName">—</h2>
+            <p id="currentPlayerMeta">Sélectionne une case. Le verdict reste caché jusqu’à la fin.</p>
+            <div id="currentPlayerBadges" class="team-strip"></div>
+            <div class="timer-box">
+              <span>Prochain joueur</span>
+              <strong id="countdownText">15s</strong>
+            </div>
+            <div class="current-actions">
+              <button id="nextPlayerBtn" class="primary-btn hidden">Passer maintenant</button>
+              <button id="leaveRoomBtn" class="ghost-btn">Quitter</button>
+            </div>
+          </div>
 
-Dans Firebase Console :
+          <div class="status-card">
+            <p class="eyebrow">Ta partie</p>
+            <div class="stat-line">
+              <span id="scoreLabel">Cases remplies</span>
+              <strong id="myScore">0 / 25</strong>
+            </div>
+            <div class="stat-line">
+              <span id="bingoLabel">Bingos</span>
+              <strong id="myBingos">?</strong>
+            </div>
+            <p id="gameMessage" class="message">Clique une case vide pour placer le joueur. Verdict caché jusqu’à la grille complète.</p>
+          </div>
 
-Authentication > Sign-in method > Anonymous > Enable
+          <div class="leaderboard-card">
+            <p class="eyebrow">Classement live</p>
+            <ol id="leaderboard"></ol>
+          </div>
+        </aside>
 
-### 3. Active Firestore
+        <section class="board-wrap">
+          <div id="board" class="board"></div>
+        </section>
+      </section>
+    </main>
+  </div>
 
-Firestore Database > Create database
-
-Tu peux choisir le mode test au début, mais je conseille ensuite de coller les règles du fichier `firestore.rules`.
-
-### 4. Ajoute ta config Firebase
-
-Dans ce dossier :
-
-1. Duplique `firebase-config.sample.js`
-2. Renomme la copie en `firebase-config.js`
-3. Remplace les valeurs par la config de ton projet Firebase
-
-Exemple :
-
-```js
-export const firebaseConfig = {
-  apiKey: "...",
-  authDomain: "...",
-  projectId: "...",
-  storageBucket: "...",
-  messagingSenderId: "...",
-  appId: "..."
-};
-```
-
-### 5. Publie sur GitHub Pages
-
-Envoie les fichiers sur ton repo GitHub, puis :
-
-Settings > Pages > Deploy from branch > main > /root
-
-Le site sera accessible avec une URL GitHub Pages.
-
-## Fichiers
-
-- `index.html` : structure du site
-- `style.css` : design
-- `app.js` : logique Firebase + jeu
-- `data.js` : joueurs + catégories
-- `firebase-config.sample.js` : modèle de config Firebase
-- `firestore.rules` : règles de sécurité simples pour tester
-
-## Important
-
-Cette version est un prototype. La validation des réponses est faite côté navigateur avec les tags de `data.js`. Pour une vraie version publique solide, il faudra ensuite :
-
-- verrouiller davantage les règles Firestore,
-- empêcher un viewer de modifier le joueur courant via les règles,
-- créer un vrai panel streamer/admin,
-- ajouter un import CSV pour tes propres joueurs,
-- ajouter une meilleure base de données joueurs/catégories.
-
-
-## V2 ajoutée
-
-Cette version ajoute :
-
-- défilement automatique du joueur toutes les 15 secondes ;
-- bouton "Passer maintenant" pour le créateur de la room ;
-- verdict caché : le site ne dit plus si la réponse est juste ou fausse avant que la grille soit complète ;
-- score final affiché seulement quand les 25 cases sont remplies ;
-- badges/logos d'équipes et de sélections.
-
-## Logos réels
-
-Le dossier `logos` est optionnel. Si tu ajoutes des vrais fichiers PNG dedans, ils seront affichés automatiquement.
-
-Exemples de noms attendus :
-
-```text
-logos/om.png
-logos/psg.png
-logos/lyon.png
-logos/monaco.png
-logos/barca.png
-logos/real.png
-logos/milan.png
-logos/inter.png
-logos/juve.png
-logos/manutd.png
-logos/arsenal.png
-logos/chelsea.png
-logos/liverpool.png
-logos/bayern.png
-logos/france.png
-logos/brazil.png
-logos/argentina.png
-logos/spain.png
-logos/italy.png
-logos/germany.png
-logos/netherlands.png
-logos/portugal.png
-```
-
-Si un fichier n'existe pas, le site affiche un badge texte automatiquement.
-
-## Important pour le défilement automatique
-
-Pour ce prototype, le défilement automatique est lancé par l'onglet du créateur de la room. Donc pendant le live, il faut garder l'onglet de l'hôte ouvert.
+  <script type="module" src="./app.js"></script>
+</body>
+</html>

@@ -1,145 +1,559 @@
-export const TEAMS = {
-  om: { short: "OM", name: "Olympique de Marseille", file: "om.png" },
-  psg: { short: "PSG", name: "Paris Saint-Germain", file: "psg.png" },
-  lyon: { short: "OL", name: "Olympique Lyonnais", file: "lyon.png" },
-  monaco: { short: "ASM", name: "AS Monaco", file: "monaco.png" },
-  barca: { short: "FCB", name: "FC Barcelone", file: "barca.png" },
-  real: { short: "RMA", name: "Real Madrid", file: "real.png" },
-  milan: { short: "ACM", name: "AC Milan", file: "milan.png" },
-  inter: { short: "INT", name: "Inter", file: "inter.png" },
-  juve: { short: "JUV", name: "Juventus", file: "juve.png" },
-  manutd: { short: "MU", name: "Manchester United", file: "manutd.png" },
-  arsenal: { short: "ARS", name: "Arsenal", file: "arsenal.png" },
-  chelsea: { short: "CHE", name: "Chelsea", file: "chelsea.png" },
-  liverpool: { short: "LIV", name: "Liverpool", file: "liverpool.png" },
-  bayern: { short: "FCB", name: "Bayern Munich", file: "bayern.png" },
-  france: { short: "FRA", name: "France", file: "france.png" },
-  brazil: { short: "BRE", name: "Brésil", file: "brazil.png" },
-  argentina: { short: "ARG", name: "Argentine", file: "argentina.png" },
-  spain: { short: "ESP", name: "Espagne", file: "spain.png" },
-  italy: { short: "ITA", name: "Italie", file: "italy.png" },
-  germany: { short: "ALL", name: "Allemagne", file: "germany.png" },
-  netherlands: { short: "PB", name: "Pays-Bas", file: "netherlands.png" },
-  portugal: { short: "POR", name: "Portugal", file: "portugal.png" }
-};
+import { firebaseConfig } from "./firebase-config.js";
+import { CATEGORIES, PLAYERS, TEAMS } from "./data.js";
 
-export const CATEGORIES = [
-  { id: "om", name: "A joué à l’OM", tags: ["om"], logo: "om" },
-  { id: "psg", name: "A joué au PSG", tags: ["psg"], logo: "psg" },
-  { id: "ol", name: "A joué à Lyon", tags: ["lyon"], logo: "lyon" },
-  { id: "monaco", name: "A joué à Monaco", tags: ["monaco"], logo: "monaco" },
-  { id: "ligue1", name: "A joué en Ligue 1", tags: ["ligue1"] },
-  { id: "premierleague", name: "A joué en Premier League", tags: ["premierleague"] },
-  { id: "laliga", name: "A joué en Liga", tags: ["laliga"] },
-  { id: "seriea", name: "A joué en Serie A", tags: ["seriea"] },
-  { id: "bundesliga", name: "A joué en Bundesliga", tags: ["bundesliga"] },
-  { id: "barca", name: "A joué au Barça", tags: ["barca"], logo: "barca" },
-  { id: "real", name: "A joué au Real Madrid", tags: ["real"], logo: "real" },
-  { id: "milan", name: "A joué à l’AC Milan", tags: ["milan"], logo: "milan" },
-  { id: "inter", name: "A joué à l’Inter", tags: ["inter"], logo: "inter" },
-  { id: "juve", name: "A joué à la Juventus", tags: ["juve"], logo: "juve" },
-  { id: "manutd", name: "A joué à Manchester United", tags: ["manutd"], logo: "manutd" },
-  { id: "arsenal", name: "A joué à Arsenal", tags: ["arsenal"], logo: "arsenal" },
-  { id: "chelsea", name: "A joué à Chelsea", tags: ["chelsea"], logo: "chelsea" },
-  { id: "liverpool", name: "A joué à Liverpool", tags: ["liverpool"], logo: "liverpool" },
-  { id: "bayern", name: "A joué au Bayern", tags: ["bayern"], logo: "bayern" },
-  { id: "uclwinner", name: "A gagné la LDC", tags: ["uclwinner"] },
-  { id: "worldcupwinner", name: "Champion du monde", tags: ["worldcupwinner"] },
-  { id: "eurowinner", name: "A gagné l’Euro", tags: ["eurowinner"] },
-  { id: "ballondor", name: "Ballon d’Or", tags: ["ballondor"] },
-  { id: "brazil", name: "Brésilien", tags: ["brazil"], logo: "brazil" },
-  { id: "france", name: "Français", tags: ["france"], logo: "france" },
-  { id: "argentina", name: "Argentin", tags: ["argentina"], logo: "argentina" },
-  { id: "africa", name: "Africain", tags: ["africa"] },
-  { id: "spain", name: "Espagnol", tags: ["spain"], logo: "spain" },
-  { id: "italy", name: "Italien", tags: ["italy"], logo: "italy" },
-  { id: "germany", name: "Allemand", tags: ["germany"], logo: "germany" },
-  { id: "netherlands", name: "Néerlandais", tags: ["netherlands"], logo: "netherlands" },
-  { id: "portugal", name: "Portugais", tags: ["portugal"], logo: "portugal" },
-  { id: "striker", name: "Attaquant", tags: ["striker"] },
-  { id: "midfielder", name: "Milieu", tags: ["midfielder"] },
-  { id: "defender", name: "Défenseur", tags: ["defender"] },
-  { id: "goalkeeper", name: "Gardien", tags: ["goalkeeper"] },
-  { id: "retired", name: "Retraité", tags: ["retired"] },
-  { id: "active", name: "Encore en activité", tags: ["active"] },
-  { id: "hundredgoals", name: "+100 buts carrière", tags: ["hundredgoals"] },
-  { id: "leftfoot", name: "Gaucher", tags: ["leftfoot"] }
-];
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+import {
+  getAuth,
+  signInAnonymously,
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+import {
+  getFirestore,
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc,
+  serverTimestamp,
+  collection,
+  onSnapshot,
+  query,
+  orderBy
+} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
-export const PLAYERS = [
-  { id: "zidane", name: "Zinédine Zidane", tags: ["france","worldcupwinner","eurowinner","ballondor","laliga","seriea","real","juve","midfielder","retired"] },
-  { id: "ronaldo9", name: "Ronaldo Nazário", tags: ["brazil","worldcupwinner","ballondor","barca","real","inter","milan","laliga","seriea","striker","retired","hundredgoals"] },
-  { id: "ronaldinho", name: "Ronaldinho", tags: ["brazil","worldcupwinner","ballondor","barca","milan","laliga","seriea","ligue1","psg","midfielder","retired","hundredgoals"] },
-  { id: "messi", name: "Lionel Messi", tags: ["argentina","worldcupwinner","ballondor","barca","psg","laliga","ligue1","striker","active","leftfoot","hundredgoals","uclwinner"] },
-  { id: "cristiano", name: "Cristiano Ronaldo", tags: ["portugal","ballondor","manutd","real","juve","premierleague","laliga","seriea","striker","active","hundredgoals","uclwinner"] },
-  { id: "benzema", name: "Karim Benzema", tags: ["france","lyon","ligue1","real","laliga","ballondor","striker","active","hundredgoals","uclwinner"] },
-  { id: "mbappe", name: "Kylian Mbappé", tags: ["france","worldcupwinner","monaco","psg","real","ligue1","laliga","striker","active","hundredgoals"] },
-  { id: "neymar", name: "Neymar", tags: ["brazil","barca","psg","laliga","ligue1","striker","active","hundredgoals","uclwinner"] },
-  { id: "henry", name: "Thierry Henry", tags: ["france","worldcupwinner","eurowinner","monaco","arsenal","barca","ligue1","premierleague","laliga","striker","retired","hundredgoals","uclwinner"] },
-  { id: "drogba", name: "Didier Drogba", tags: ["africa","om","ligue1","chelsea","premierleague","striker","retired","hundredgoals","uclwinner"] },
-  { id: "ibrahimovic", name: "Zlatan Ibrahimović", tags: ["psg","milan","inter","juve","barca","ligue1","seriea","laliga","striker","retired","hundredgoals"] },
-  { id: "cavani", name: "Edinson Cavani", tags: ["psg","manutd","ligue1","seriea","premierleague","striker","retired","hundredgoals"] },
-  { id: "papin", name: "Jean-Pierre Papin", tags: ["france","om","milan","bayern","ligue1","seriea","bundesliga","ballondor","striker","retired","hundredgoals"] },
-  { id: "ribery", name: "Franck Ribéry", tags: ["france","om","bayern","ligue1","bundesliga","seriea","midfielder","retired","uclwinner"] },
-  { id: "nasri", name: "Samir Nasri", tags: ["france","om","arsenal","ligue1","premierleague","midfielder","retired"] },
-  { id: "payet", name: "Dimitri Payet", tags: ["france","om","ligue1","premierleague","midfielder","retired","hundredgoals"] },
-  { id: "benarfa", name: "Hatem Ben Arfa", tags: ["france","lyon","om","psg","ligue1","premierleague","midfielder","retired"] },
-  { id: "valbuena", name: "Mathieu Valbuena", tags: ["france","om","lyon","ligue1","midfielder","retired"] },
-  { id: "barthez", name: "Fabien Barthez", tags: ["france","worldcupwinner","eurowinner","om","monaco","manutd","ligue1","premierleague","goalkeeper","retired","uclwinner"] },
-  { id: "lloris", name: "Hugo Lloris", tags: ["france","worldcupwinner","lyon","ligue1","premierleague","goalkeeper","active"] },
-  { id: "mandanda", name: "Steve Mandanda", tags: ["france","worldcupwinner","om","ligue1","premierleague","goalkeeper","active"] },
-  { id: "buffon", name: "Gianluigi Buffon", tags: ["italy","worldcupwinner","juve","psg","seriea","ligue1","goalkeeper","retired"] },
-  { id: "casillas", name: "Iker Casillas", tags: ["spain","worldcupwinner","eurowinner","real","laliga","goalkeeper","retired","uclwinner"] },
-  { id: "ramos", name: "Sergio Ramos", tags: ["spain","worldcupwinner","eurowinner","real","psg","laliga","ligue1","defender","active","hundredgoals","uclwinner"] },
-  { id: "puyol", name: "Carles Puyol", tags: ["spain","worldcupwinner","eurowinner","barca","laliga","defender","retired","uclwinner"] },
-  { id: "pique", name: "Gerard Piqué", tags: ["spain","worldcupwinner","eurowinner","barca","manutd","laliga","premierleague","defender","retired","uclwinner"] },
-  { id: "maldini", name: "Paolo Maldini", tags: ["italy","milan","seriea","defender","retired","uclwinner"] },
-  { id: "cannavaro", name: "Fabio Cannavaro", tags: ["italy","worldcupwinner","ballondor","real","juve","inter","laliga","seriea","defender","retired"] },
-  { id: "van-dijk", name: "Virgil van Dijk", tags: ["netherlands","liverpool","premierleague","defender","active","uclwinner"] },
-  { id: "kaka", name: "Kaká", tags: ["brazil","worldcupwinner","ballondor","milan","real","seriea","laliga","midfielder","retired","uclwinner"] },
-  { id: "modric", name: "Luka Modrić", tags: ["ballondor","real","laliga","premierleague","midfielder","active","uclwinner"] },
-  { id: "xavi", name: "Xavi", tags: ["spain","worldcupwinner","eurowinner","barca","laliga","midfielder","retired","uclwinner"] },
-  { id: "iniesta", name: "Andrés Iniesta", tags: ["spain","worldcupwinner","eurowinner","barca","laliga","midfielder","retired","uclwinner"] },
-  { id: "pirlo", name: "Andrea Pirlo", tags: ["italy","worldcupwinner","milan","juve","inter","seriea","midfielder","retired","uclwinner"] },
-  { id: "seedorf", name: "Clarence Seedorf", tags: ["netherlands","real","milan","inter","laliga","seriea","midfielder","retired","uclwinner"] },
-  { id: "lampard", name: "Frank Lampard", tags: ["chelsea","premierleague","midfielder","retired","hundredgoals","uclwinner"] },
-  { id: "gerrard", name: "Steven Gerrard", tags: ["liverpool","premierleague","midfielder","retired","hundredgoals","uclwinner"] },
-  { id: "rooney", name: "Wayne Rooney", tags: ["manutd","premierleague","striker","retired","hundredgoals","uclwinner"] },
-  { id: "shevchenko", name: "Andriy Shevchenko", tags: ["milan","chelsea","seriea","premierleague","ballondor","striker","retired","hundredgoals","uclwinner"] },
-  { id: "eto-o", name: "Samuel Eto’o", tags: ["africa","barca","inter","chelsea","laliga","seriea","premierleague","striker","retired","hundredgoals","uclwinner"] },
-  { id: "mane", name: "Sadio Mané", tags: ["africa","liverpool","bayern","premierleague","bundesliga","striker","active","uclwinner"] },
-  { id: "salah", name: "Mohamed Salah", tags: ["africa","chelsea","liverpool","seriea","premierleague","striker","active","leftfoot","hundredgoals","uclwinner"] },
-  { id: "mahrez", name: "Riyad Mahrez", tags: ["africa","premierleague","striker","active","leftfoot","uclwinner"] },
-  { id: "auba", name: "Pierre-Emerick Aubameyang", tags: ["africa","om","barca","arsenal","chelsea","milan","ligue1","laliga","premierleague","seriea","bundesliga","striker","active","hundredgoals"] },
-  { id: "giroud", name: "Olivier Giroud", tags: ["france","worldcupwinner","arsenal","chelsea","milan","ligue1","premierleague","seriea","striker","active","hundredgoals","uclwinner"] },
-  { id: "griezmann", name: "Antoine Griezmann", tags: ["france","worldcupwinner","barca","laliga","striker","active","leftfoot","hundredgoals"] },
-  { id: "kante", name: "N’Golo Kanté", tags: ["france","worldcupwinner","chelsea","ligue1","premierleague","midfielder","active","uclwinner"] },
-  { id: "pogba", name: "Paul Pogba", tags: ["france","worldcupwinner","manutd","juve","premierleague","seriea","midfielder","active"] },
-  { id: "ozil", name: "Mesut Özil", tags: ["germany","worldcupwinner","real","arsenal","laliga","premierleague","bundesliga","midfielder","retired","leftfoot"] },
-  { id: "kroos", name: "Toni Kroos", tags: ["germany","worldcupwinner","bayern","real","bundesliga","laliga","midfielder","retired","uclwinner"] },
-  { id: "muller", name: "Thomas Müller", tags: ["germany","worldcupwinner","bayern","bundesliga","midfielder","active","hundredgoals","uclwinner"] },
-  { id: "lewandowski", name: "Robert Lewandowski", tags: ["bayern","barca","bundesliga","laliga","striker","active","hundredgoals","uclwinner"] },
-  { id: "haaland", name: "Erling Haaland", tags: ["premierleague","bundesliga","striker","active","leftfoot","hundredgoals","uclwinner"] },
-  { id: "debruyne", name: "Kevin De Bruyne", tags: ["chelsea","premierleague","bundesliga","midfielder","active","uclwinner"] },
-  { id: "hazard", name: "Eden Hazard", tags: ["chelsea","real","ligue1","premierleague","laliga","striker","retired","hundredgoals"] },
-  { id: "figo", name: "Luís Figo", tags: ["portugal","ballondor","barca","real","inter","laliga","seriea","midfielder","retired","uclwinner"] },
-  { id: "deco", name: "Deco", tags: ["portugal","barca","chelsea","laliga","premierleague","midfielder","retired","uclwinner"] },
-  { id: "suarez", name: "Luis Suárez", tags: ["barca","liverpool","laliga","premierleague","striker","active","leftfoot","hundredgoals","uclwinner"] },
-  { id: "aguero", name: "Sergio Agüero", tags: ["argentina","barca","laliga","premierleague","striker","retired","hundredgoals"] },
-  { id: "tevez", name: "Carlos Tévez", tags: ["argentina","manutd","juve","premierleague","seriea","striker","retired","hundredgoals","uclwinner"] },
-  { id: "dimaria", name: "Ángel Di María", tags: ["argentina","worldcupwinner","psg","real","juve","manutd","ligue1","laliga","seriea","premierleague","midfielder","active","leftfoot","uclwinner"] },
-  { id: "verratti", name: "Marco Verratti", tags: ["italy","eurowinner","psg","ligue1","midfielder","active"] },
-  { id: "hakimi", name: "Achraf Hakimi", tags: ["africa","psg","real","inter","bundesliga","ligue1","laliga","seriea","defender","active"] },
-  { id: "marquinhos", name: "Marquinhos", tags: ["brazil","psg","ligue1","seriea","defender","active"] },
-  { id: "thiagosilva", name: "Thiago Silva", tags: ["brazil","psg","milan","chelsea","ligue1","seriea","premierleague","defender","active","uclwinner"] },
-  { id: "osimhen", name: "Victor Osimhen", tags: ["africa","ligue1","seriea","striker","active"] },
-  { id: "falcao", name: "Radamel Falcao", tags: ["monaco","chelsea","manutd","ligue1","premierleague","laliga","striker","retired","hundredgoals"] },
-  { id: "pauleta", name: "Pauleta", tags: ["portugal","psg","ligue1","laliga","striker","retired","hundredgoals"] },
-  { id: "cisse", name: "Djibril Cissé", tags: ["france","om","ligue1","premierleague","seriea","striker","retired","hundredgoals"] },
-  { id: "niang", name: "Mamadou Niang", tags: ["africa","om","ligue1","striker","retired","hundredgoals"] },
-  { id: "gignac", name: "André-Pierre Gignac", tags: ["france","om","ligue1","striker","active","hundredgoals"] },
-  { id: "lacazette", name: "Alexandre Lacazette", tags: ["france","lyon","arsenal","ligue1","premierleague","striker","active","hundredgoals"] },
-  { id: "benyedder", name: "Wissam Ben Yedder", tags: ["france","monaco","ligue1","laliga","striker","active","hundredgoals"] },
-  { id: "balotelli", name: "Mario Balotelli", tags: ["italy","om","milan","inter","ligue1","seriea","premierleague","striker","active","hundredgoals","uclwinner"] },
-  { id: "depays", name: "Memphis Depay", tags: ["netherlands","lyon","barca","manutd","ligue1","laliga","premierleague","striker","active","hundredgoals"] }
-];
+const AUTO_ADVANCE_MS = 15000;
+const GRID_SIZE = 25;
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+const $ = (id) => document.getElementById(id);
+
+const setupView = $("setupView");
+const gameView = $("gameView");
+const roomPill = $("roomPill");
+const roomCodeDisplay = $("roomCodeDisplay");
+const playerNameInput = $("playerName");
+const joinCodeInput = $("joinCode");
+const boardEl = $("board");
+const currentPlayerNameEl = $("currentPlayerName");
+const currentPlayerMetaEl = $("currentPlayerMeta");
+const currentPlayerBadgesEl = $("currentPlayerBadges");
+const countdownTextEl = $("countdownText");
+const gameMessageEl = $("gameMessage");
+const myScoreEl = $("myScore");
+const myBingosEl = $("myBingos");
+const scoreLabelEl = $("scoreLabel");
+const bingoLabelEl = $("bingoLabel");
+const leaderboardEl = $("leaderboard");
+const nextPlayerBtn = $("nextPlayerBtn");
+
+let uid = null;
+let currentRoomCode = null;
+let roomData = null;
+let myData = null;
+let unsubscribeRoom = null;
+let unsubscribeMe = null;
+let unsubscribeLeaderboard = null;
+let autoAdvanceInterval = null;
+let countdownInterval = null;
+
+const safeLocalName = localStorage.getItem("kun-bingo-name");
+if (safeLocalName) playerNameInput.value = safeLocalName;
+
+onAuthStateChanged(auth, (user) => {
+  uid = user?.uid || null;
+});
+
+signInAnonymously(auth).catch((error) => {
+  setMessage("Erreur Firebase Auth : " + error.message, "bad");
+});
+
+$("createRoomBtn").addEventListener("click", createRoom);
+$("joinRoomBtn").addEventListener("click", () => joinRoom(joinCodeInput.value.trim().toUpperCase()));
+$("copyRoomBtn").addEventListener("click", copyRoomInfo);
+$("leaveRoomBtn").addEventListener("click", leaveRoom);
+nextPlayerBtn.addEventListener("click", () => advancePlayer(false));
+
+async function createRoom() {
+  const name = getPlayerName();
+  if (!name || !uid) return;
+
+  const code = generateRoomCode();
+  const grid = shuffle(CATEGORIES).slice(0, GRID_SIZE);
+  const deck = shuffle(PLAYERS).slice(0, 60).map(p => p.id);
+
+  const roomRef = doc(db, "rooms", code);
+  await setDoc(roomRef, {
+    code,
+    hostUid: uid,
+    grid,
+    deck,
+    currentIndex: 0,
+    status: "playing",
+    autoAdvanceMs: AUTO_ADVANCE_MS,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp()
+  });
+
+  await setDoc(doc(db, "rooms", code, "participants", uid), {
+    name,
+    score: 0,
+    filledCount: 0,
+    correctCount: 0,
+    bingos: [],
+    board: {},
+    isComplete: false,
+    isHost: true,
+    joinedAt: serverTimestamp()
+  });
+
+  joinRoom(code, true);
+}
+
+async function joinRoom(code, alreadyJoined = false) {
+  const name = getPlayerName();
+  if (!name || !uid) return;
+
+  if (!/^[A-Z0-9]{4,6}$/.test(code)) {
+    setSetupError("Entre un code room valide.");
+    return;
+  }
+
+  const roomRef = doc(db, "rooms", code);
+  const snapshot = await getDoc(roomRef);
+
+  if (!snapshot.exists()) {
+    setSetupError("Room introuvable.");
+    return;
+  }
+
+  if (!alreadyJoined) {
+    await setDoc(doc(db, "rooms", code, "participants", uid), {
+      name,
+      score: 0,
+      filledCount: 0,
+      correctCount: 0,
+      bingos: [],
+      board: {},
+      isComplete: false,
+      isHost: snapshot.data().hostUid === uid,
+      joinedAt: serverTimestamp()
+    }, { merge: true });
+  }
+
+  currentRoomCode = code;
+  localStorage.setItem("kun-bingo-name", name);
+  showGameView(code);
+  subscribeToRoom(code);
+  startCountdown();
+}
+
+function showGameView(code) {
+  setupView.classList.add("hidden");
+  gameView.classList.remove("hidden");
+  roomPill.classList.remove("hidden");
+  roomCodeDisplay.textContent = code;
+}
+
+function subscribeToRoom(code) {
+  cleanupSubscriptions(false);
+
+  unsubscribeRoom = onSnapshot(doc(db, "rooms", code), (snapshot) => {
+    if (!snapshot.exists()) {
+      setMessage("La room n’existe plus.", "bad");
+      return;
+    }
+
+    roomData = snapshot.data();
+    renderGame();
+  });
+
+  unsubscribeMe = onSnapshot(doc(db, "rooms", code, "participants", uid), (snapshot) => {
+    myData = snapshot.exists() ? snapshot.data() : null;
+    renderGame();
+  });
+
+  const q = query(collection(db, "rooms", code, "participants"), orderBy("score", "desc"));
+  unsubscribeLeaderboard = onSnapshot(q, (snapshot) => {
+    leaderboardEl.innerHTML = "";
+    snapshot.forEach((docSnap, index) => {
+      const player = docSnap.data();
+      const isComplete = player.isComplete || (player.filledCount || 0) >= GRID_SIZE;
+      const visibleScore = isComplete
+        ? `${player.correctCount || 0}/25 justes`
+        : `${player.filledCount || player.score || 0}/25 remplies`;
+
+      const li = document.createElement("li");
+      li.innerHTML = `<strong>${escapeHtml(player.name || "Joueur")}</strong> — ${visibleScore}`;
+      if (index === 0 && (player.score || 0) > 0) li.innerHTML = "👑 " + li.innerHTML;
+      leaderboardEl.appendChild(li);
+    });
+  });
+}
+
+function renderGame() {
+  if (!roomData || !myData) return;
+
+  const currentPlayer = getCurrentPlayer();
+  const isHost = roomData.hostUid === uid;
+  const myBoard = myData.board || {};
+  const filledCount = Object.keys(myBoard).length;
+  const isComplete = myData.isComplete || filledCount >= GRID_SIZE;
+
+  manageAutoAdvance(isHost);
+
+  nextPlayerBtn.classList.toggle("hidden", !isHost);
+  currentPlayerNameEl.textContent = currentPlayer ? currentPlayer.name : "Fin de la manche";
+  currentPlayerMetaEl.textContent = currentPlayer
+    ? "15 secondes par joueur. Place-le où tu veux : le verdict reste caché jusqu’à ta grille complète."
+    : "Plus aucun joueur dans le deck.";
+
+  renderTeamBadges(currentPlayerBadgesEl, currentPlayer ? getPlayerTeams(currentPlayer) : []);
+
+  if (isComplete) {
+    scoreLabelEl.textContent = "Score final";
+    bingoLabelEl.textContent = "Bingos validés";
+    myScoreEl.textContent = `${myData.correctCount || 0} / 25`;
+    myBingosEl.textContent = `${(myData.bingos || []).length}`;
+  } else {
+    scoreLabelEl.textContent = "Cases remplies";
+    bingoLabelEl.textContent = "Bingos";
+    myScoreEl.textContent = `${filledCount} / 25`;
+    myBingosEl.textContent = "?";
+  }
+
+  renderBoard(currentPlayer, isComplete);
+  updateCountdown();
+}
+
+function renderBoard(currentPlayer, isComplete) {
+  boardEl.innerHTML = "";
+
+  const board = myData.board || {};
+  const bingoCells = isComplete
+    ? new Set((myData.bingos || []).flatMap(line => getLineCells(line)))
+    : new Set();
+
+  roomData.grid.forEach((category, index) => {
+    const move = board[index];
+    const cell = document.createElement("button");
+    cell.className = "cell";
+
+    if (move) {
+      cell.classList.add("filled");
+      cell.classList.add(isComplete ? (move.isValid ? "correct" : "wrong") : "pending");
+    }
+
+    if (bingoCells.has(index)) cell.classList.add("bingo");
+
+    const head = document.createElement("div");
+    head.className = "category-head";
+
+    if (category.logo) {
+      head.appendChild(createTeamBadge(category.logo));
+    }
+
+    const categoryDiv = document.createElement("div");
+    categoryDiv.className = "category-name";
+    categoryDiv.textContent = category.name;
+    head.appendChild(categoryDiv);
+
+    const hint = document.createElement("small");
+    hint.textContent = move
+      ? (isComplete ? (move.isValid ? "Validé" : "Faux") : "Réponse masquée")
+      : "Case vide";
+
+    const placed = document.createElement("div");
+    placed.className = "placed-player";
+    placed.textContent = move ? move.playerName : "";
+
+    cell.appendChild(head);
+    cell.appendChild(hint);
+    cell.appendChild(placed);
+
+    cell.disabled = Boolean(move) || !currentPlayer || isComplete;
+    cell.addEventListener("click", () => placeCurrentPlayer(index));
+
+    boardEl.appendChild(cell);
+  });
+}
+
+async function placeCurrentPlayer(cellIndex) {
+  if (!roomData || !myData) return;
+
+  const currentPlayer = getCurrentPlayer();
+  if (!currentPlayer) return;
+
+  const board = myData.board || {};
+  if (board[cellIndex]) {
+    setMessage("Cette case est déjà remplie.", "bad");
+    return;
+  }
+
+  if (Object.keys(board).length >= GRID_SIZE) {
+    setMessage("Ta grille est déjà complète.", "bad");
+    return;
+  }
+
+  const category = roomData.grid[cellIndex];
+  const isValid = category.tags.some(tag => currentPlayer.tags.includes(tag));
+
+  const newBoard = {
+    ...board,
+    [cellIndex]: {
+      playerId: currentPlayer.id,
+      playerName: currentPlayer.name,
+      categoryId: category.id,
+      categoryName: category.name,
+      isValid,
+      placedAt: Date.now()
+    }
+  };
+
+  const filledCount = Object.keys(newBoard).length;
+  const isComplete = filledCount >= GRID_SIZE;
+  const correctCount = Object.values(newBoard).filter(move => move.isValid).length;
+  const newBingos = isComplete ? calculateBingos(newBoard) : [];
+
+  await updateDoc(doc(db, "rooms", currentRoomCode, "participants", uid), {
+    board: newBoard,
+    filledCount,
+    correctCount,
+    isComplete,
+    score: isComplete ? correctCount : filledCount,
+    bingos: newBingos
+  });
+
+  if (isComplete) {
+    setMessage(`Grille complète ! Verdict : ${correctCount}/25 bonnes réponses.`, correctCount >= 18 ? "good" : "bad");
+  } else {
+    setMessage(`${currentPlayer.name} placé. Verdict caché jusqu’à la fin.`, "good");
+  }
+}
+
+async function advancePlayer(showMessage = true) {
+  if (!roomData || roomData.hostUid !== uid || !currentRoomCode) return;
+
+  const nextIndex = Math.min((roomData.currentIndex || 0) + 1, (roomData.deck || []).length);
+
+  await updateDoc(doc(db, "rooms", currentRoomCode), {
+    currentIndex: nextIndex,
+    updatedAt: serverTimestamp()
+  });
+
+  if (showMessage) setMessage("Joueur suivant envoyé à toute la room.", "good");
+}
+
+function manageAutoAdvance(isHost) {
+  const shouldRun = isHost
+    && currentRoomCode
+    && roomData?.status === "playing"
+    && (roomData.currentIndex || 0) < (roomData.deck || []).length;
+
+  if (shouldRun && !autoAdvanceInterval) {
+    autoAdvanceInterval = setInterval(() => advancePlayer(false), AUTO_ADVANCE_MS);
+  }
+
+  if (!shouldRun && autoAdvanceInterval) {
+    clearInterval(autoAdvanceInterval);
+    autoAdvanceInterval = null;
+  }
+}
+
+function startCountdown() {
+  if (countdownInterval) clearInterval(countdownInterval);
+  countdownInterval = setInterval(updateCountdown, 250);
+}
+
+function updateCountdown() {
+  if (!countdownTextEl || !roomData) return;
+  const currentPlayer = getCurrentPlayer();
+
+  if (!currentPlayer) {
+    countdownTextEl.textContent = "fin";
+    return;
+  }
+
+  const updatedMs = getRoomUpdatedMs();
+  const remainingMs = Math.max(0, updatedMs + AUTO_ADVANCE_MS - Date.now());
+  const seconds = Math.ceil(remainingMs / 1000);
+  countdownTextEl.textContent = `${seconds}s`;
+}
+
+function getRoomUpdatedMs() {
+  const updatedAt = roomData?.updatedAt;
+  if (updatedAt?.toDate) return updatedAt.toDate().getTime();
+  if (typeof updatedAt?.seconds === "number") return updatedAt.seconds * 1000;
+  return Date.now();
+}
+
+function getCurrentPlayer() {
+  if (!roomData?.deck) return null;
+  const playerId = roomData.deck[roomData.currentIndex || 0];
+  return PLAYERS.find(p => p.id === playerId) || null;
+}
+
+function getPlayerTeams(player) {
+  return (player.tags || []).filter(tag => TEAMS[tag]).slice(0, 10);
+}
+
+function renderTeamBadges(container, teamIds) {
+  container.innerHTML = "";
+
+  if (!teamIds.length) {
+    const empty = document.createElement("small");
+    empty.textContent = "Aucun logo dispo pour ce joueur.";
+    container.appendChild(empty);
+    return;
+  }
+
+  teamIds.forEach(teamId => container.appendChild(createTeamBadge(teamId)));
+}
+
+function createTeamBadge(teamId) {
+  const team = TEAMS[teamId];
+  const badge = document.createElement("span");
+  badge.className = "team-badge";
+  badge.title = team?.name || teamId;
+
+  const fallback = document.createElement("span");
+  fallback.className = "fallback-logo";
+  fallback.textContent = team?.short || teamId.toUpperCase();
+  badge.appendChild(fallback);
+
+  if (team?.file) {
+    const img = document.createElement("img");
+    img.alt = team.name;
+    img.src = `./logos/${team.file}`;
+    img.addEventListener("load", () => badge.classList.add("has-img"));
+    img.addEventListener("error", () => img.remove());
+    badge.appendChild(img);
+  }
+
+  return badge;
+}
+
+function calculateBingos(board) {
+  const lines = [];
+
+  for (let r = 0; r < 5; r++) {
+    lines.push({ id: `row-${r}`, cells: [0, 1, 2, 3, 4].map(c => r * 5 + c) });
+  }
+
+  for (let c = 0; c < 5; c++) {
+    lines.push({ id: `col-${c}`, cells: [0, 1, 2, 3, 4].map(r => r * 5 + c) });
+  }
+
+  lines.push({ id: "diag-1", cells: [0, 6, 12, 18, 24] });
+  lines.push({ id: "diag-2", cells: [4, 8, 12, 16, 20] });
+
+  return lines
+    .filter(line => line.cells.every(cellIndex => board[cellIndex]?.isValid))
+    .map(line => line.id);
+}
+
+function getLineCells(lineId) {
+  if (lineId.startsWith("row-")) {
+    const r = Number(lineId.replace("row-", ""));
+    return [0, 1, 2, 3, 4].map(c => r * 5 + c);
+  }
+
+  if (lineId.startsWith("col-")) {
+    const c = Number(lineId.replace("col-", ""));
+    return [0, 1, 2, 3, 4].map(r => r * 5 + c);
+  }
+
+  if (lineId === "diag-1") return [0, 6, 12, 18, 24];
+  if (lineId === "diag-2") return [4, 8, 12, 16, 20];
+  return [];
+}
+
+function getPlayerName() {
+  const name = playerNameInput.value.trim().slice(0, 20);
+
+  if (!name) {
+    setSetupError("Mets un pseudo pour jouer.");
+    return "";
+  }
+
+  return name;
+}
+
+function setSetupError(message) {
+  alert(message);
+}
+
+function setMessage(message, type = "") {
+  gameMessageEl.textContent = message;
+  gameMessageEl.className = "message";
+  if (type) gameMessageEl.classList.add(type);
+}
+
+function copyRoomInfo() {
+  const url = new URL(window.location.href);
+  url.searchParams.set("room", currentRoomCode);
+  navigator.clipboard?.writeText(`${currentRoomCode} — ${url.toString()}`);
+  setMessage("Code room copié.", "good");
+}
+
+function leaveRoom() {
+  cleanupSubscriptions(true);
+  currentRoomCode = null;
+  roomData = null;
+  myData = null;
+
+  gameView.classList.add("hidden");
+  roomPill.classList.add("hidden");
+  setupView.classList.remove("hidden");
+}
+
+function cleanupSubscriptions(stopTimers = true) {
+  if (unsubscribeRoom) unsubscribeRoom();
+  if (unsubscribeMe) unsubscribeMe();
+  if (unsubscribeLeaderboard) unsubscribeLeaderboard();
+
+  unsubscribeRoom = null;
+  unsubscribeMe = null;
+  unsubscribeLeaderboard = null;
+
+  if (stopTimers) {
+    if (autoAdvanceInterval) clearInterval(autoAdvanceInterval);
+    if (countdownInterval) clearInterval(countdownInterval);
+    autoAdvanceInterval = null;
+    countdownInterval = null;
+  }
+}
+
+function generateRoomCode() {
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let code = "";
+
+  for (let i = 0; i < 5; i++) {
+    code += alphabet[Math.floor(Math.random() * alphabet.length)];
+  }
+
+  return code;
+}
+
+function shuffle(items) {
+  const copy = [...items];
+
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+
+  return copy;
+}
+
+function escapeHtml(text) {
+  const div = document.createElement("div");
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+const roomFromUrl = new URLSearchParams(window.location.search).get("room");
+if (roomFromUrl) {
+  joinCodeInput.value = roomFromUrl.toUpperCase();
+}

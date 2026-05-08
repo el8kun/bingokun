@@ -1,98 +1,145 @@
-<!doctype html>
-<html lang="fr">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Kun Foot Bingo</title>
-  <link rel="preconnect" href="https://www.gstatic.com">
-  <link rel="stylesheet" href="./style.css" />
-</head>
-<body>
-  <div class="app-shell">
-    <header class="topbar">
-      <div>
-        <p class="eyebrow">Multijoueur · 5x5</p>
-        <h1>Kun Foot Bingo</h1>
-      </div>
-      <div class="room-pill hidden" id="roomPill">
-        Room <strong id="roomCodeDisplay">----</strong>
-        <button id="copyRoomBtn" class="ghost-btn">Copier</button>
-      </div>
-    </header>
+export const TEAMS = {
+  om: { short: "OM", name: "Olympique de Marseille", file: "om.png" },
+  psg: { short: "PSG", name: "Paris Saint-Germain", file: "psg.png" },
+  lyon: { short: "OL", name: "Olympique Lyonnais", file: "lyon.png" },
+  monaco: { short: "ASM", name: "AS Monaco", file: "monaco.png" },
+  barca: { short: "FCB", name: "FC Barcelone", file: "barca.png" },
+  real: { short: "RMA", name: "Real Madrid", file: "real.png" },
+  milan: { short: "ACM", name: "AC Milan", file: "milan.png" },
+  inter: { short: "INT", name: "Inter", file: "inter.png" },
+  juve: { short: "JUV", name: "Juventus", file: "juve.png" },
+  manutd: { short: "MU", name: "Manchester United", file: "manutd.png" },
+  arsenal: { short: "ARS", name: "Arsenal", file: "arsenal.png" },
+  chelsea: { short: "CHE", name: "Chelsea", file: "chelsea.png" },
+  liverpool: { short: "LIV", name: "Liverpool", file: "liverpool.png" },
+  bayern: { short: "FCB", name: "Bayern Munich", file: "bayern.png" },
+  france: { short: "FRA", name: "France", file: "france.png" },
+  brazil: { short: "BRE", name: "Brésil", file: "brazil.png" },
+  argentina: { short: "ARG", name: "Argentine", file: "argentina.png" },
+  spain: { short: "ESP", name: "Espagne", file: "spain.png" },
+  italy: { short: "ITA", name: "Italie", file: "italy.png" },
+  germany: { short: "ALL", name: "Allemagne", file: "germany.png" },
+  netherlands: { short: "PB", name: "Pays-Bas", file: "netherlands.png" },
+  portugal: { short: "POR", name: "Portugal", file: "portugal.png" }
+};
 
-    <main>
-      <section id="setupView" class="setup-card">
-        <div class="hero-copy">
-          <p class="eyebrow">Prototype test</p>
-          <h2>Crée une room, partage le code, tout le monde joue sur la même grille.</h2>
-          <p>
-            Chaque joueur a sa propre grille à remplir. Le streamer peut passer au joueur suivant.
-            Les scores se mettent à jour en direct.
-          </p>
-        </div>
+export const CATEGORIES = [
+  { id: "om", name: "A joué à l’OM", tags: ["om"], logo: "om" },
+  { id: "psg", name: "A joué au PSG", tags: ["psg"], logo: "psg" },
+  { id: "ol", name: "A joué à Lyon", tags: ["lyon"], logo: "lyon" },
+  { id: "monaco", name: "A joué à Monaco", tags: ["monaco"], logo: "monaco" },
+  { id: "ligue1", name: "A joué en Ligue 1", tags: ["ligue1"] },
+  { id: "premierleague", name: "A joué en Premier League", tags: ["premierleague"] },
+  { id: "laliga", name: "A joué en Liga", tags: ["laliga"] },
+  { id: "seriea", name: "A joué en Serie A", tags: ["seriea"] },
+  { id: "bundesliga", name: "A joué en Bundesliga", tags: ["bundesliga"] },
+  { id: "barca", name: "A joué au Barça", tags: ["barca"], logo: "barca" },
+  { id: "real", name: "A joué au Real Madrid", tags: ["real"], logo: "real" },
+  { id: "milan", name: "A joué à l’AC Milan", tags: ["milan"], logo: "milan" },
+  { id: "inter", name: "A joué à l’Inter", tags: ["inter"], logo: "inter" },
+  { id: "juve", name: "A joué à la Juventus", tags: ["juve"], logo: "juve" },
+  { id: "manutd", name: "A joué à Manchester United", tags: ["manutd"], logo: "manutd" },
+  { id: "arsenal", name: "A joué à Arsenal", tags: ["arsenal"], logo: "arsenal" },
+  { id: "chelsea", name: "A joué à Chelsea", tags: ["chelsea"], logo: "chelsea" },
+  { id: "liverpool", name: "A joué à Liverpool", tags: ["liverpool"], logo: "liverpool" },
+  { id: "bayern", name: "A joué au Bayern", tags: ["bayern"], logo: "bayern" },
+  { id: "uclwinner", name: "A gagné la LDC", tags: ["uclwinner"] },
+  { id: "worldcupwinner", name: "Champion du monde", tags: ["worldcupwinner"] },
+  { id: "eurowinner", name: "A gagné l’Euro", tags: ["eurowinner"] },
+  { id: "ballondor", name: "Ballon d’Or", tags: ["ballondor"] },
+  { id: "brazil", name: "Brésilien", tags: ["brazil"], logo: "brazil" },
+  { id: "france", name: "Français", tags: ["france"], logo: "france" },
+  { id: "argentina", name: "Argentin", tags: ["argentina"], logo: "argentina" },
+  { id: "africa", name: "Africain", tags: ["africa"] },
+  { id: "spain", name: "Espagnol", tags: ["spain"], logo: "spain" },
+  { id: "italy", name: "Italien", tags: ["italy"], logo: "italy" },
+  { id: "germany", name: "Allemand", tags: ["germany"], logo: "germany" },
+  { id: "netherlands", name: "Néerlandais", tags: ["netherlands"], logo: "netherlands" },
+  { id: "portugal", name: "Portugais", tags: ["portugal"], logo: "portugal" },
+  { id: "striker", name: "Attaquant", tags: ["striker"] },
+  { id: "midfielder", name: "Milieu", tags: ["midfielder"] },
+  { id: "defender", name: "Défenseur", tags: ["defender"] },
+  { id: "goalkeeper", name: "Gardien", tags: ["goalkeeper"] },
+  { id: "retired", name: "Retraité", tags: ["retired"] },
+  { id: "active", name: "Encore en activité", tags: ["active"] },
+  { id: "hundredgoals", name: "+100 buts carrière", tags: ["hundredgoals"] },
+  { id: "leftfoot", name: "Gaucher", tags: ["leftfoot"] }
+];
 
-        <div class="setup-panel">
-          <label for="playerName">Ton pseudo</label>
-          <input id="playerName" maxlength="20" placeholder="Ex : Kun" />
-
-          <div class="divider"></div>
-
-          <button id="createRoomBtn" class="primary-btn">Créer une partie</button>
-
-          <div class="join-row">
-            <input id="joinCode" maxlength="6" placeholder="Code room" />
-            <button id="joinRoomBtn" class="secondary-btn">Rejoindre</button>
-          </div>
-
-          <p class="tiny">
-            Besoin de Firebase configuré pour le vrai multijoueur. Voir README.
-          </p>
-        </div>
-      </section>
-
-      <section id="gameView" class="game-layout hidden">
-        <aside class="side-panel">
-          <div class="current-card">
-            <p class="eyebrow">Joueur actuel</p>
-            <h2 id="currentPlayerName">—</h2>
-            <p id="currentPlayerMeta">Sélectionne une case. Le verdict reste caché jusqu’à la fin.</p>
-            <div id="currentPlayerBadges" class="team-strip"></div>
-            <div class="timer-box">
-              <span>Prochain joueur</span>
-              <strong id="countdownText">15s</strong>
-            </div>
-            <div class="current-actions">
-              <button id="nextPlayerBtn" class="primary-btn hidden">Passer maintenant</button>
-              <button id="leaveRoomBtn" class="ghost-btn">Quitter</button>
-            </div>
-          </div>
-
-          <div class="status-card">
-            <p class="eyebrow">Ta partie</p>
-            <div class="stat-line">
-              <span id="scoreLabel">Cases remplies</span>
-              <strong id="myScore">0 / 25</strong>
-            </div>
-            <div class="stat-line">
-              <span id="bingoLabel">Bingos</span>
-              <strong id="myBingos">?</strong>
-            </div>
-            <p id="gameMessage" class="message">Clique une case vide pour placer le joueur. Verdict caché jusqu’à la grille complète.</p>
-          </div>
-
-          <div class="leaderboard-card">
-            <p class="eyebrow">Classement live</p>
-            <ol id="leaderboard"></ol>
-          </div>
-        </aside>
-
-        <section class="board-wrap">
-          <div id="board" class="board"></div>
-        </section>
-      </section>
-    </main>
-  </div>
-
-  <script type="module" src="./app.js"></script>
-</body>
-</html>
+export const PLAYERS = [
+  { id: "zidane", name: "Zinédine Zidane", tags: ["france","worldcupwinner","eurowinner","ballondor","laliga","seriea","real","juve","midfielder","retired"] },
+  { id: "ronaldo9", name: "Ronaldo Nazário", tags: ["brazil","worldcupwinner","ballondor","barca","real","inter","milan","laliga","seriea","striker","retired","hundredgoals"] },
+  { id: "ronaldinho", name: "Ronaldinho", tags: ["brazil","worldcupwinner","ballondor","barca","milan","laliga","seriea","ligue1","psg","midfielder","retired","hundredgoals"] },
+  { id: "messi", name: "Lionel Messi", tags: ["argentina","worldcupwinner","ballondor","barca","psg","laliga","ligue1","striker","active","leftfoot","hundredgoals","uclwinner"] },
+  { id: "cristiano", name: "Cristiano Ronaldo", tags: ["portugal","ballondor","manutd","real","juve","premierleague","laliga","seriea","striker","active","hundredgoals","uclwinner"] },
+  { id: "benzema", name: "Karim Benzema", tags: ["france","lyon","ligue1","real","laliga","ballondor","striker","active","hundredgoals","uclwinner"] },
+  { id: "mbappe", name: "Kylian Mbappé", tags: ["france","worldcupwinner","monaco","psg","real","ligue1","laliga","striker","active","hundredgoals"] },
+  { id: "neymar", name: "Neymar", tags: ["brazil","barca","psg","laliga","ligue1","striker","active","hundredgoals","uclwinner"] },
+  { id: "henry", name: "Thierry Henry", tags: ["france","worldcupwinner","eurowinner","monaco","arsenal","barca","ligue1","premierleague","laliga","striker","retired","hundredgoals","uclwinner"] },
+  { id: "drogba", name: "Didier Drogba", tags: ["africa","om","ligue1","chelsea","premierleague","striker","retired","hundredgoals","uclwinner"] },
+  { id: "ibrahimovic", name: "Zlatan Ibrahimović", tags: ["psg","milan","inter","juve","barca","ligue1","seriea","laliga","striker","retired","hundredgoals"] },
+  { id: "cavani", name: "Edinson Cavani", tags: ["psg","manutd","ligue1","seriea","premierleague","striker","retired","hundredgoals"] },
+  { id: "papin", name: "Jean-Pierre Papin", tags: ["france","om","milan","bayern","ligue1","seriea","bundesliga","ballondor","striker","retired","hundredgoals"] },
+  { id: "ribery", name: "Franck Ribéry", tags: ["france","om","bayern","ligue1","bundesliga","seriea","midfielder","retired","uclwinner"] },
+  { id: "nasri", name: "Samir Nasri", tags: ["france","om","arsenal","ligue1","premierleague","midfielder","retired"] },
+  { id: "payet", name: "Dimitri Payet", tags: ["france","om","ligue1","premierleague","midfielder","retired","hundredgoals"] },
+  { id: "benarfa", name: "Hatem Ben Arfa", tags: ["france","lyon","om","psg","ligue1","premierleague","midfielder","retired"] },
+  { id: "valbuena", name: "Mathieu Valbuena", tags: ["france","om","lyon","ligue1","midfielder","retired"] },
+  { id: "barthez", name: "Fabien Barthez", tags: ["france","worldcupwinner","eurowinner","om","monaco","manutd","ligue1","premierleague","goalkeeper","retired","uclwinner"] },
+  { id: "lloris", name: "Hugo Lloris", tags: ["france","worldcupwinner","lyon","ligue1","premierleague","goalkeeper","active"] },
+  { id: "mandanda", name: "Steve Mandanda", tags: ["france","worldcupwinner","om","ligue1","premierleague","goalkeeper","active"] },
+  { id: "buffon", name: "Gianluigi Buffon", tags: ["italy","worldcupwinner","juve","psg","seriea","ligue1","goalkeeper","retired"] },
+  { id: "casillas", name: "Iker Casillas", tags: ["spain","worldcupwinner","eurowinner","real","laliga","goalkeeper","retired","uclwinner"] },
+  { id: "ramos", name: "Sergio Ramos", tags: ["spain","worldcupwinner","eurowinner","real","psg","laliga","ligue1","defender","active","hundredgoals","uclwinner"] },
+  { id: "puyol", name: "Carles Puyol", tags: ["spain","worldcupwinner","eurowinner","barca","laliga","defender","retired","uclwinner"] },
+  { id: "pique", name: "Gerard Piqué", tags: ["spain","worldcupwinner","eurowinner","barca","manutd","laliga","premierleague","defender","retired","uclwinner"] },
+  { id: "maldini", name: "Paolo Maldini", tags: ["italy","milan","seriea","defender","retired","uclwinner"] },
+  { id: "cannavaro", name: "Fabio Cannavaro", tags: ["italy","worldcupwinner","ballondor","real","juve","inter","laliga","seriea","defender","retired"] },
+  { id: "van-dijk", name: "Virgil van Dijk", tags: ["netherlands","liverpool","premierleague","defender","active","uclwinner"] },
+  { id: "kaka", name: "Kaká", tags: ["brazil","worldcupwinner","ballondor","milan","real","seriea","laliga","midfielder","retired","uclwinner"] },
+  { id: "modric", name: "Luka Modrić", tags: ["ballondor","real","laliga","premierleague","midfielder","active","uclwinner"] },
+  { id: "xavi", name: "Xavi", tags: ["spain","worldcupwinner","eurowinner","barca","laliga","midfielder","retired","uclwinner"] },
+  { id: "iniesta", name: "Andrés Iniesta", tags: ["spain","worldcupwinner","eurowinner","barca","laliga","midfielder","retired","uclwinner"] },
+  { id: "pirlo", name: "Andrea Pirlo", tags: ["italy","worldcupwinner","milan","juve","inter","seriea","midfielder","retired","uclwinner"] },
+  { id: "seedorf", name: "Clarence Seedorf", tags: ["netherlands","real","milan","inter","laliga","seriea","midfielder","retired","uclwinner"] },
+  { id: "lampard", name: "Frank Lampard", tags: ["chelsea","premierleague","midfielder","retired","hundredgoals","uclwinner"] },
+  { id: "gerrard", name: "Steven Gerrard", tags: ["liverpool","premierleague","midfielder","retired","hundredgoals","uclwinner"] },
+  { id: "rooney", name: "Wayne Rooney", tags: ["manutd","premierleague","striker","retired","hundredgoals","uclwinner"] },
+  { id: "shevchenko", name: "Andriy Shevchenko", tags: ["milan","chelsea","seriea","premierleague","ballondor","striker","retired","hundredgoals","uclwinner"] },
+  { id: "eto-o", name: "Samuel Eto’o", tags: ["africa","barca","inter","chelsea","laliga","seriea","premierleague","striker","retired","hundredgoals","uclwinner"] },
+  { id: "mane", name: "Sadio Mané", tags: ["africa","liverpool","bayern","premierleague","bundesliga","striker","active","uclwinner"] },
+  { id: "salah", name: "Mohamed Salah", tags: ["africa","chelsea","liverpool","seriea","premierleague","striker","active","leftfoot","hundredgoals","uclwinner"] },
+  { id: "mahrez", name: "Riyad Mahrez", tags: ["africa","premierleague","striker","active","leftfoot","uclwinner"] },
+  { id: "auba", name: "Pierre-Emerick Aubameyang", tags: ["africa","om","barca","arsenal","chelsea","milan","ligue1","laliga","premierleague","seriea","bundesliga","striker","active","hundredgoals"] },
+  { id: "giroud", name: "Olivier Giroud", tags: ["france","worldcupwinner","arsenal","chelsea","milan","ligue1","premierleague","seriea","striker","active","hundredgoals","uclwinner"] },
+  { id: "griezmann", name: "Antoine Griezmann", tags: ["france","worldcupwinner","barca","laliga","striker","active","leftfoot","hundredgoals"] },
+  { id: "kante", name: "N’Golo Kanté", tags: ["france","worldcupwinner","chelsea","ligue1","premierleague","midfielder","active","uclwinner"] },
+  { id: "pogba", name: "Paul Pogba", tags: ["france","worldcupwinner","manutd","juve","premierleague","seriea","midfielder","active"] },
+  { id: "ozil", name: "Mesut Özil", tags: ["germany","worldcupwinner","real","arsenal","laliga","premierleague","bundesliga","midfielder","retired","leftfoot"] },
+  { id: "kroos", name: "Toni Kroos", tags: ["germany","worldcupwinner","bayern","real","bundesliga","laliga","midfielder","retired","uclwinner"] },
+  { id: "muller", name: "Thomas Müller", tags: ["germany","worldcupwinner","bayern","bundesliga","midfielder","active","hundredgoals","uclwinner"] },
+  { id: "lewandowski", name: "Robert Lewandowski", tags: ["bayern","barca","bundesliga","laliga","striker","active","hundredgoals","uclwinner"] },
+  { id: "haaland", name: "Erling Haaland", tags: ["premierleague","bundesliga","striker","active","leftfoot","hundredgoals","uclwinner"] },
+  { id: "debruyne", name: "Kevin De Bruyne", tags: ["chelsea","premierleague","bundesliga","midfielder","active","uclwinner"] },
+  { id: "hazard", name: "Eden Hazard", tags: ["chelsea","real","ligue1","premierleague","laliga","striker","retired","hundredgoals"] },
+  { id: "figo", name: "Luís Figo", tags: ["portugal","ballondor","barca","real","inter","laliga","seriea","midfielder","retired","uclwinner"] },
+  { id: "deco", name: "Deco", tags: ["portugal","barca","chelsea","laliga","premierleague","midfielder","retired","uclwinner"] },
+  { id: "suarez", name: "Luis Suárez", tags: ["barca","liverpool","laliga","premierleague","striker","active","leftfoot","hundredgoals","uclwinner"] },
+  { id: "aguero", name: "Sergio Agüero", tags: ["argentina","barca","laliga","premierleague","striker","retired","hundredgoals"] },
+  { id: "tevez", name: "Carlos Tévez", tags: ["argentina","manutd","juve","premierleague","seriea","striker","retired","hundredgoals","uclwinner"] },
+  { id: "dimaria", name: "Ángel Di María", tags: ["argentina","worldcupwinner","psg","real","juve","manutd","ligue1","laliga","seriea","premierleague","midfielder","active","leftfoot","uclwinner"] },
+  { id: "verratti", name: "Marco Verratti", tags: ["italy","eurowinner","psg","ligue1","midfielder","active"] },
+  { id: "hakimi", name: "Achraf Hakimi", tags: ["africa","psg","real","inter","bundesliga","ligue1","laliga","seriea","defender","active"] },
+  { id: "marquinhos", name: "Marquinhos", tags: ["brazil","psg","ligue1","seriea","defender","active"] },
+  { id: "thiagosilva", name: "Thiago Silva", tags: ["brazil","psg","milan","chelsea","ligue1","seriea","premierleague","defender","active","uclwinner"] },
+  { id: "osimhen", name: "Victor Osimhen", tags: ["africa","ligue1","seriea","striker","active"] },
+  { id: "falcao", name: "Radamel Falcao", tags: ["monaco","chelsea","manutd","ligue1","premierleague","laliga","striker","retired","hundredgoals"] },
+  { id: "pauleta", name: "Pauleta", tags: ["portugal","psg","ligue1","laliga","striker","retired","hundredgoals"] },
+  { id: "cisse", name: "Djibril Cissé", tags: ["france","om","ligue1","premierleague","seriea","striker","retired","hundredgoals"] },
+  { id: "niang", name: "Mamadou Niang", tags: ["africa","om","ligue1","striker","retired","hundredgoals"] },
+  { id: "gignac", name: "André-Pierre Gignac", tags: ["france","om","ligue1","striker","active","hundredgoals"] },
+  { id: "lacazette", name: "Alexandre Lacazette", tags: ["france","lyon","arsenal","ligue1","premierleague","striker","active","hundredgoals"] },
+  { id: "benyedder", name: "Wissam Ben Yedder", tags: ["france","monaco","ligue1","laliga","striker","active","hundredgoals"] },
+  { id: "balotelli", name: "Mario Balotelli", tags: ["italy","om","milan","inter","ligue1","seriea","premierleague","striker","active","hundredgoals","uclwinner"] },
+  { id: "depays", name: "Memphis Depay", tags: ["netherlands","lyon","barca","manutd","ligue1","laliga","premierleague","striker","active","hundredgoals"] }
+];
