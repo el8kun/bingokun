@@ -507,7 +507,7 @@ function renderBoard(currentPlayer) {
         <div class="cell-kicker">${escapeHtml(category.kicker || "Critère")}</div>
         <div class="cell-title">${escapeHtml(category.title || category.name || category.id)}</div>
         <div class="cell-footer">
-          ${move ? `<div class="placed-player">${escapeHtml(move.playerName)}</div>` : ""}
+          ${move ? `<div class="placed-player">${escapeHtml(getDisplaySurname(move.playerName))}</div>` : ""}
           ${reveal && move ? `<div class="result-chip ${move.isValid ? "good" : "bad"}">${move.isValid ? "VALIDÉ" : "FAUX"}</div>` : ""}
         </div>
       </div>
@@ -814,6 +814,18 @@ function getCurrentPlayer() {
   if (!roomData?.deck) return null;
   const id = roomData.deck[getMyCurrentIndex()];
   return ACTIVE_PLAYERS.find((player) => player.id === id) || null;
+}
+
+function getDisplaySurname(name) {
+  const parts = String(name || "")
+    .replace(/[’']/g, " ")
+    .split(/\s+/)
+    .filter(Boolean);
+
+  if (!parts.length) return "";
+  if (parts.length === 1) return parts[0];
+
+  return parts[parts.length - 1];
 }
 
 function getPlayerInitials(name) {
