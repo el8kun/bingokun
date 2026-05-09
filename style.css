@@ -2725,3 +2725,107 @@ body.overlay-open {
     font-size: .78rem;
   }
 }
+/* === Bingo Kun : garder le même format de case avant/après clic === */
+
+.cell {
+  min-height: 128px;
+}
+
+.cell-inner {
+  height: 100%;
+  min-height: 108px;
+  display: grid;
+  grid-template-rows: 56px 16px 34px 40px; /* visuel / kicker / titre / footer */
+  gap: 4px;
+  align-items: center;
+  justify-items: center;
+  text-align: center;
+}
+
+.cell-visual {
+  min-height: 56px;
+}
+
+.cell-kicker {
+  min-height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cell-title {
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.05;
+}
+
+.cell-footer {
+  height: 40px;
+  min-height: 40px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.placed-player {
+  margin-top: 0;
+  min-height: 24px;
+  max-height: 24px;
+  max-width: 92%;
+  padding: 4px 10px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1;
+  font-size: .76rem;
+  font-weight: 1000;
+}
+
+.result-chip {
+  margin-top: 0;
+  min-height: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 8px;
+  line-height: 1;
+}
+
+/* mobile */
+@media (max-width: 820px) {
+  .cell {
+    min-height: 118px;
+  }
+
+  .cell-inner {
+    min-height: 98px;
+    grid-template-rows: 48px 14px 30px 36px;
+  }
+
+  .cell-title {
+    min-height: 30px;
+    font-size: .78rem;
+  }
+
+  .cell-footer {
+    height: 36px;
+    min-height: 36px;
+  }
+
+  .placed-player {
+    min-height: 22px;
+    max-height: 22px;
+    font-size: .68rem;
+    padding: 3px 8px;
+  }
+}
