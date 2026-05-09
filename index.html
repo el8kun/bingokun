@@ -33,7 +33,7 @@
     </div>
   </header>
 
-  <div class="top-timer">
+  <div id="topTimer" class="top-timer hidden">
     <div class="timer-count" id="globalTimerText">15s</div>
     <div class="top-timer-track">
       <div id="globalTimerBar" class="top-timer-bar"></div>
@@ -44,10 +44,10 @@
     <section id="setupView" class="setup-screen">
       <div class="setup-hero">
         <p class="mini-title">Bingo foot multijoueur · 5x5</p>
-        <h1>Crée une room, partage le code, et joue avec ton chat.</h1>
+        <h1>Crée une room, attends ton chat, puis lance la partie.</h1>
         <p>
-          Les joueurs défilent automatiquement toutes les 15 secondes.
-          Chaque viewer remplit sa grille, mais le verdict reste caché jusqu’à la fin.
+          La grille et la liste des 75 joueurs sont communes à tous.
+          Ensuite, chaque joueur avance à son propre rythme : placer ou passer un joueur ne change rien pour les autres.
         </p>
       </div>
 
@@ -57,7 +57,7 @@
         <label for="playerName">Ton pseudo</label>
         <input id="playerName" maxlength="20" placeholder="Ex : Kun" autocomplete="nickname" />
 
-        <button id="createRoomBtn" class="primary-btn" type="button">Créer une partie</button>
+        <button id="createRoomBtn" class="primary-btn" type="button">Créer une room</button>
 
         <div class="separator"><span>ou</span></div>
 
@@ -66,8 +66,46 @@
           <button id="joinRoomBtn" class="secondary-btn" type="button">Rejoindre</button>
         </div>
 
-        <p class="hint">Le créateur doit garder l’onglet ouvert pour le défilement automatique.</p>
+        <p class="hint">La partie démarre seulement quand le créateur clique sur “Lancer la partie”.</p>
       </div>
+    </section>
+
+    <section id="waitingView" class="waiting-screen hidden">
+      <div class="waiting-hero">
+        <p class="mini-title">Salle d'attente</p>
+        <h1>Room <span id="waitingRoomCodeDisplay">----</span></h1>
+        <p id="waitingHostHint">En attente du créateur de la room.</p>
+
+        <div class="waiting-actions">
+          <button id="copyWaitingRoomBtn" class="secondary-btn" type="button">Copier le code</button>
+          <button id="startGameBtn" class="primary-btn hidden" type="button">Lancer la partie</button>
+        </div>
+
+        <div class="waiting-stats">
+          <div>
+            <span>Joueurs</span>
+            <strong id="waitingPlayerCount">0 joueur</strong>
+          </div>
+          <div>
+            <span>Grille</span>
+            <strong id="waitingGridInfo">25 cases</strong>
+          </div>
+          <div>
+            <span>Deck</span>
+            <strong id="waitingDeckInfo">75 joueurs</strong>
+          </div>
+          <div>
+            <span>Minimum</span>
+            <strong id="waitingPlayableInfo">60 jouables</strong>
+          </div>
+        </div>
+      </div>
+
+      <aside class="waiting-card">
+        <p class="side-title">Joueurs dans la room</p>
+        <div id="waitingPlayersList" class="waiting-players-list"></div>
+        <button id="leaveWaitingRoomBtn" class="leave-btn" type="button">Quitter la room</button>
+      </aside>
     </section>
 
     <section id="gameView" class="game-screen hidden">
@@ -82,7 +120,7 @@
             <div class="current-player-info">
               <div class="player-card-topline">
                 <span id="playerCounterBadge" class="player-counter-badge">Joueur 1 / 75</span>
-                <span class="live-badge"><span></span> EN JEU</span>
+                <span class="live-badge"><span></span> TON TOUR</span>
               </div>
 
               <div class="current-player-main">
@@ -99,7 +137,7 @@
             </div>
 
             <button id="nextPlayerBtn" class="skip-btn hidden" type="button">
-              SKIP ▶
+              PASSER ▶
             </button>
           </div>
 
@@ -148,7 +186,7 @@
         </div>
 
         <div class="side-card history-card">
-          <p class="side-title">Joueurs passés</p>
+          <p class="side-title">Tes joueurs passés</p>
           <div id="playedPlayersList" class="played-players-list"></div>
         </div>
 

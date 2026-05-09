@@ -31,9 +31,19 @@ const MIN_PLAYABLE_PLAYERS = 60;
 const $ = (id) => document.getElementById(id);
 
 const setupView = $("setupView");
+const waitingView = $("waitingView");
 const gameView = $("gameView");
+const topTimer = $("topTimer");
 const roomPill = $("roomPill");
 const roomCodeDisplay = $("roomCodeDisplay");
+const waitingRoomCodeDisplay = $("waitingRoomCodeDisplay");
+const waitingPlayersList = $("waitingPlayersList");
+const waitingPlayerCount = $("waitingPlayerCount");
+const waitingGridInfo = $("waitingGridInfo");
+const waitingDeckInfo = $("waitingDeckInfo");
+const waitingPlayableInfo = $("waitingPlayableInfo");
+const startGameBtn = $("startGameBtn");
+const waitingHostHint = $("waitingHostHint");
 const playerNameInput = $("playerName");
 const joinCodeInput = $("joinCode");
 const boardEl = $("board");
@@ -61,12 +71,13 @@ let uid = null;
 let currentRoomCode = null;
 let roomData = null;
 let myData = null;
+let participantsData = [];
 
 let unsubscribeRoom = null;
 let unsubscribeMe = null;
 let unsubscribePlayers = null;
 let clockInterval = null;
-let hostInterval = null;
+let playerAutoInterval = null;
 
 const savedName = localStorage.getItem("bingo-kun-name");
 if (savedName) playerNameInput.value = savedName;
@@ -82,8 +93,11 @@ signInAnonymously(auth).catch((error) => {
 $("createRoomBtn").addEventListener("click", createRoom);
 $("joinRoomBtn").addEventListener("click", () => joinRoom(joinCodeInput.value.trim().toUpperCase()));
 $("copyRoomBtn").addEventListener("click", copyRoomInfo);
+$("copyWaitingRoomBtn").addEventListener("click", copyRoomInfo);
 $("leaveRoomBtn").addEventListener("click", leaveRoom);
-nextPlayerBtn.addEventListener("click", () => advancePlayer(true));
+$("leaveWaitingRoomBtn").addEventListener("click", leaveRoom);
+startGameBtn.addEventListener("click", startGame);
+nextPlayerBtn.addEventListener("click", () => advanceMyPlayer(true));
 
 async function createRoom() {
   const name = getPlayerName();
@@ -103,24 +117,14 @@ async function createRoom() {
     playableCount: setup.playableCount,
     maxDeckPlayers: MAX_DECK_PLAYERS,
     minPlayablePlayers: MIN_PLAYABLE_PLAYERS,
-    currentIndex: 0,
-    currentStartedAt: serverTimestamp(),
     secondsPerPlayer: AUTO_SECONDS,
-    status: "playing",
+    status: "waiting",
     createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp()
+    updatedAt: serverTimestamp(),
+    gameStartedAt: null
   });
 
-  await setDoc(doc(db, "rooms", code, "participants", uid), {
-    name,
-    board: {},
-    filledCount: 0,
-    finalScore: null,
-    bingos: [],
-    finished: false,
-    isHost: true,
-    joinedAt: serverTimestamp()
-  });
+  await setDoc(doc(db, "rooms", code, "participants", uid), buildFreshParticipant(name, true));
 
   await joinRoom(code, true);
 }
@@ -145,34 +149,45 @@ async function joinRoom(code, alreadyJoined = false) {
 
   const participantRef = doc(db, "rooms", code, "participants", uid);
   const participantSnap = await getDoc(participantRef);
+  const room = roomSnap.data();
+
+  if (room.status !== "waiting" && !participantSnap.exists()) {
+    alert("La partie a déjà commencé. Tu pourras rejoindre la prochaine room.");
+    return;
+  }
 
   if (!alreadyJoined && !participantSnap.exists()) {
-    await setDoc(participantRef, {
-      name,
-      board: {},
-      filledCount: 0,
-      finalScore: null,
-      bingos: [],
-      finished: false,
-      isHost: roomSnap.data().hostUid === uid,
-      joinedAt: serverTimestamp()
-    });
+    await setDoc(participantRef, buildFreshParticipant(name, room.hostUid === uid));
   } else if (!alreadyJoined) {
     await updateDoc(participantRef, { name });
   }
 
   currentRoomCode = code;
   localStorage.setItem("bingo-kun-name", name);
-  showGameView(code);
+  showRoomShell(code);
   subscribeToRoom(code);
-  startTimers();
 }
 
-function showGameView(code) {
+function buildFreshParticipant(name, isHost = false) {
+  return {
+    name,
+    board: {},
+    filledCount: 0,
+    finalScore: null,
+    bingos: [],
+    finished: false,
+    isHost,
+    currentIndex: 0,
+    currentStartedAt: null,
+    joinedAt: serverTimestamp()
+  };
+}
+
+function showRoomShell(code) {
   setupView.classList.add("hidden");
-  gameView.classList.remove("hidden");
   roomPill.classList.remove("hidden");
   roomCodeDisplay.textContent = code;
+  waitingRoomCodeDisplay.textContent = code;
 }
 
 function subscribeToRoom(code) {
@@ -185,56 +200,124 @@ function subscribeToRoom(code) {
     }
 
     roomData = snapshot.data();
-    renderGame();
+    renderViews();
   });
 
   unsubscribeMe = onSnapshot(doc(db, "rooms", code, "participants", uid), (snapshot) => {
     myData = snapshot.exists() ? snapshot.data() : null;
-    renderGame();
+    renderViews();
   });
 
   unsubscribePlayers = onSnapshot(collection(db, "rooms", code, "participants"), (snapshot) => {
-    const players = [];
-    snapshot.forEach((item) => players.push(item.data()));
+    participantsData = [];
+    snapshot.forEach((item) => participantsData.push({ id: item.id, ...item.data() }));
+    renderParticipants();
+    renderViews();
+  });
+}
 
-    players.sort((a, b) => {
-      if (a.finished && b.finished) return (b.finalScore || 0) - (a.finalScore || 0);
-      if (a.finished !== b.finished) return a.finished ? -1 : 1;
-      return (b.filledCount || 0) - (a.filledCount || 0);
-    });
+function renderViews() {
+  if (!roomData || !myData) return;
 
-    leaderboardEl.innerHTML = "";
-    players.forEach((player, index) => {
-      const li = document.createElement("li");
-      const status = player.finished
-        ? `${player.finalScore || 0}/25`
-        : `${player.filledCount || 0}/25`;
-      li.innerHTML = `${index === 0 ? "👑 " : ""}<strong>${escapeHtml(player.name || "Joueur")}</strong> — ${status}`;
-      leaderboardEl.appendChild(li);
-    });
+  if (roomData.status === "waiting") {
+    stopTimers();
+    waitingView.classList.remove("hidden");
+    gameView.classList.add("hidden");
+    topTimer.classList.add("hidden");
+    renderWaitingRoom();
+    return;
+  }
+
+  waitingView.classList.add("hidden");
+  gameView.classList.remove("hidden");
+  topTimer.classList.remove("hidden");
+  startTimers();
+  renderGame();
+}
+
+function renderWaitingRoom() {
+  const isHost = roomData.hostUid === uid;
+  startGameBtn.classList.toggle("hidden", !isHost);
+  waitingHostHint.textContent = isHost
+    ? "Tu es le créateur de la room. Lance la partie quand tout le monde est là."
+    : "En attente du créateur de la room. La partie commencera quand il lancera le décompte.";
+
+  waitingPlayerCount.textContent = `${participantsData.length} joueur${participantsData.length > 1 ? "s" : ""}`;
+  waitingGridInfo.textContent = `${roomData.grid?.length || 0} cases`;
+  waitingDeckInfo.textContent = `${roomData.deck?.length || 0} joueurs max`;
+  waitingPlayableInfo.textContent = `${roomData.playableCount || 0} jouables`;
+  renderParticipants();
+}
+
+function renderParticipants() {
+  const players = [...participantsData].sort((a, b) => {
+    if (a.isHost !== b.isHost) return a.isHost ? -1 : 1;
+    return String(a.name || "").localeCompare(String(b.name || ""));
+  });
+
+  if (waitingPlayersList) {
+    waitingPlayersList.innerHTML = players.length
+      ? players.map((player) => `
+          <div class="waiting-player">
+            <span class="waiting-player-avatar">${escapeHtml(getPlayerInitials(player.name || "Joueur"))}</span>
+            <span class="waiting-player-name">${escapeHtml(player.name || "Joueur")}</span>
+            ${player.isHost ? `<span class="host-chip">HOST</span>` : ""}
+          </div>
+        `).join("")
+      : `<p class="empty-history">Aucun joueur dans la room.</p>`;
+  }
+
+  if (leaderboardEl) renderLeaderboard(players);
+}
+
+function renderLeaderboard(players = participantsData) {
+  const sorted = [...players].sort((a, b) => {
+    if (a.finished && b.finished) return (b.finalScore || 0) - (a.finalScore || 0);
+    if (a.finished !== b.finished) return a.finished ? -1 : 1;
+    return (b.filledCount || 0) - (a.filledCount || 0);
+  });
+
+  leaderboardEl.innerHTML = "";
+  sorted.forEach((player, index) => {
+    const li = document.createElement("li");
+    const status = player.finished
+      ? `${player.finalScore || 0}/25`
+      : `${player.filledCount || 0}/25`;
+    li.innerHTML = `${index === 0 ? "👑 " : ""}<strong>${escapeHtml(player.name || "Joueur")}</strong> — ${status}`;
+    leaderboardEl.appendChild(li);
+  });
+}
+
+async function startGame() {
+  if (!roomData || !currentRoomCode || roomData.hostUid !== uid) return;
+
+  await updateDoc(doc(db, "rooms", currentRoomCode), {
+    status: "playing",
+    gameStartedAt: serverTimestamp(),
+    updatedAt: serverTimestamp()
   });
 }
 
 function renderGame() {
-  if (!roomData || !myData) return;
+  if (!roomData || !myData || roomData.status !== "playing") return;
 
   const currentPlayer = getCurrentPlayer();
-  const isHost = roomData.hostUid === uid;
   const finished = Boolean(myData.finished);
   const filledCount = myData.filledCount || 0;
 
-  nextPlayerBtn.classList.toggle("hidden", !isHost);
+  nextPlayerBtn.classList.remove("hidden");
+  nextPlayerBtn.disabled = !currentPlayer || finished;
 
   const deckLength = roomData.deck?.length || 0;
-  const currentIndex = roomData.currentIndex || 0;
+  const currentIndex = getMyCurrentIndex();
   const remainingPlayers = currentPlayer ? Math.max(0, deckLength - currentIndex - 1) : 0;
 
   currentPlayerNameEl.textContent = currentPlayer ? currentPlayer.name : "Fin du deck";
   currentPlayerInitialsEl.textContent = currentPlayer ? getPlayerInitials(currentPlayer.name) : "✓";
   playerCounterBadgeEl.textContent = currentPlayer ? `Joueur ${currentIndex + 1} / ${deckLength}` : `Deck terminé`;
   currentPlayerSublineEl.textContent = currentPlayer
-    ? "Choisis une case vide : les indices restent cachés jusqu'à la fin."
-    : "Plus aucun joueur dans la liste.";
+    ? "Choisis une case vide : ton rythme n'impacte pas les autres joueurs."
+    : "Tu as terminé ta liste de joueurs.";
 
   myFilledEl.textContent = `${filledCount} / 25`;
   playersRemainingEl.textContent = `${remainingPlayers} / ${deckLength}`;
@@ -298,7 +381,7 @@ function renderBoard(currentPlayer) {
 }
 
 async function placeCurrentPlayer(cellIndex) {
-  if (!roomData || !myData || myData.finished) return;
+  if (!roomData || !myData || roomData.status !== "playing" || myData.finished) return;
 
   const currentPlayer = getCurrentPlayer();
   if (!currentPlayer) return;
@@ -317,7 +400,7 @@ async function placeCurrentPlayer(cellIndex) {
   }
 
   const category = roomData.grid[cellIndex];
-  const isValid = category.tags.some((tag) => currentPlayer.tags.includes(tag));
+  const isValid = canPlayerFillCategory(currentPlayer, category);
 
   const newBoard = {
     ...board,
@@ -343,66 +426,73 @@ async function placeCurrentPlayer(cellIndex) {
     updatePayload.bingos = calculateBingos(newBoard);
     setMessage("Grille complète ! Le verdict est révélé.", "good");
   } else {
-    setMessage("Réponse enregistrée. Verdict caché jusqu’à la fin.", "good");
+    const nextIndex = Math.min(getMyCurrentIndex() + 1, roomData.deck?.length || 0);
+    updatePayload.currentIndex = nextIndex;
+    updatePayload.currentStartedAt = serverTimestamp();
+    setMessage("Joueur placé. Le prochain joueur arrive pour toi uniquement.", "good");
   }
 
   await updateDoc(doc(db, "rooms", currentRoomCode, "participants", uid), updatePayload);
-
-  // Dès qu'un joueur est placé, on passe au joueur suivant.
-  // Le currentIndexAtPlacement évite de sauter plusieurs joueurs si plusieurs personnes cliquent presque en même temps.
-  await advancePlayer(false, roomData.currentIndex || 0);
 }
 
-async function advancePlayer(manual = false, expectedIndex = null) {
-  if (!roomData || !currentRoomCode) return;
-  if (manual && roomData.hostUid !== uid) return;
+async function advanceMyPlayer(manual = false) {
+  if (!roomData || !currentRoomCode || roomData.status !== "playing" || !myData || myData.finished) return;
 
-  const roomRef = doc(db, "rooms", currentRoomCode);
+  const participantRef = doc(db, "rooms", currentRoomCode, "participants", uid);
 
   const advanced = await runTransaction(db, async (transaction) => {
-    const roomSnap = await transaction.get(roomRef);
-    if (!roomSnap.exists()) return false;
+    const participantSnap = await transaction.get(participantRef);
+    if (!participantSnap.exists()) return false;
 
-    const liveRoom = roomSnap.data();
-    const currentIndex = liveRoom.currentIndex || 0;
-    const deckLength = liveRoom.deck?.length || 0;
+    const liveParticipant = participantSnap.data();
+    if (liveParticipant.finished) return false;
 
-    if (expectedIndex !== null && currentIndex !== expectedIndex) return false;
-    if (currentIndex >= deckLength - 1) return false;
+    const currentIndex = Number(liveParticipant.currentIndex || 0);
+    const deckLength = roomData.deck?.length || 0;
 
-    transaction.update(roomRef, {
-      currentIndex: currentIndex + 1,
-      currentStartedAt: serverTimestamp(),
-      updatedAt: serverTimestamp()
+    if (currentIndex >= deckLength) return false;
+
+    transaction.update(participantRef, {
+      currentIndex: Math.min(currentIndex + 1, deckLength),
+      currentStartedAt: serverTimestamp()
     });
 
     return true;
   });
 
-  if (manual && advanced) setMessage("Joueur suivant envoyé.", "good");
+  if (manual && advanced) setMessage("Joueur passé pour toi uniquement.", "good");
 }
 
 function startTimers() {
-  stopTimers();
+  if (clockInterval || playerAutoInterval) return;
 
   clockInterval = setInterval(() => {
     updateCountdown();
   }, 250);
 
-  hostInterval = setInterval(() => {
-    if (!roomData || roomData.hostUid !== uid) return;
-    if (getRemainingSeconds() <= 0) advancePlayer(false);
+  playerAutoInterval = setInterval(() => {
+    if (!roomData || roomData.status !== "playing" || !myData || myData.finished) return;
+    if (!getCurrentPlayer()) return;
+    if (getRemainingSeconds() <= 0) advanceMyPlayer(false);
   }, 1000);
 }
 
 function stopTimers() {
   if (clockInterval) clearInterval(clockInterval);
-  if (hostInterval) clearInterval(hostInterval);
+  if (playerAutoInterval) clearInterval(playerAutoInterval);
   clockInterval = null;
-  hostInterval = null;
+  playerAutoInterval = null;
 }
 
 function updateCountdown() {
+  if (!roomData || roomData.status !== "playing") {
+    globalTimerTextEl.textContent = `${AUTO_SECONDS}s`;
+    globalTimerBarEl.style.width = "100%";
+    circleTimerTextEl.textContent = String(AUTO_SECONDS);
+    document.documentElement.style.setProperty("--timer-progress", "100%");
+    return;
+  }
+
   const remaining = getRemainingSeconds();
   const seconds = Math.max(0, Math.ceil(remaining));
   const percent = Math.max(0, Math.min(100, (remaining / AUTO_SECONDS) * 100));
@@ -414,19 +504,23 @@ function updateCountdown() {
 }
 
 function getRemainingSeconds() {
-  if (!roomData?.currentStartedAt) return AUTO_SECONDS;
+  if (!roomData || roomData.status !== "playing") return AUTO_SECONDS;
 
-  const startedAt = roomData.currentStartedAt.toMillis
-    ? roomData.currentStartedAt.toMillis()
-    : Date.now();
+  const timestamp = myData?.currentStartedAt || roomData.gameStartedAt;
+  if (!timestamp) return AUTO_SECONDS;
 
+  const startedAt = timestamp.toMillis ? timestamp.toMillis() : Date.now();
   const elapsed = (Date.now() - startedAt) / 1000;
   return AUTO_SECONDS - elapsed;
 }
 
+function getMyCurrentIndex() {
+  return Math.max(0, Number(myData?.currentIndex || 0));
+}
+
 function getCurrentPlayer() {
   if (!roomData?.deck) return null;
-  const id = roomData.deck[roomData.currentIndex || 0];
+  const id = roomData.deck[getMyCurrentIndex()];
   return PLAYERS.find((player) => player.id === id) || null;
 }
 
@@ -466,7 +560,7 @@ function renderPlayedPlayers(currentIndex) {
   }
 
   playedPlayersListEl.innerHTML = history.map(({ player, index }) => {
-    const isCurrent = index === currentIndex;
+    const isCurrent = index === currentIndex && getCurrentPlayer();
     const move = usedByPlayerId.get(player.id);
     const status = isCurrent ? "EN JEU" : move ? "PLACÉ" : "PASSÉ";
     const statusClass = isCurrent ? "current" : move ? "placed" : "passed";
@@ -537,7 +631,6 @@ function iconForCategory(id) {
   return icons[id] || "★";
 }
 
-
 function generateGameSetup() {
   const maxDeckSize = Math.min(MAX_DECK_PLAYERS, PLAYERS.length);
   const requiredPlayable = Math.min(MIN_PLAYABLE_PLAYERS, maxDeckSize);
@@ -588,7 +681,6 @@ function generateGameSetup() {
 function buildDeck(grid, playablePlayers, maxDeckSize) {
   const selected = new Map();
 
-  // On garantit d'abord que chaque case de la grille peut être remplie par au moins un joueur du deck.
   grid.forEach((category) => {
     const candidates = shuffle(playablePlayers).filter((player) => canPlayerFillCategory(player, category));
     if (candidates[0]) selected.set(candidates[0].id, candidates[0]);
@@ -614,7 +706,6 @@ function buildDeck(grid, playablePlayers, maxDeckSize) {
     deck.push(player);
   }
 
-  // Si la base n'a pas assez de joueurs non jouables, on complète avec d'autres joueurs jouables.
   for (const player of shuffle(PLAYERS.filter((player) => !deck.some((item) => item.id === player.id)))) {
     if (deck.length >= maxDeckSize) break;
     deck.push(player);
@@ -628,6 +719,9 @@ function canPlayerFillAnyCell(player, grid) {
 }
 
 function canPlayerFillCategory(player, category) {
+  if (!category?.tags?.length) return false;
+  const mode = category.match || "any";
+  if (mode === "all") return category.tags.every((tag) => player.tags.includes(tag));
   return category.tags.some((tag) => player.tags.includes(tag));
 }
 
@@ -638,6 +732,7 @@ function getPlayerName() {
 }
 
 function setMessage(message, type = "") {
+  if (!gameMessageEl) return;
   gameMessageEl.textContent = message;
   gameMessageEl.className = "message";
   if (type) gameMessageEl.classList.add(type);
@@ -648,7 +743,11 @@ function copyRoomInfo() {
   const url = new URL(window.location.href);
   url.searchParams.set("room", currentRoomCode);
   navigator.clipboard?.writeText(`${currentRoomCode} — ${url.toString()}`);
-  setMessage("Code room copié.", "good");
+  if (roomData?.status === "waiting") {
+    waitingHostHint.textContent = "Code room copié. Tu peux le partager au chat.";
+  } else {
+    setMessage("Code room copié.", "good");
+  }
 }
 
 function leaveRoom() {
@@ -658,8 +757,11 @@ function leaveRoom() {
   currentRoomCode = null;
   roomData = null;
   myData = null;
+  participantsData = [];
 
+  waitingView.classList.add("hidden");
   gameView.classList.add("hidden");
+  topTimer.classList.add("hidden");
   roomPill.classList.add("hidden");
   setupView.classList.remove("hidden");
 }
