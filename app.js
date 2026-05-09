@@ -508,7 +508,6 @@ function renderBoard(currentPlayer) {
         <div class="cell-title">${escapeHtml(category.title || category.name || category.id)}</div>
         <div class="cell-footer">
           ${move ? `<div class="placed-player">${escapeHtml(move.playerName)}</div>` : ""}
-          ${move && !reveal ? `<div class="result-chip pending">PLACÉ</div>` : ""}
           ${reveal && move ? `<div class="result-chip ${move.isValid ? "good" : "bad"}">${move.isValid ? "VALIDÉ" : "FAUX"}</div>` : ""}
         </div>
       </div>

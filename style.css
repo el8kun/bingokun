@@ -2725,8 +2725,9 @@ body.overlay-open {
     font-size: .78rem;
   }
 }
-/* === Bingo Kun : garder le même format de case avant/après clic === */
 
+
+/* --- Bingo Kun v14 : format de case stable + suppression du badge PLACÉ --- */
 .cell {
   min-height: 128px;
 }
@@ -2735,7 +2736,7 @@ body.overlay-open {
   height: 100%;
   min-height: 108px;
   display: grid;
-  grid-template-rows: 56px 16px 34px 40px; /* visuel / kicker / titre / footer */
+  grid-template-rows: 56px 16px 34px 40px;
   gap: 4px;
   align-items: center;
   justify-items: center;
@@ -2801,7 +2802,6 @@ body.overlay-open {
   line-height: 1;
 }
 
-/* mobile */
 @media (max-width: 820px) {
   .cell {
     min-height: 118px;
