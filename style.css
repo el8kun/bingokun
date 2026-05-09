@@ -2622,3 +2622,106 @@ body.overlay-open {
     white-space: normal;
   }
 }
+
+
+/* --- Bingo Kun v13 : sans bulle grise + visuels agrandis --- */
+.cell-inner {
+  min-height: 108px;
+  grid-template-rows: auto auto auto;
+  gap: 5px;
+}
+
+.cell-visual {
+  min-height: 64px;
+}
+
+.cell-visual-images {
+  min-height: 50px;
+}
+
+.cell-visual-images.is-combo {
+  gap: 8px;
+}
+
+.cell-short-label {
+  display: none !important;
+}
+
+.cell-image {
+  width: 52px;
+  height: 52px;
+  filter: drop-shadow(0 7px 12px rgba(0,0,0,.30));
+}
+
+.cell-visual-club .cell-image,
+.cell-visual-trophy .cell-image,
+.cell-visual-player .cell-image,
+.cell-visual-coach .cell-image,
+.cell-visual-special .cell-image,
+.cell-visual-league .cell-image {
+  width: 52px;
+  height: 52px;
+}
+
+.cell-visual-flag .cell-image {
+  width: 56px;
+  height: 38px;
+  border-radius: 7px;
+}
+
+.cell-visual-images.is-combo .cell-image {
+  width: 42px;
+  height: 42px;
+}
+
+.cell-title {
+  margin-top: 1px;
+  font-size: .92rem;
+  font-weight: 1000;
+  letter-spacing: .02em;
+}
+
+.cell-kicker {
+  font-size: .58rem;
+  opacity: .82;
+}
+
+.cell .cell-footer {
+  min-height: 22px;
+}
+
+@media (max-width: 820px) {
+  .cell-inner {
+    min-height: 98px;
+    gap: 4px;
+  }
+
+  .cell-image {
+    width: 44px;
+    height: 44px;
+  }
+
+  .cell-visual-club .cell-image,
+  .cell-visual-trophy .cell-image,
+  .cell-visual-player .cell-image,
+  .cell-visual-coach .cell-image,
+  .cell-visual-special .cell-image,
+  .cell-visual-league .cell-image {
+    width: 44px;
+    height: 44px;
+  }
+
+  .cell-visual-flag .cell-image {
+    width: 48px;
+    height: 32px;
+  }
+
+  .cell-visual-images.is-combo .cell-image {
+    width: 34px;
+    height: 34px;
+  }
+
+  .cell-title {
+    font-size: .78rem;
+  }
+}

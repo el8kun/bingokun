@@ -547,14 +547,11 @@ function renderCategoryVisual(category) {
     `;
   }).join("");
 
-  const label = category.shortLabel || visuals.map((item) => item.shortLabel).filter(Boolean).join("+");
-
   return `
     <div class="cell-visual cell-visual-${escapeHtml(visualClass)}">
       <div class="cell-visual-images ${visuals.length > 1 ? "is-combo" : ""}">
         ${imagesHtml}
       </div>
-      ${label ? `<div class="cell-short-label">${escapeHtml(label)}</div>` : ""}
     </div>
   `;
 }
