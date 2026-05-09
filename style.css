@@ -827,3 +827,264 @@ input:focus {
     font-size: .61rem;
   }
 }
+
+/* --- Bingo Kun v3: lisibilité des cases + carte joueur --- */
+.cell:disabled {
+  opacity: 1;
+}
+
+.cell.filled {
+  color: #07100e;
+  border-color: rgba(205, 255, 23, .95);
+  background:
+    radial-gradient(circle at 30% 18%, rgba(255,255,255,.38), transparent 22%),
+    linear-gradient(145deg, #d7ff12, #95e600 70%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.42),
+    0 0 0 1px rgba(205, 255, 23, .45),
+    0 18px 38px rgba(149, 230, 0, .18);
+}
+
+.cell.filled::before {
+  content: "✓";
+  position: absolute;
+  top: 9px;
+  right: 9px;
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  color: #07100e;
+  background: rgba(255,255,255,.62);
+  font-size: .9rem;
+  font-weight: 1000;
+  box-shadow: 0 8px 18px rgba(0,0,0,.15);
+}
+
+.cell.filled::after {
+  background: linear-gradient(90deg, transparent, rgba(7, 16, 14, .55), transparent);
+}
+
+.cell.filled .cell-icon {
+  color: #07100e;
+  background: rgba(255,255,255,.58);
+  box-shadow: 0 12px 28px rgba(0,0,0,.14);
+}
+
+.cell.filled .cell-kicker,
+.cell.filled .cell-title {
+  color: rgba(7, 16, 14, .72);
+}
+
+.cell.filled .placed-player {
+  color: #07100e;
+  font-size: .94rem;
+  text-shadow: none;
+}
+
+.cell.invalid {
+  color: #fff;
+  border-color: rgba(255, 77, 93, .95);
+  background:
+    radial-gradient(circle at 30% 18%, rgba(255,255,255,.16), transparent 24%),
+    linear-gradient(145deg, rgba(255, 77, 93, .98), rgba(115, 16, 31, .98));
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.20),
+    0 0 0 1px rgba(255, 77, 93, .48),
+    0 18px 38px rgba(255, 77, 93, .20);
+}
+
+.cell.invalid::before {
+  content: "×";
+  color: #fff;
+  background: rgba(0,0,0,.28);
+}
+
+.cell.invalid .cell-icon,
+.cell.invalid .cell-kicker,
+.cell.invalid .cell-title,
+.cell.invalid .placed-player {
+  color: #fff;
+}
+
+.cell.invalid .cell-icon {
+  background: rgba(255,255,255,.18);
+}
+
+.cell.valid {
+  color: #07100e;
+  border-color: rgba(205, 255, 23, .95);
+  background:
+    radial-gradient(circle at 30% 18%, rgba(255,255,255,.38), transparent 22%),
+    linear-gradient(145deg, #d7ff12, #95e600 70%);
+}
+
+.result-chip.pending {
+  color: #07100e;
+  background: rgba(255,255,255,.58);
+}
+
+.current-player-card {
+  grid-template-columns: 86px minmax(0, 1fr) auto;
+  overflow: hidden;
+}
+
+.player-card-topline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.player-counter-badge,
+.live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  padding: 5px 9px;
+  font-size: .66rem;
+  font-weight: 1000;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+.player-counter-badge {
+  color: #07100e;
+  background: linear-gradient(135deg, var(--cyan), var(--gold));
+}
+
+.live-badge {
+  color: var(--cyan);
+  background: rgba(39, 242, 195, .10);
+  border: 1px solid rgba(39, 242, 195, .18);
+}
+
+.live-badge span {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--cyan);
+  box-shadow: 0 0 12px rgba(39,242,195,.9);
+}
+
+.current-player-main {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.current-player-initials {
+  width: 58px;
+  height: 58px;
+  flex: 0 0 58px;
+  display: grid;
+  place-items: center;
+  border-radius: 18px;
+  color: #07100e;
+  font-size: 1.2rem;
+  font-weight: 1000;
+  background:
+    radial-gradient(circle at 30% 25%, rgba(255,255,255,.58), transparent 30%),
+    linear-gradient(145deg, #d7ff12, var(--cyan));
+  box-shadow: 0 0 28px rgba(39,242,195,.18);
+}
+
+.current-player-subline {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: .82rem;
+  line-height: 1.25;
+}
+
+.history-card {
+  max-height: 330px;
+  overflow: hidden;
+}
+
+.played-players-list {
+  display: grid;
+  gap: 7px;
+}
+
+.played-player {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  border: 1px solid rgba(255,255,255,.09);
+  border-radius: 14px;
+  padding: 8px;
+  background: rgba(255,255,255,.055);
+}
+
+.played-player.current {
+  border-color: rgba(39,242,195,.45);
+  background: rgba(39,242,195,.10);
+}
+
+.played-player.placed {
+  border-color: rgba(205,255,23,.45);
+  background: rgba(205,255,23,.10);
+}
+
+.played-player-rank {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  color: #07100e;
+  background: linear-gradient(135deg, var(--cyan), var(--gold));
+  font-size: .72rem;
+  font-weight: 1000;
+}
+
+.played-player-name {
+  color: var(--text);
+  font-size: .82rem;
+  font-weight: 900;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.played-player-status {
+  color: var(--muted);
+  font-size: .58rem;
+  font-weight: 1000;
+  letter-spacing: .08em;
+}
+
+.played-player.current .played-player-status {
+  color: var(--cyan);
+}
+
+.played-player.placed .played-player-status {
+  color: #d7ff12;
+}
+
+.empty-history {
+  color: var(--muted);
+  padding: 10px 0;
+  font-size: .86rem;
+}
+
+@media (max-width: 820px) {
+  .current-player-card {
+    grid-template-columns: 70px 1fr;
+  }
+
+  .current-player-initials {
+    width: 46px;
+    height: 46px;
+    flex-basis: 46px;
+    border-radius: 15px;
+  }
+
+  .current-player-main {
+    gap: 10px;
+  }
+}

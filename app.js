@@ -38,6 +38,10 @@ const playerNameInput = $("playerName");
 const joinCodeInput = $("joinCode");
 const boardEl = $("board");
 const currentPlayerNameEl = $("currentPlayerName");
+const currentPlayerInitialsEl = $("currentPlayerInitials");
+const playerCounterBadgeEl = $("playerCounterBadge");
+const currentPlayerSublineEl = $("currentPlayerSubline");
+const playedPlayersListEl = $("playedPlayersList");
 const globalTimerTextEl = $("globalTimerText");
 const globalTimerBarEl = $("globalTimerBar");
 const circleTimerTextEl = $("circleTimerText");
@@ -221,14 +225,20 @@ function renderGame() {
 
   nextPlayerBtn.classList.toggle("hidden", !isHost);
 
-  currentPlayerNameEl.textContent = currentPlayer ? currentPlayer.name : "Fin du deck";
-
   const deckLength = roomData.deck?.length || 0;
   const currentIndex = roomData.currentIndex || 0;
   const remainingPlayers = currentPlayer ? Math.max(0, deckLength - currentIndex - 1) : 0;
 
+  currentPlayerNameEl.textContent = currentPlayer ? currentPlayer.name : "Fin du deck";
+  currentPlayerInitialsEl.textContent = currentPlayer ? getPlayerInitials(currentPlayer.name) : "✓";
+  playerCounterBadgeEl.textContent = currentPlayer ? `Joueur ${currentIndex + 1} / ${deckLength}` : `Deck terminé`;
+  currentPlayerSublineEl.textContent = currentPlayer
+    ? "Choisis une case vide : les indices restent cachés jusqu'à la fin."
+    : "Plus aucun joueur dans la liste.";
+
   myFilledEl.textContent = `${filledCount} / 25`;
   playersRemainingEl.textContent = `${remainingPlayers} / ${deckLength}`;
+  renderPlayedPlayers(currentIndex);
 
   if (finished) {
     scoreDisplayEl.textContent = myData.finalScore || 0;
@@ -266,7 +276,7 @@ function renderBoard(currentPlayer) {
     if (reveal && move && !move.isValid) cell.classList.add("invalid");
     if (bingoCells.has(index)) cell.classList.add("bingo");
 
-    const logo = category.logo && TEAMS[category.logo] ? TEAMS[category.logo].short : (category.icon || iconForCategory(category.id));
+    const logo = category.logo && TEAMS[category.logo] ? TEAMS[category.logo].short : iconForCategory(category.id);
 
     cell.innerHTML = `
       <div class="cell-inner">
@@ -275,6 +285,7 @@ function renderBoard(currentPlayer) {
         <div class="cell-title">${escapeHtml(category.title || category.name || category.id)}</div>
         <div class="cell-footer">
           ${move ? `<div class="placed-player">${escapeHtml(move.playerName)}</div>` : ""}
+          ${move && !reveal ? `<div class="result-chip pending">PLACÉ</div>` : ""}
           ${reveal && move ? `<div class="result-chip ${move.isValid ? "good" : "bad"}">${move.isValid ? "VALIDÉ" : "FAUX"}</div>` : ""}
         </div>
       </div>
@@ -306,7 +317,7 @@ async function placeCurrentPlayer(cellIndex) {
   }
 
   const category = roomData.grid[cellIndex];
-  const isValid = canPlayerFillCategory(currentPlayer, category);
+  const isValid = category.tags.some((tag) => currentPlayer.tags.includes(tag));
 
   const newBoard = {
     ...board,
@@ -419,6 +430,57 @@ function getCurrentPlayer() {
   return PLAYERS.find((player) => player.id === id) || null;
 }
 
+function getPlayerInitials(name) {
+  const parts = String(name || "?")
+    .replace(/[’']/g, " ")
+    .split(/\s+/)
+    .filter(Boolean);
+
+  if (!parts.length) return "?";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+
+  return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+}
+
+function renderPlayedPlayers(currentIndex) {
+  if (!playedPlayersListEl || !roomData?.deck) return;
+
+  const board = myData?.board || {};
+  const usedByPlayerId = new Map(
+    Object.values(board).map((move) => [move.playerId, move])
+  );
+
+  const history = roomData.deck
+    .slice(0, Math.min(currentIndex + 1, roomData.deck.length))
+    .map((id, index) => {
+      const player = PLAYERS.find((item) => item.id === id);
+      return player ? { player, index } : null;
+    })
+    .filter(Boolean)
+    .slice(-8)
+    .reverse();
+
+  if (!history.length) {
+    playedPlayersListEl.innerHTML = `<div class="empty-history">Aucun joueur pour l'instant.</div>`;
+    return;
+  }
+
+  playedPlayersListEl.innerHTML = history.map(({ player, index }) => {
+    const isCurrent = index === currentIndex;
+    const move = usedByPlayerId.get(player.id);
+    const status = isCurrent ? "EN JEU" : move ? "PLACÉ" : "PASSÉ";
+    const statusClass = isCurrent ? "current" : move ? "placed" : "passed";
+
+    return `
+      <div class="played-player ${statusClass}">
+        <span class="played-player-rank">${index + 1}</span>
+        <span class="played-player-name">${escapeHtml(player.name)}</span>
+        <span class="played-player-status">${status}</span>
+      </div>
+    `;
+  }).join("");
+}
+
 function calculateBingos(board) {
   const lines = [];
 
@@ -482,8 +544,8 @@ function generateGameSetup() {
 
   let bestSetup = null;
 
-  for (let attempt = 0; attempt < 1500; attempt++) {
-    const grid = generateRandomGrid();
+  for (let attempt = 0; attempt < 1200; attempt++) {
+    const grid = shuffle(CATEGORIES).slice(0, BOARD_SIZE);
     const playablePlayers = PLAYERS.filter((player) => canPlayerFillAnyCell(player, grid));
     const coveredCells = grid.filter((category) => playablePlayers.some((player) => canPlayerFillCategory(player, category))).length;
 
@@ -491,11 +553,7 @@ function generateGameSetup() {
     const deckPlayableCount = deck.filter((player) => canPlayerFillAnyCell(player, grid)).length;
     const deckCoversEveryCell = grid.every((category) => deck.some((player) => canPlayerFillCategory(player, category)));
 
-    // On favorise d'abord les decks avec au moins 60 joueurs utiles,
-    // puis les grilles qui couvrent les 25 cases, puis la variété des types de cases.
-    const varietyScore = new Set(grid.map((category) => category.kind || "other")).size;
-    const comboScore = grid.filter((category) => category.match === "all").length;
-    const score = deckPlayableCount * 1000 + coveredCells * 100 + varietyScore * 10 + comboScore;
+    const score = deckPlayableCount * 100 + coveredCells;
 
     if (!bestSetup || score > bestSetup.score) {
       bestSetup = {
@@ -525,29 +583,6 @@ function generateGameSetup() {
     deck: bestSetup.deck,
     playableCount: bestSetup.playableCount
   };
-}
-
-function generateRandomGrid() {
-  const simpleCategories = CATEGORIES.filter((category) => category.match !== "all");
-  const comboCategories = CATEGORIES.filter((category) => category.match === "all");
-
-  // Mix volontaire : assez de catégories simples pour garder 60+ joueurs jouables,
-  // et plusieurs combos pour que les grilles ne se ressemblent pas.
-  const simpleCount = Math.min(17, simpleCategories.length);
-  const comboCount = Math.min(8, comboCategories.length, BOARD_SIZE - simpleCount);
-
-  const picked = [
-    ...weightedShuffle(simpleCategories).slice(0, simpleCount),
-    ...weightedShuffle(comboCategories).slice(0, comboCount)
-  ];
-
-  if (picked.length < BOARD_SIZE) {
-    const pickedIds = new Set(picked.map((category) => category.id));
-    const fallback = weightedShuffle(CATEGORIES.filter((category) => !pickedIds.has(category.id)));
-    picked.push(...fallback.slice(0, BOARD_SIZE - picked.length));
-  }
-
-  return shuffle(picked).slice(0, BOARD_SIZE);
 }
 
 function buildDeck(grid, playablePlayers, maxDeckSize) {
@@ -593,14 +628,7 @@ function canPlayerFillAnyCell(player, grid) {
 }
 
 function canPlayerFillCategory(player, category) {
-  const requiredTags = category.tags || [];
-  const playerTags = player.tags || [];
-
-  if (category.match === "all") {
-    return requiredTags.every((tag) => playerTags.includes(tag));
-  }
-
-  return requiredTags.some((tag) => playerTags.includes(tag));
+  return category.tags.some((tag) => player.tags.includes(tag));
 }
 
 function getPlayerName() {
@@ -655,26 +683,6 @@ function generateRoomCode() {
   }
 
   return code;
-}
-
-
-function weightedShuffle(items) {
-  // On duplique virtuellement les catégories avec un poids plus fort,
-  // puis on retire les doublons après mélange. Ça permet de voir plus souvent
-  // les catégories fortes sans bloquer l'aléatoire.
-  const weighted = [];
-
-  items.forEach((item) => {
-    const weight = Math.max(1, Number(item.weight || 1));
-    for (let i = 0; i < weight; i++) weighted.push(item);
-  });
-
-  const seen = new Set();
-  return shuffle(weighted).filter((item) => {
-    if (seen.has(item.id)) return false;
-    seen.add(item.id);
-    return true;
-  });
 }
 
 function shuffle(items) {

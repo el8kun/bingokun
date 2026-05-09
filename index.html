@@ -80,8 +80,22 @@
             </div>
 
             <div class="current-player-info">
-              <p>Joueur actuel</p>
-              <h2 id="currentPlayerName">—</h2>
+              <div class="player-card-topline">
+                <span id="playerCounterBadge" class="player-counter-badge">Joueur 1 / 75</span>
+                <span class="live-badge"><span></span> EN JEU</span>
+              </div>
+
+              <div class="current-player-main">
+                <div id="currentPlayerInitials" class="current-player-initials">?</div>
+                <div>
+                  <p>Joueur actuel</p>
+                  <h2 id="currentPlayerName">—</h2>
+                </div>
+              </div>
+
+              <div id="currentPlayerSubline" class="current-player-subline">
+                Clique une case vide pour placer ce joueur.
+              </div>
             </div>
 
             <button id="nextPlayerBtn" class="skip-btn hidden" type="button">
@@ -131,6 +145,11 @@
           </div>
 
           <p id="gameMessage" class="message">Clique une case vide pour placer le joueur.</p>
+        </div>
+
+        <div class="side-card history-card">
+          <p class="side-title">Joueurs passés</p>
+          <div id="playedPlayersList" class="played-players-list"></div>
         </div>
 
         <div class="side-card leaderboard-card">
