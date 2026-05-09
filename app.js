@@ -266,7 +266,7 @@ function renderBoard(currentPlayer) {
     if (reveal && move && !move.isValid) cell.classList.add("invalid");
     if (bingoCells.has(index)) cell.classList.add("bingo");
 
-    const logo = category.logo && TEAMS[category.logo] ? TEAMS[category.logo].short : iconForCategory(category.id);
+    const logo = category.logo && TEAMS[category.logo] ? TEAMS[category.logo].short : (category.icon || iconForCategory(category.id));
 
     cell.innerHTML = `
       <div class="cell-inner">
@@ -306,7 +306,7 @@ async function placeCurrentPlayer(cellIndex) {
   }
 
   const category = roomData.grid[cellIndex];
-  const isValid = category.tags.some((tag) => currentPlayer.tags.includes(tag));
+  const isValid = canPlayerFillCategory(currentPlayer, category);
 
   const newBoard = {
     ...board,
@@ -482,8 +482,8 @@ function generateGameSetup() {
 
   let bestSetup = null;
 
-  for (let attempt = 0; attempt < 1200; attempt++) {
-    const grid = shuffle(CATEGORIES).slice(0, BOARD_SIZE);
+  for (let attempt = 0; attempt < 1500; attempt++) {
+    const grid = generateRandomGrid();
     const playablePlayers = PLAYERS.filter((player) => canPlayerFillAnyCell(player, grid));
     const coveredCells = grid.filter((category) => playablePlayers.some((player) => canPlayerFillCategory(player, category))).length;
 
@@ -491,7 +491,11 @@ function generateGameSetup() {
     const deckPlayableCount = deck.filter((player) => canPlayerFillAnyCell(player, grid)).length;
     const deckCoversEveryCell = grid.every((category) => deck.some((player) => canPlayerFillCategory(player, category)));
 
-    const score = deckPlayableCount * 100 + coveredCells;
+    // On favorise d'abord les decks avec au moins 60 joueurs utiles,
+    // puis les grilles qui couvrent les 25 cases, puis la variété des types de cases.
+    const varietyScore = new Set(grid.map((category) => category.kind || "other")).size;
+    const comboScore = grid.filter((category) => category.match === "all").length;
+    const score = deckPlayableCount * 1000 + coveredCells * 100 + varietyScore * 10 + comboScore;
 
     if (!bestSetup || score > bestSetup.score) {
       bestSetup = {
@@ -521,6 +525,29 @@ function generateGameSetup() {
     deck: bestSetup.deck,
     playableCount: bestSetup.playableCount
   };
+}
+
+function generateRandomGrid() {
+  const simpleCategories = CATEGORIES.filter((category) => category.match !== "all");
+  const comboCategories = CATEGORIES.filter((category) => category.match === "all");
+
+  // Mix volontaire : assez de catégories simples pour garder 60+ joueurs jouables,
+  // et plusieurs combos pour que les grilles ne se ressemblent pas.
+  const simpleCount = Math.min(17, simpleCategories.length);
+  const comboCount = Math.min(8, comboCategories.length, BOARD_SIZE - simpleCount);
+
+  const picked = [
+    ...weightedShuffle(simpleCategories).slice(0, simpleCount),
+    ...weightedShuffle(comboCategories).slice(0, comboCount)
+  ];
+
+  if (picked.length < BOARD_SIZE) {
+    const pickedIds = new Set(picked.map((category) => category.id));
+    const fallback = weightedShuffle(CATEGORIES.filter((category) => !pickedIds.has(category.id)));
+    picked.push(...fallback.slice(0, BOARD_SIZE - picked.length));
+  }
+
+  return shuffle(picked).slice(0, BOARD_SIZE);
 }
 
 function buildDeck(grid, playablePlayers, maxDeckSize) {
@@ -566,7 +593,14 @@ function canPlayerFillAnyCell(player, grid) {
 }
 
 function canPlayerFillCategory(player, category) {
-  return category.tags.some((tag) => player.tags.includes(tag));
+  const requiredTags = category.tags || [];
+  const playerTags = player.tags || [];
+
+  if (category.match === "all") {
+    return requiredTags.every((tag) => playerTags.includes(tag));
+  }
+
+  return requiredTags.some((tag) => playerTags.includes(tag));
 }
 
 function getPlayerName() {
@@ -621,6 +655,26 @@ function generateRoomCode() {
   }
 
   return code;
+}
+
+
+function weightedShuffle(items) {
+  // On duplique virtuellement les catégories avec un poids plus fort,
+  // puis on retire les doublons après mélange. Ça permet de voir plus souvent
+  // les catégories fortes sans bloquer l'aléatoire.
+  const weighted = [];
+
+  items.forEach((item) => {
+    const weight = Math.max(1, Number(item.weight || 1));
+    for (let i = 0; i < weight; i++) weighted.push(item);
+  });
+
+  const seen = new Set();
+  return shuffle(weighted).filter((item) => {
+    if (seen.has(item.id)) return false;
+    seen.add(item.id);
+    return true;
+  });
 }
 
 function shuffle(items) {
