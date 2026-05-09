@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96">
+    <path d="M18 10h60v18l-4 50H22L18 28Z" fill="#1E3A8A" stroke="#fff" stroke-width="3"/>
+    <rect x="18" y="28" width="60" height="50" fill="#fff"/>
+    <g>
+      <rect x="24" y="28" width="8" height="50" fill="#D61F26"/>
+      <rect x="40" y="28" width="8" height="50" fill="#D61F26"/>
+      <rect x="56" y="28" width="8" height="50" fill="#D61F26"/>
+    </g>
+    <path d="M18 10h30v18H18Z" fill="#1E3A8A"/>
+    <circle cx="30" cy="20" r="6" fill="#fff"/>
+    <text x="57" y="23" text-anchor="middle" font-family="Arial Black,Arial,sans-serif" font-size="13" fill="#fff" font-weight="900" >ATM</text>
+  </svg>

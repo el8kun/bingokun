@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96">
+    <path d="M48 6 82 18v24c0 22-14 38-34 48C28 80 14 64 14 42V18L48 6Z" fill="#1D4ED8" stroke="#fff" stroke-width="3"/>
+    <path d="M20 20h56" stroke="#fff" stroke-width="4"/>
+    <text x="48" y="52" text-anchor="middle" font-family="Arial Black,Arial,sans-serif" font-size="18" fill="#fff" font-weight="900" >FCP</text>
+    <path d="M48 27c4 6 10 8 16 10-8 2-13 6-16 13-3-7-8-11-16-13 6-2 12-4 16-10Z" fill="#F4D03F"/>
+    <path d="M32 13h32l4 8H28Z" fill="#F4D03F" stroke="#D4AF37" stroke-width="2"/>
+  </svg>

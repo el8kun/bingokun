@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96">
+    <path d="M48 6 82 18v24c0 22-14 38-34 48C28 80 14 64 14 42V18L48 6Z" fill="#1E40AF" stroke="#ffffff" stroke-width="3"/>
+    <rect x="33" y="27" width="30" height="22" rx="2" fill="#fff" opacity=".95"/>
+    <rect x="38" y="32" width="20" height="12" fill="#1E40AF"/>
+    <text x="48" y="62" text-anchor="middle" font-family="Arial Black,Arial,sans-serif" font-size="18" fill="#fff" font-weight="900" >EVE</text>
+    <text x="48" y="78" text-anchor="middle" font-family="Arial Black,Arial,sans-serif" font-size="10" fill="#C7D2FE" font-weight="900" >1878</text>
+  </svg>

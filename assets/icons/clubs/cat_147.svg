@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96">
+    <path d="M48 6 82 18v24c0 22-14 38-34 48C28 80 14 64 14 42V18L48 6Z" fill="#fff" stroke="#D71920" stroke-width="3"/>
+    <rect x="36" y="16" width="8" height="62" fill="#D71920"/>
+    <rect x="52" y="16" width="8" height="62" fill="#D71920"/>
+    <text x="48" y="53" text-anchor="middle" font-family="Arial Black,Arial,sans-serif" font-size="18" fill="#D71920" font-weight="900" >SEV</text>
+  </svg>

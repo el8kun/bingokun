@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96">
+    <circle cx="48" cy="48" r="42" fill="#1D4ED8" stroke="#fff" stroke-width="4"/><circle cx="48" cy="48" r="31" fill="none" stroke="#fff" stroke-width="3"/><path d="M48 30c5 3 8 7 8 12 0 4-3 8-8 11-5-3-8-7-8-11 0-5 3-9 8-12Z" fill="#fff"/><path d="M48 53v13" stroke="#fff" stroke-width="4"/><path d="M42 66h12" stroke="#fff" stroke-width="4"/>
+    <text x="48" y="84" text-anchor="middle" font-family="Arial Black,Arial,sans-serif" font-size="11" fill="#fff" font-weight="900" >CFC</text>
+  </svg>
