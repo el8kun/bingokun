@@ -30,6 +30,10 @@
     <div class="brand-title">
       <strong>BINGO KUN</strong>
       <span>🔥</span>
+      <div class="header-links">
+        <a href="./classement.html">Classement</a>
+        <a href="./admin.html">Admin</a>
+      </div>
     </div>
   </header>
 
@@ -67,6 +71,10 @@
         </div>
 
         <p class="hint">La partie démarre seulement quand le créateur clique sur “Lancer la partie”.</p>
+        <div class="quick-links">
+          <a href="./classement.html">Voir le classement mensuel</a>
+          <a href="./admin.html">Base admin</a>
+        </div>
       </div>
     </section>
 
@@ -166,19 +174,43 @@
             <strong id="playersRemaining">75</strong>
           </div>
 
+          <div class="side-stat emphasis-stat">
+            <span>Bingos validés</span>
+            <strong id="liveBingos">0</strong>
+          </div>
+
+          <div class="side-stat emphasis-stat">
+            <span>Rang live</span>
+            <strong id="myRank">#-</strong>
+          </div>
+
           <div id="hiddenResultBox" class="locked-box">
             <span>🔒</span>
             <p>Le résultat reste caché jusqu’à ce que tu remplisses les 25 cases.</p>
           </div>
 
           <div id="finalResultBox" class="final-box hidden">
-            <div>
+            <div class="final-box-row hero">
               <span>Résultat final</span>
               <strong id="myResult">0 / 25</strong>
             </div>
-            <div>
-              <span>Bingos validés</span>
-              <strong id="myBingos">0</strong>
+            <div class="final-box-grid">
+              <div>
+                <span>Bingos validés</span>
+                <strong id="myBingos">0</strong>
+              </div>
+              <div>
+                <span>Fausses cases</span>
+                <strong id="myWrong">0</strong>
+              </div>
+              <div>
+                <span>Rang final</span>
+                <strong id="myFinalRank">#-</strong>
+              </div>
+              <div>
+                <span>Précision</span>
+                <strong id="myAccuracy">0%</strong>
+              </div>
             </div>
           </div>
 
@@ -192,13 +224,49 @@
 
         <div class="side-card leaderboard-card">
           <p class="side-title">Classement live</p>
-          <ol id="leaderboard"></ol>
+          <div id="leaderboard" class="leaderboard-list"></div>
         </div>
 
         <button id="leaveRoomBtn" class="leave-btn" type="button">Quitter la room</button>
       </aside>
     </section>
   </main>
+
+  <div id="finishOverlay" class="finish-overlay hidden">
+    <div class="finish-modal">
+      <div class="finish-badge">PARTIE TERMINÉE</div>
+      <h2 id="finishTitle">Grille terminée !</h2>
+      <p id="finishSubtitle">Bravo, ton score final est calculé.</p>
+
+      <div class="finish-stats">
+        <div>
+          <span>Score</span>
+          <strong id="finishScore">0 / 25</strong>
+        </div>
+        <div>
+          <span>Bingos</span>
+          <strong id="finishBingos">0</strong>
+        </div>
+        <div>
+          <span>Fausses cases</span>
+          <strong id="finishWrong">0</strong>
+        </div>
+        <div>
+          <span>Précision</span>
+          <strong id="finishAccuracy">0%</strong>
+        </div>
+      </div>
+
+      <div class="finish-rankline">
+        Tu termines <strong id="finishRank">#-</strong> sur <strong id="finishTotalPlayers">0 joueurs</strong>
+      </div>
+
+      <div class="finish-actions">
+        <button id="closeFinishOverlayBtn" class="secondary-btn" type="button">Fermer</button>
+        <button id="copyFinishRoomBtn" class="primary-btn" type="button">Copier le code room</button>
+      </div>
+    </div>
+  </div>
 
   <script type="module" src="./app.js"></script>
 </body>

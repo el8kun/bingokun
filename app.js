@@ -23,6 +23,60 @@ const firebaseApp = initializeApp(firebaseConfig);
 const auth = getAuth(firebaseApp);
 const db = getFirestore(firebaseApp);
 
+function clonePlayers(source) {
+  return source.map((player) => ({
+    ...player,
+    tags: [...(player.tags || [])],
+    logos: [...(player.logos || [])]
+  }));
+}
+
+function cloneCategories(source) {
+  return source.map((category) => ({
+    ...category,
+    tags: [...(category.tags || [])],
+    sourceIds: [...(category.sourceIds || [])],
+    visuals: Array.isArray(category.visuals)
+      ? category.visuals.map((visual) => ({ ...visual }))
+      : []
+  }));
+}
+
+let ACTIVE_PLAYERS = clonePlayers(PLAYERS);
+let ACTIVE_CATEGORIES = cloneCategories(CATEGORIES);
+let databaseOverridesLoaded = false;
+
+async function loadDatabaseOverrides(force = false) {
+  if (databaseOverridesLoaded && !force) return;
+
+  ACTIVE_PLAYERS = clonePlayers(PLAYERS);
+  ACTIVE_CATEGORIES = cloneCategories(CATEGORIES);
+
+  try {
+    const snap = await getDoc(doc(db, "admin", "database"));
+    if (snap.exists()) {
+      const data = snap.data();
+      const playerOverrides = data.playerOverrides || {};
+
+      ACTIVE_PLAYERS = ACTIVE_PLAYERS.map((player) => {
+        const override = playerOverrides[player.id];
+        if (!override) return player;
+
+        return {
+          ...player,
+          name: override.name || player.name,
+          tags: Array.isArray(override.tags) ? [...new Set(override.tags)] : player.tags,
+          adminNote: override.note || ""
+        };
+      });
+    }
+  } catch (error) {
+    console.warn("Bingo Kun : impossible de charger les corrections admin.", error);
+  }
+
+  databaseOverridesLoaded = true;
+}
+
 const BOARD_SIZE = 25;
 const AUTO_SECONDS = 15;
 const MAX_DECK_PLAYERS = 75;
@@ -66,6 +120,22 @@ const myBingosEl = $("myBingos");
 const leaderboardEl = $("leaderboard");
 const scoreDisplayEl = $("scoreDisplay");
 const scoreSublineEl = $("scoreSubline");
+const liveBingosEl = $("liveBingos");
+const myRankEl = $("myRank");
+const myWrongEl = $("myWrong");
+const myFinalRankEl = $("myFinalRank");
+const myAccuracyEl = $("myAccuracy");
+const finishOverlay = $("finishOverlay");
+const finishTitleEl = $("finishTitle");
+const finishSubtitleEl = $("finishSubtitle");
+const finishScoreEl = $("finishScore");
+const finishBingosEl = $("finishBingos");
+const finishWrongEl = $("finishWrong");
+const finishAccuracyEl = $("finishAccuracy");
+const finishRankEl = $("finishRank");
+const finishTotalPlayersEl = $("finishTotalPlayers");
+const closeFinishOverlayBtn = $("closeFinishOverlayBtn");
+const copyFinishRoomBtn = $("copyFinishRoomBtn");
 
 let uid = null;
 let currentRoomCode = null;
@@ -78,6 +148,8 @@ let unsubscribeMe = null;
 let unsubscribePlayers = null;
 let clockInterval = null;
 let playerAutoInterval = null;
+let hasShownFinishOverlay = false;
+let savingResult = false;
 
 const savedName = localStorage.getItem("bingo-kun-name");
 if (savedName) playerNameInput.value = savedName;
@@ -98,11 +170,15 @@ $("leaveRoomBtn").addEventListener("click", leaveRoom);
 $("leaveWaitingRoomBtn").addEventListener("click", leaveRoom);
 startGameBtn.addEventListener("click", startGame);
 nextPlayerBtn.addEventListener("click", () => advanceMyPlayer(true));
+closeFinishOverlayBtn?.addEventListener("click", () => hideFinishOverlay());
+copyFinishRoomBtn?.addEventListener("click", copyRoomInfo);
 
 async function createRoom() {
   const name = getPlayerName();
   if (!name) return;
   if (!uid) return alert("Connexion Firebase en cours, réessaie dans 2 secondes.");
+
+  await loadDatabaseOverrides(true);
 
   const code = generateRoomCode();
   const setup = generateGameSetup();
@@ -139,6 +215,8 @@ async function joinRoom(code, alreadyJoined = false) {
     return;
   }
 
+  await loadDatabaseOverrides(true);
+
   const roomRef = doc(db, "rooms", code);
   const roomSnap = await getDoc(roomRef);
 
@@ -163,6 +241,8 @@ async function joinRoom(code, alreadyJoined = false) {
   }
 
   currentRoomCode = code;
+  hasShownFinishOverlay = false;
+  hideFinishOverlay();
   localStorage.setItem("bingo-kun-name", name);
   showRoomShell(code);
   subscribeToRoom(code);
@@ -176,6 +256,8 @@ function buildFreshParticipant(name, isHost = false) {
     finalScore: null,
     bingos: [],
     finished: false,
+    resultSaved: false,
+    resultId: null,
     isHost,
     currentIndex: 0,
     currentStartedAt: null,
@@ -270,22 +352,58 @@ function renderParticipants() {
   if (leaderboardEl) renderLeaderboard(players);
 }
 
-function renderLeaderboard(players = participantsData) {
-  const sorted = [...players].sort((a, b) => {
-    if (a.finished && b.finished) return (b.finalScore || 0) - (a.finalScore || 0);
+function getSortedParticipants(players = participantsData) {
+  return [...players].sort((a, b) => {
+    if (a.finished && b.finished) {
+      if ((b.finalScore || 0) !== (a.finalScore || 0)) return (b.finalScore || 0) - (a.finalScore || 0);
+      if (((b.bingos || []).length) !== ((a.bingos || []).length)) return ((b.bingos || []).length) - ((a.bingos || []).length);
+      return (a.joinedAt?.seconds || 0) - (b.joinedAt?.seconds || 0);
+    }
     if (a.finished !== b.finished) return a.finished ? -1 : 1;
-    return (b.filledCount || 0) - (a.filledCount || 0);
+    if ((b.filledCount || 0) !== (a.filledCount || 0)) return (b.filledCount || 0) - (a.filledCount || 0);
+    if (((b.bingos || []).length) !== ((a.bingos || []).length)) return ((b.bingos || []).length) - ((a.bingos || []).length);
+    return String(a.name || "").localeCompare(String(b.name || ""));
   });
+}
 
-  leaderboardEl.innerHTML = "";
-  sorted.forEach((player, index) => {
-    const li = document.createElement("li");
-    const status = player.finished
-      ? `${player.finalScore || 0}/25`
-      : `${player.filledCount || 0}/25`;
-    li.innerHTML = `${index === 0 ? "👑 " : ""}<strong>${escapeHtml(player.name || "Joueur")}</strong> — ${status}`;
-    leaderboardEl.appendChild(li);
-  });
+function getParticipantRank(participantId) {
+  const sorted = getSortedParticipants();
+  const index = sorted.findIndex((player) => player.id === participantId);
+  return index >= 0 ? index + 1 : null;
+}
+
+function renderLeaderboard(players = participantsData) {
+  const sorted = getSortedParticipants(players);
+
+  leaderboardEl.innerHTML = sorted.map((player, index) => {
+    const rank = index + 1;
+    const score = player.finished ? (player.finalScore || 0) : (player.filledCount || 0);
+    const progress = Math.max(0, Math.min(100, Math.round((score / 25) * 100)));
+    const bingos = (player.bingos || []).length;
+    const medal = rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : `#${rank}`;
+    const statusText = player.finished ? "TERMINÉ" : "EN JEU";
+    const me = player.id === uid ? '<span class="leaderboard-me">TOI</span>' : '';
+
+    return `
+      <div class="leaderboard-item ${player.finished ? "finished" : ""} ${player.id === uid ? "me" : ""}">
+        <div class="leaderboard-main">
+          <div class="leaderboard-rank">${medal}</div>
+          <div class="leaderboard-meta">
+            <div class="leaderboard-name-row">
+              <strong>${escapeHtml(player.name || "Joueur")}</strong>
+              ${me}
+              <span class="leaderboard-status">${statusText}</span>
+            </div>
+            <div class="leaderboard-subline">
+              <span>${score}/25</span>
+              <span>${bingos} bingo${bingos > 1 ? "s" : ""}</span>
+            </div>
+            <div class="leaderboard-progress"><span style="width:${progress}%"></span></div>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join("");
 }
 
 async function startGame() {
@@ -303,38 +421,60 @@ function renderGame() {
 
   const currentPlayer = getCurrentPlayer();
   const finished = Boolean(myData.finished);
+  const board = myData.board || {};
   const filledCount = myData.filledCount || 0;
+  const validCount = countValidMoves(board);
+  const invalidCount = countInvalidMoves(board);
+  const liveBingos = calculateBingos(board).length;
+  const myRank = getParticipantRank(uid);
 
-  nextPlayerBtn.classList.remove("hidden");
+  nextPlayerBtn.classList.toggle("hidden", finished);
   nextPlayerBtn.disabled = !currentPlayer || finished;
 
   const deckLength = roomData.deck?.length || 0;
   const currentIndex = getMyCurrentIndex();
   const remainingPlayers = currentPlayer ? Math.max(0, deckLength - currentIndex - 1) : 0;
 
-  currentPlayerNameEl.textContent = currentPlayer ? currentPlayer.name : "Fin du deck";
-  currentPlayerInitialsEl.textContent = currentPlayer ? getPlayerInitials(currentPlayer.name) : "✓";
-  playerCounterBadgeEl.textContent = currentPlayer ? `Joueur ${currentIndex + 1} / ${deckLength}` : `Deck terminé`;
-  currentPlayerSublineEl.textContent = currentPlayer
-    ? "Choisis une case vide : ton rythme n'impacte pas les autres joueurs."
-    : "Tu as terminé ta liste de joueurs.";
+  currentPlayerNameEl.textContent = currentPlayer ? currentPlayer.name : finished ? "Grille terminée" : "Fin du deck";
+  currentPlayerInitialsEl.textContent = currentPlayer ? getPlayerInitials(currentPlayer.name) : finished ? "✓" : "—";
+  playerCounterBadgeEl.textContent = currentPlayer ? `Joueur ${currentIndex + 1} / ${deckLength}` : finished ? `Partie terminée` : `Deck terminé`;
+  currentPlayerSublineEl.textContent = finished
+    ? "Ton score final est verrouillé. Consulte le classement et tes bingos."
+    : currentPlayer
+      ? "Choisis une case vide : ton rythme n'impacte pas les autres joueurs."
+      : "Tu as terminé ta liste de joueurs.";
 
   myFilledEl.textContent = `${filledCount} / 25`;
   playersRemainingEl.textContent = `${remainingPlayers} / ${deckLength}`;
+  if (liveBingosEl) liveBingosEl.textContent = `${liveBingos}`;
+  if (myRankEl) myRankEl.textContent = myRank ? `#${myRank}` : "#-";
   renderPlayedPlayers(currentIndex);
 
   if (finished) {
-    scoreDisplayEl.textContent = myData.finalScore || 0;
+    const finalScore = myData.finalScore || 0;
+    const finalBingos = (myData.bingos || []).length;
+    const accuracy = Math.round((finalScore / BOARD_SIZE) * 100);
+    scoreDisplayEl.textContent = finalScore;
     scoreSublineEl.textContent = "score final";
     hiddenResultBox.classList.add("hidden");
     finalResultBox.classList.remove("hidden");
-    myResultEl.textContent = `${myData.finalScore || 0} / 25`;
-    myBingosEl.textContent = `${(myData.bingos || []).length}`;
+    myResultEl.textContent = `${finalScore} / 25`;
+    myBingosEl.textContent = `${finalBingos}`;
+    if (myWrongEl) myWrongEl.textContent = `${BOARD_SIZE - finalScore}`;
+    if (myFinalRankEl) myFinalRankEl.textContent = myRank ? `#${myRank}` : "#-";
+    if (myAccuracyEl) myAccuracyEl.textContent = `${accuracy}%`;
+    updateFinishOverlay(finalScore, finalBingos, BOARD_SIZE - finalScore, accuracy, myRank, participantsData.length);
+    ensureResultSaved(board, finalScore, myData.bingos || []);
+    if (!hasShownFinishOverlay) {
+      showFinishOverlay();
+      hasShownFinishOverlay = true;
+    }
   } else {
     scoreDisplayEl.textContent = filledCount;
     scoreSublineEl.textContent = "cases";
     hiddenResultBox.classList.remove("hidden");
     finalResultBox.classList.add("hidden");
+    hideFinishOverlay();
   }
 
   renderBoard(currentPlayer);
@@ -359,11 +499,11 @@ function renderBoard(currentPlayer) {
     if (reveal && move && !move.isValid) cell.classList.add("invalid");
     if (bingoCells.has(index)) cell.classList.add("bingo");
 
-    const logo = category.logo && TEAMS[category.logo] ? TEAMS[category.logo].short : iconForCategory(category.id);
+    const visualHtml = renderCategoryVisual(category);
 
     cell.innerHTML = `
       <div class="cell-inner">
-        <div class="cell-icon">${escapeHtml(logo)}</div>
+        ${visualHtml}
         <div class="cell-kicker">${escapeHtml(category.kicker || "Critère")}</div>
         <div class="cell-title">${escapeHtml(category.title || category.name || category.id)}</div>
         <div class="cell-footer">
@@ -378,6 +518,45 @@ function renderBoard(currentPlayer) {
     cell.addEventListener("click", () => placeCurrentPlayer(index));
     boardEl.appendChild(cell);
   });
+}
+
+
+function renderCategoryVisual(category) {
+  const visuals = Array.isArray(category.visuals) && category.visuals.length
+    ? category.visuals.slice(0, 2)
+    : [{
+        visualType: category.visualType || "default",
+        image: category.image || "",
+        shortLabel: category.shortLabel || (category.logo && TEAMS[category.logo] ? TEAMS[category.logo].short : iconForCategory(category.id))
+      }];
+
+  const visualClass = visuals.length > 1 ? "combo" : (visuals[0]?.visualType || "default");
+
+  const imagesHtml = visuals.map((item) => {
+    if (!item?.image) {
+      return `<div class="cell-icon-fallback">${escapeHtml(item?.shortLabel || "★")}</div>`;
+    }
+
+    return `
+      <img
+        src="${escapeHtml(item.image)}"
+        alt="${escapeHtml(category.title || category.name || category.id)}"
+        class="cell-image"
+        loading="lazy"
+      />
+    `;
+  }).join("");
+
+  const label = category.shortLabel || visuals.map((item) => item.shortLabel).filter(Boolean).join("+");
+
+  return `
+    <div class="cell-visual cell-visual-${escapeHtml(visualClass)}">
+      <div class="cell-visual-images ${visuals.length > 1 ? "is-combo" : ""}">
+        ${imagesHtml}
+      </div>
+      ${label ? `<div class="cell-short-label">${escapeHtml(label)}</div>` : ""}
+    </div>
+  `;
 }
 
 async function placeCurrentPlayer(cellIndex) {
@@ -424,6 +603,7 @@ async function placeCurrentPlayer(cellIndex) {
     updatePayload.finished = true;
     updatePayload.finalScore = validCount;
     updatePayload.bingos = calculateBingos(newBoard);
+    updatePayload.resultSaved = false;
     setMessage("Grille complète ! Le verdict est révélé.", "good");
   } else {
     const nextIndex = Math.min(getMyCurrentIndex() + 1, roomData.deck?.length || 0);
@@ -461,6 +641,122 @@ async function advanceMyPlayer(manual = false) {
   });
 
   if (manual && advanced) setMessage("Joueur passé pour toi uniquement.", "good");
+}
+
+function countValidMoves(board) {
+  return Object.values(board || {}).filter((move) => move?.isValid).length;
+}
+
+function countInvalidMoves(board) {
+  return Object.values(board || {}).filter((move) => move && move.isValid === false).length;
+}
+
+
+async function ensureResultSaved(board, finalScore, bingos) {
+  if (!currentRoomCode || !uid || !roomData || !myData || savingResult || myData.resultSaved) return;
+
+  savingResult = true;
+  const resultId = `${currentRoomCode}_${uid}`;
+  const bingoCount = Array.isArray(bingos) ? bingos.length : 0;
+  const wrongAnswers = BOARD_SIZE - Number(finalScore || 0);
+  const accuracy = Math.round((Number(finalScore || 0) / BOARD_SIZE) * 100);
+  const points = calculateRankingPoints(Number(finalScore || 0), bingoCount);
+  const now = new Date();
+  const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  const playerName = myData.name || getPlayerName() || "Joueur";
+
+  try {
+    await setDoc(doc(db, "results", resultId), {
+      resultId,
+      roomCode: currentRoomCode,
+      playerUid: uid,
+      playerName,
+      playerKey: normalizePlayerKey(playerName),
+      score: Number(finalScore || 0),
+      finalScore: Number(finalScore || 0),
+      bingos: bingoCount,
+      bingoIds: Array.isArray(bingos) ? bingos : [],
+      wrongAnswers,
+      accuracy,
+      points,
+      filledCount: Object.keys(board || {}).length,
+      monthKey,
+      year: now.getFullYear(),
+      createdAt: serverTimestamp(),
+      finishedAt: serverTimestamp(),
+      roomCreatedAt: roomData.createdAt || null,
+      deckSize: roomData.deck?.length || 0,
+      gridSize: roomData.grid?.length || 0
+    }, { merge: true });
+
+    await updateDoc(doc(db, "rooms", currentRoomCode, "participants", uid), {
+      resultSaved: true,
+      resultId,
+      rankingPoints: points,
+      finishedAt: serverTimestamp()
+    });
+  } catch (error) {
+    console.error("Bingo Kun : impossible d'enregistrer le résultat.", error);
+  } finally {
+    savingResult = false;
+  }
+}
+
+function calculateRankingPoints(score, bingoCount) {
+  const safeScore = Number(score || 0);
+  const safeBingos = Number(bingoCount || 0);
+  const perfectBonus = safeScore >= BOARD_SIZE ? 10 : 0;
+  const bingoBonus = safeBingos >= 5 ? 5 : 0;
+  return safeScore + (safeBingos * 3) + perfectBonus + bingoBonus;
+}
+
+function normalizePlayerKey(name) {
+  return String(name || "joueur")
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "") || "joueur";
+}
+
+function updateFinishOverlay(finalScore, bingoCount, wrongCount, accuracy, rank, totalPlayers) {
+  if (!finishTitleEl) return;
+
+  let title = 'Bien joué !';
+  let subtitle = 'Ta grille est complète.';
+
+  if (finalScore >= 23) {
+    title = 'Masterclass !';
+    subtitle = 'Énorme performance sur cette grille.';
+  } else if (finalScore >= 18) {
+    title = 'Très solide !';
+    subtitle = 'Belle partie, ta grille tient bien la route.';
+  } else if (finalScore <= 10) {
+    title = 'À retenter !';
+    subtitle = 'Tu peux faire mieux sur la prochaine room.';
+  }
+
+  finishTitleEl.textContent = title;
+  finishSubtitleEl.textContent = subtitle;
+  finishScoreEl.textContent = `${finalScore} / 25`;
+  finishBingosEl.textContent = String(bingoCount);
+  finishWrongEl.textContent = String(wrongCount);
+  finishAccuracyEl.textContent = `${accuracy}%`;
+  finishRankEl.textContent = rank ? `#${rank}` : '#-';
+  finishTotalPlayersEl.textContent = `${totalPlayers} joueur${totalPlayers > 1 ? 's' : ''}`;
+}
+
+function showFinishOverlay() {
+  if (!finishOverlay) return;
+  finishOverlay.classList.remove('hidden');
+  document.body.classList.add('overlay-open');
+}
+
+function hideFinishOverlay() {
+  if (!finishOverlay) return;
+  finishOverlay.classList.add('hidden');
+  document.body.classList.remove('overlay-open');
 }
 
 function startTimers() {
@@ -521,7 +817,7 @@ function getMyCurrentIndex() {
 function getCurrentPlayer() {
   if (!roomData?.deck) return null;
   const id = roomData.deck[getMyCurrentIndex()];
-  return PLAYERS.find((player) => player.id === id) || null;
+  return ACTIVE_PLAYERS.find((player) => player.id === id) || null;
 }
 
 function getPlayerInitials(name) {
@@ -547,7 +843,7 @@ function renderPlayedPlayers(currentIndex) {
   const history = roomData.deck
     .slice(0, Math.min(currentIndex + 1, roomData.deck.length))
     .map((id, index) => {
-      const player = PLAYERS.find((item) => item.id === id);
+      const player = ACTIVE_PLAYERS.find((item) => item.id === id);
       return player ? { player, index } : null;
     })
     .filter(Boolean)
@@ -632,14 +928,14 @@ function iconForCategory(id) {
 }
 
 function generateGameSetup() {
-  const maxDeckSize = Math.min(MAX_DECK_PLAYERS, PLAYERS.length);
+  const maxDeckSize = Math.min(MAX_DECK_PLAYERS, ACTIVE_PLAYERS.length);
   const requiredPlayable = Math.min(MIN_PLAYABLE_PLAYERS, maxDeckSize);
 
   let bestSetup = null;
 
   for (let attempt = 0; attempt < 1200; attempt++) {
-    const grid = shuffle(CATEGORIES).slice(0, BOARD_SIZE);
-    const playablePlayers = PLAYERS.filter((player) => canPlayerFillAnyCell(player, grid));
+    const grid = shuffle(ACTIVE_CATEGORIES).slice(0, BOARD_SIZE);
+    const playablePlayers = ACTIVE_PLAYERS.filter((player) => canPlayerFillAnyCell(player, grid));
     const coveredCells = grid.filter((category) => playablePlayers.some((player) => canPlayerFillCategory(player, category))).length;
 
     const deck = buildDeck(grid, playablePlayers, maxDeckSize);
@@ -696,7 +992,7 @@ function buildDeck(grid, playablePlayers, maxDeckSize) {
 
   const selectedIds = new Set(selected.keys());
   const nonPlayablePlayers = shuffle(
-    PLAYERS.filter((player) => !selectedIds.has(player.id) && !canPlayerFillAnyCell(player, grid))
+    ACTIVE_PLAYERS.filter((player) => !selectedIds.has(player.id) && !canPlayerFillAnyCell(player, grid))
   );
 
   const deck = [...selected.values()];
@@ -706,7 +1002,7 @@ function buildDeck(grid, playablePlayers, maxDeckSize) {
     deck.push(player);
   }
 
-  for (const player of shuffle(PLAYERS.filter((player) => !deck.some((item) => item.id === player.id)))) {
+  for (const player of shuffle(ACTIVE_PLAYERS.filter((player) => !deck.some((item) => item.id === player.id)))) {
     if (deck.length >= maxDeckSize) break;
     deck.push(player);
   }
@@ -758,6 +1054,9 @@ function leaveRoom() {
   roomData = null;
   myData = null;
   participantsData = [];
+
+  hasShownFinishOverlay = false;
+  hideFinishOverlay();
 
   waitingView.classList.add("hidden");
   gameView.classList.add("hidden");

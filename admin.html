@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bingo Kun — Admin BDD</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body class="admin-body">
+  <div class="app-bg">
+    <div class="big-word big-word-left">ADMIN</div>
+    <div class="big-word big-word-right">BDD</div>
+  </div>
+
+  <header class="game-header admin-header">
+    <div class="profile-block">
+      <div class="avatar">BK</div>
+      <div>
+        <div class="player-label"><span class="flag">🛠️</span><strong>ADMIN BINGO KUN</strong></div>
+        <div class="room-line">Correction de la base joueurs via Firebase</div>
+      </div>
+    </div>
+    <div class="brand-title"><strong>BASE ADMIN</strong><span>⚙️</span></div>
+  </header>
+
+  <main class="admin-shell">
+    <section class="admin-panel admin-intro">
+      <p class="mini-title">Base joueurs</p>
+      <h1>Corrige les tags sans toucher au code.</h1>
+      <p>Recherche un joueur, ajoute ou retire des critères, puis sauvegarde. Les nouvelles rooms utiliseront ces corrections automatiquement.</p>
+      <div class="admin-actions">
+        <a class="secondary-btn admin-link-btn" href="./index.html">Retour au bingo</a>
+        <button id="reloadAdminBtn" class="secondary-btn" type="button">Recharger Firebase</button>
+        <button id="exportOverridesBtn" class="primary-btn" type="button">Exporter corrections</button>
+      </div>
+      <p id="adminStatus" class="admin-status">Connexion Firebase…</p>
+    </section>
+
+    <section class="admin-layout">
+      <aside class="admin-panel admin-search-panel">
+        <label for="playerSearch">Rechercher un joueur</label>
+        <input id="playerSearch" placeholder="Ex : Cristiano, Drogba, Messi…" />
+        <div id="playersCount" class="admin-small-info">704 joueurs</div>
+        <div id="playersList" class="admin-list"></div>
+      </aside>
+
+      <section class="admin-panel admin-editor-panel">
+        <div id="emptyEditor" class="admin-empty">
+          <strong>Sélectionne un joueur</strong>
+          <p>Ses critères apparaîtront ici.</p>
+        </div>
+
+        <div id="playerEditor" class="hidden">
+          <div class="admin-editor-head">
+            <div>
+              <p class="mini-title">Joueur sélectionné</p>
+              <h2 id="selectedPlayerName">—</h2>
+              <span id="selectedPlayerId" class="admin-id-chip">ID</span>
+            </div>
+            <div class="admin-editor-buttons">
+              <button id="resetPlayerBtn" class="secondary-btn" type="button">Reset joueur</button>
+              <button id="savePlayerBtn" class="primary-btn" type="button">Sauvegarder</button>
+            </div>
+          </div>
+
+          <div class="admin-grid-two">
+            <div>
+              <label for="categorySearch">Ajouter un critère</label>
+              <input id="categorySearch" placeholder="Ex : Euro, Real Madrid, France…" />
+              <div id="categoriesList" class="admin-category-list"></div>
+            </div>
+
+            <div>
+              <label>Critères du joueur</label>
+              <div id="selectedTagsList" class="admin-tags-list"></div>
+            </div>
+          </div>
+
+          <label for="adminNote">Note interne</label>
+          <textarea id="adminNote" class="admin-note" placeholder="Ex : Cristiano a gagné l’Euro 2016…"></textarea>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script type="module" src="./admin.js"></script>
+</body>
+</html>
