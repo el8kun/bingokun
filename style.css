@@ -4210,3 +4210,539 @@ body {
     grid-template-columns: 1fr;
   }
 }
+
+
+
+/* =========================================================
+   Bingo Kun v40 — format live compact 1080p
+   Objectif : voir la grille entière sans devoir dézoomer
+   ========================================================= */
+
+.game-header {
+  height: 68px !important;
+  padding: 8px 22px !important;
+}
+
+.avatar {
+  width: 48px !important;
+  height: 48px !important;
+  border-radius: 17px !important;
+  font-size: .95rem !important;
+}
+
+.profile-block {
+  gap: 12px !important;
+}
+
+.brand-title strong {
+  font-size: 1rem !important;
+}
+
+.header-links a {
+  padding: 7px 10px !important;
+  font-size: .68rem !important;
+}
+
+.admin-auth-line {
+  margin-top: 3px !important;
+}
+
+.top-timer {
+  height: 10px !important;
+  padding: 0 !important;
+}
+
+.top-timer .timer-count,
+.timer-count {
+  font-size: .72rem !important;
+}
+
+.page-shell {
+  max-width: 1320px !important;
+  padding: 10px 14px 16px !important;
+  margin: 0 auto !important;
+}
+
+.game-screen {
+  grid-template-columns: minmax(0, 1fr) 300px !important;
+  gap: 12px !important;
+}
+
+.live-matchbar {
+  display: none !important;
+}
+
+.status-row {
+  grid-template-columns: minmax(0, 1fr) 130px !important;
+  gap: 10px !important;
+  margin-bottom: 10px !important;
+}
+
+.current-player-card {
+  min-height: 112px !important;
+  padding: 12px 14px !important;
+  border-radius: 18px !important;
+  grid-template-columns: 62px minmax(0, 1fr) 120px !important;
+  gap: 12px !important;
+}
+
+.round-timer {
+  width: 58px !important;
+  height: 58px !important;
+}
+
+.round-timer::before {
+  inset: 8px !important;
+}
+
+.round-timer span {
+  font-size: 1.28rem !important;
+}
+
+.round-timer small {
+  font-size: .52rem !important;
+}
+
+.player-card-topline {
+  margin-bottom: 5px !important;
+  gap: 6px !important;
+}
+
+.player-counter-badge,
+.compact-score-badge,
+.live-badge {
+  padding: 4px 8px !important;
+  font-size: .58rem !important;
+}
+
+.current-player-initials {
+  width: 50px !important;
+  height: 50px !important;
+  border-radius: 14px !important;
+  font-size: 1.15rem !important;
+}
+
+.current-player-main {
+  gap: 10px !important;
+}
+
+.current-player-main p {
+  font-size: .62rem !important;
+  margin: 0 0 2px !important;
+}
+
+.current-player-main h2 {
+  font-size: clamp(1.6rem, 2.2vw, 2.25rem) !important;
+  line-height: .94 !important;
+}
+
+.current-player-subline {
+  margin-top: 5px !important;
+  font-size: .76rem !important;
+  line-height: 1.2 !important;
+}
+
+.skip-btn {
+  height: 44px !important;
+  border-radius: 12px !important;
+  font-size: .74rem !important;
+  padding: 0 12px !important;
+}
+
+.score-card {
+  min-height: 112px !important;
+  border-radius: 18px !important;
+  padding: 12px !important;
+}
+
+.score-card span {
+  font-size: .65rem !important;
+}
+
+.score-card strong {
+  font-size: 2.75rem !important;
+}
+
+.score-card small {
+  font-size: .68rem !important;
+}
+
+.board-panel {
+  border-radius: 20px !important;
+  padding: 11px !important;
+}
+
+.board-grid {
+  gap: 8px !important;
+}
+
+.cell {
+  min-height: 126px !important;
+  border-radius: 15px !important;
+}
+
+.cell-inner {
+  padding: 9px 7px 8px !important;
+}
+
+.cell-visual {
+  min-height: 42px !important;
+  margin-bottom: 4px !important;
+}
+
+.cell-image {
+  max-width: 42px !important;
+  max-height: 42px !important;
+}
+
+.cell-visual-images.is-combo .cell-image {
+  max-width: 35px !important;
+  max-height: 35px !important;
+}
+
+.cell-visual-images.is-combo {
+  gap: 4px !important;
+}
+
+.cell-kicker {
+  font-size: .52rem !important;
+  letter-spacing: .15em !important;
+  margin-bottom: 5px !important;
+}
+
+.cell-title {
+  font-size: clamp(.75rem, .82vw, .9rem) !important;
+  line-height: 1.02 !important;
+}
+
+.placed-player {
+  margin-top: 4px !important;
+  padding: 3px 8px !important;
+  font-size: .68rem !important;
+}
+
+.cell.filled.valid::after,
+.cell.filled:not(.invalid)::after,
+.cell.invalid::after {
+  width: 21px !important;
+  height: 21px !important;
+  top: 7px !important;
+  right: 7px !important;
+  font-size: .78rem !important;
+}
+
+.right-panel {
+  top: 78px !important;
+  max-height: calc(100vh - 88px) !important;
+  gap: 10px !important;
+}
+
+.right-panel .side-card {
+  border-radius: 16px !important;
+  padding: 12px !important;
+  margin-bottom: 10px !important;
+}
+
+.side-title {
+  font-size: .66rem !important;
+  margin-bottom: 8px !important;
+}
+
+.side-stat {
+  border-radius: 11px !important;
+  padding: 8px 9px !important;
+  margin-bottom: 7px !important;
+}
+
+.side-stat span {
+  font-size: .55rem !important;
+}
+
+.side-stat strong {
+  font-size: .86rem !important;
+}
+
+.locked-box,
+.final-box,
+.message {
+  border-radius: 12px !important;
+  padding: 9px !important;
+  font-size: .72rem !important;
+}
+
+.played-players-list,
+.leaderboard-list {
+  gap: 6px !important;
+}
+
+.played-player,
+.leaderboard-row {
+  padding: 7px 8px !important;
+  border-radius: 10px !important;
+  font-size: .72rem !important;
+}
+
+.history-card {
+  max-height: 190px !important;
+  overflow: auto !important;
+}
+
+.leaderboard-card {
+  max-height: 190px !important;
+  overflow: auto !important;
+}
+
+.leave-btn {
+  min-height: 38px !important;
+  border-radius: 12px !important;
+  font-size: .75rem !important;
+}
+
+/* Sur écrans 1080p, on force une interface pensée pour le live */
+@media (min-width: 1100px) and (max-height: 1100px) {
+  .game-screen {
+    grid-template-columns: minmax(720px, 900px) 300px !important;
+    justify-content: center !important;
+  }
+
+  .board-grid {
+    grid-template-columns: repeat(4, minmax(135px, 1fr)) !important;
+  }
+}
+
+/* Si l’écran est très large, éviter que la grille parte trop loin ou devienne trop grande */
+@media (min-width: 1500px) {
+  .page-shell {
+    max-width: 1350px !important;
+  }
+
+  .cell {
+    min-height: 128px !important;
+  }
+}
+
+/* Mobile/tablette : garder la logique actuelle mais compacte */
+@media (max-width: 1280px) {
+  .game-screen {
+    grid-template-columns: 1fr !important;
+  }
+
+  .right-panel {
+    position: static !important;
+    max-height: none !important;
+  }
+}
+
+@media (max-width: 860px) {
+  .current-player-card {
+    grid-template-columns: 54px minmax(0, 1fr) !important;
+  }
+
+  .skip-btn {
+    grid-column: 1 / -1 !important;
+  }
+
+  .cell {
+    min-height: 116px !important;
+  }
+}
+
+
+
+/* =========================================================
+   Bingo Kun v41 — scroll historique joueurs
+   ========================================================= */
+
+/* Le scroll doit être sur la liste, pas seulement sur la carte */
+.history-card {
+  display: flex !important;
+  flex-direction: column !important;
+  max-height: 260px !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+
+.history-card .side-title {
+  flex: 0 0 auto !important;
+}
+
+.played-players-list {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  max-height: 210px !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  padding-right: 4px !important;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(118,255,61,.7) rgba(255,255,255,.08);
+}
+
+.played-players-list::-webkit-scrollbar {
+  width: 7px;
+}
+
+.played-players-list::-webkit-scrollbar-track {
+  background: rgba(255,255,255,.06);
+  border-radius: 999px;
+}
+
+.played-players-list::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--v39-green2), var(--v39-green));
+  border-radius: 999px;
+}
+
+@media (max-height: 850px) {
+  .history-card {
+    max-height: 220px !important;
+  }
+
+  .played-players-list {
+    max-height: 170px !important;
+  }
+}
+
+
+/* =========================================================
+   Bingo Kun v42 — grille 4 lignes x 5 colonnes
+   Objectif : plus adaptée au live 16:9
+   ========================================================= */
+
+.page-shell {
+  max-width: 1400px !important;
+}
+
+.game-screen {
+  grid-template-columns: minmax(0, 1fr) 300px !important;
+  gap: 12px !important;
+}
+
+.status-row {
+  grid-template-columns: minmax(0, 1fr) 126px !important;
+}
+
+.board-panel {
+  padding: 10px !important;
+}
+
+.board-grid {
+  grid-template-columns: repeat(5, minmax(118px, 1fr)) !important;
+  gap: 8px !important;
+}
+
+.cell {
+  min-height: 122px !important;
+}
+
+.cell-inner {
+  padding: 8px 7px 8px !important;
+}
+
+.cell-visual {
+  min-height: 40px !important;
+  margin-bottom: 4px !important;
+}
+
+.cell-image {
+  max-width: 40px !important;
+  max-height: 40px !important;
+}
+
+.cell-visual-images.is-combo .cell-image {
+  max-width: 33px !important;
+  max-height: 33px !important;
+}
+
+.cell-kicker {
+  font-size: .50rem !important;
+  margin-bottom: 5px !important;
+  letter-spacing: .14em !important;
+}
+
+.cell-title {
+  font-size: clamp(.74rem, .78vw, .88rem) !important;
+  line-height: 1.02 !important;
+}
+
+.placed-player {
+  font-size: .66rem !important;
+  padding: 3px 8px !important;
+}
+
+.result-chip {
+  font-size: .56rem !important;
+  padding: 3px 7px !important;
+}
+
+.right-panel {
+  width: auto !important;
+  top: 76px !important;
+  max-height: calc(100vh - 86px) !important;
+}
+
+/* Écrans live 1080p */
+@media (min-width: 1100px) and (max-height: 1100px) {
+  .page-shell {
+    max-width: 1380px !important;
+  }
+
+  .game-screen {
+    grid-template-columns: minmax(860px, 1020px) 300px !important;
+    justify-content: center !important;
+  }
+
+  .board-grid {
+    grid-template-columns: repeat(5, minmax(112px, 1fr)) !important;
+    gap: 8px !important;
+  }
+
+  .cell {
+    min-height: 118px !important;
+  }
+
+  .score-card strong {
+    font-size: 2.6rem !important;
+  }
+}
+
+/* Écrans plus larges */
+@media (min-width: 1500px) {
+  .page-shell {
+    max-width: 1420px !important;
+  }
+
+  .board-grid {
+    grid-template-columns: repeat(5, minmax(122px, 1fr)) !important;
+  }
+}
+
+/* Tablette */
+@media (max-width: 1280px) {
+  .game-screen {
+    grid-template-columns: 1fr !important;
+  }
+
+  .board-grid {
+    grid-template-columns: repeat(5, minmax(100px, 1fr)) !important;
+  }
+
+  .right-panel {
+    position: static !important;
+    max-height: none !important;
+  }
+}
+
+/* Mobile : on retombe sur 4 colonnes pour garder des cases lisibles */
+@media (max-width: 860px) {
+  .board-grid {
+    grid-template-columns: repeat(4, minmax(72px, 1fr)) !important;
+    gap: 7px !important;
+  }
+
+  .cell {
+    min-height: 110px !important;
+  }
+
+  .cell-title {
+    font-size: .72rem !important;
+  }
+}
