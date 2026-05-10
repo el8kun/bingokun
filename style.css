@@ -3266,3 +3266,176 @@ body.overlay-open {
 #createRoomBtn {
   pointer-events: auto !important;
 }
+
+/* --- Bingo Kun v28 : récap fin de partie --- */
+.finish-modal {
+  max-width: min(940px, 94vw);
+}
+
+.finish-recap {
+  margin-top: 16px;
+  padding: 12px;
+  border-radius: 18px;
+  background: rgba(255,255,255,.055);
+  border: 1px solid rgba(255,255,255,.10);
+}
+
+.finish-recap-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.finish-recap-head strong {
+  display: block;
+  color: var(--cyan);
+  font-weight: 1000;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  font-size: .78rem;
+}
+
+.finish-recap-head span {
+  display: block;
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: .78rem;
+  font-weight: 800;
+}
+
+.finish-recap-list {
+  display: grid;
+  gap: 8px;
+  max-height: 330px;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.recap-row {
+  padding: 10px;
+  border-radius: 15px;
+  background: rgba(0,0,0,.18);
+  border: 1px solid rgba(255,255,255,.08);
+}
+
+.recap-row.good {
+  border-color: rgba(186,255,61,.24);
+  background: rgba(186,255,61,.08);
+}
+
+.recap-row.bad {
+  border-color: rgba(255,77,93,.24);
+  background: rgba(255,77,93,.08);
+}
+
+.recap-row.playable {
+  border-color: rgba(39,242,195,.20);
+}
+
+.recap-player {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.recap-number {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  color: #07100e;
+  background: linear-gradient(135deg, var(--cyan), var(--gold));
+  font-size: .72rem;
+  font-weight: 1000;
+}
+
+.recap-player strong {
+  min-width: 0;
+  color: var(--text);
+  font-size: .9rem;
+  font-weight: 1000;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.recap-player em {
+  color: var(--muted);
+  font-style: normal;
+  font-size: .72rem;
+  font-weight: 1000;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+
+.recap-cells {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.recap-chip {
+  display: inline-flex;
+  align-items: center;
+  max-width: 210px;
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.09);
+  color: var(--text);
+  font-size: .68rem;
+  font-weight: 900;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.recap-chip.good {
+  color: #07100e;
+  background: var(--gold);
+}
+
+.recap-chip.bad {
+  color: #fff;
+  background: rgba(255,77,93,.75);
+}
+
+.recap-chip.muted {
+  color: var(--muted);
+}
+
+.recap-placed {
+  margin-top: 7px;
+  color: var(--muted);
+  font-size: .72rem;
+}
+
+.recap-placed strong {
+  color: var(--text);
+}
+
+@media (max-width: 820px) {
+  .finish-modal {
+    max-width: 96vw;
+  }
+
+  .finish-recap-list {
+    max-height: 280px;
+  }
+
+  .recap-player {
+    grid-template-columns: 28px minmax(0, 1fr);
+  }
+
+  .recap-player em {
+    grid-column: 2;
+  }
+
+  .recap-chip {
+    max-width: 155px;
+  }
+}

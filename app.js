@@ -157,6 +157,8 @@ const finishWrongEl = $("finishWrong");
 const finishAccuracyEl = $("finishAccuracy");
 const finishRankEl = $("finishRank");
 const finishTotalPlayersEl = $("finishTotalPlayers");
+const finishRecapStatsEl = $("finishRecapStats");
+const finishRecapListEl = $("finishRecapList");
 const closeFinishOverlayBtn = $("closeFinishOverlayBtn");
 const copyFinishRoomBtn = $("copyFinishRoomBtn");
 
@@ -1047,7 +1049,111 @@ function updateFinishOverlay(finalScore, bingoCount, wrongCount, accuracy, rank,
   finishAccuracyEl.textContent = `${accuracy}%`;
   finishRankEl.textContent = rank ? `#${rank}` : '#-';
   finishTotalPlayersEl.textContent = `${totalPlayers} joueur${totalPlayers > 1 ? 's' : ''}`;
+  renderFinishRecap();
 }
+
+
+function getCategoryDisplayName(category) {
+  if (!category) return "Case inconnue";
+  const title = category.title || category.name || category.shortLabel || category.id;
+  const kicker = category.kicker || "";
+  return `${kicker ? kicker + " · " : ""}${title}`.trim();
+}
+
+function renderFinishRecap() {
+  if (!finishRecapListEl || !finishRecapStatsEl) return;
+
+  if (!roomData?.deck?.length || !roomData?.grid?.length) {
+    finishRecapStatsEl.textContent = "Aucune donnée disponible.";
+    finishRecapListEl.innerHTML = "";
+    return;
+  }
+
+  const board = myData?.board || {};
+  const movesByPlayerId = new Map();
+
+  Object.entries(board).forEach(([cellIndex, move]) => {
+    if (!move?.playerId) return;
+    movesByPlayerId.set(move.playerId, {
+      ...move,
+      cellIndex: Number(cellIndex)
+    });
+  });
+
+  const currentIndex = Math.min(getMyCurrentIndex(), roomData.deck.length - 1);
+  const hasReachedEnd = myData?.finished && currentIndex >= roomData.deck.length - 1;
+  const shownIds = roomData.deck.slice(0, hasReachedEnd ? roomData.deck.length : currentIndex + 1);
+
+  const rows = shownIds
+    .map((playerId, index) => {
+      const player = ACTIVE_PLAYERS.find((item) => item.id === playerId);
+      if (!player) return null;
+
+      const possibleCells = roomData.grid
+        .map((category, cellIndex) => ({ category, cellIndex }))
+        .filter(({ category }) => canPlayerFillCategory(player, category));
+
+      const move = movesByPlayerId.get(player.id);
+      const placedCategory = move ? roomData.grid[move.cellIndex] : null;
+
+      return {
+        player,
+        index,
+        possibleCells,
+        move,
+        placedCategory
+      };
+    })
+    .filter(Boolean);
+
+  const usefulCount = rows.filter((row) => row.possibleCells.length > 0).length;
+  const placedCount = rows.filter((row) => row.move).length;
+
+  finishRecapStatsEl.textContent = `${rows.length} joueurs vus · ${usefulCount} jouables · ${placedCount} placés`;
+
+  finishRecapListEl.innerHTML = rows.map((row) => {
+    const possibleHtml = row.possibleCells.length
+      ? row.possibleCells.slice(0, 5).map(({ category, cellIndex }) => {
+          const isPlacedHere = row.move && Number(row.move.cellIndex) === Number(cellIndex);
+          return `<span class="recap-chip ${isPlacedHere ? (row.move.isValid ? "good" : "bad") : ""}">${escapeHtml(getCategoryDisplayName(category))}</span>`;
+        }).join("")
+      : `<span class="recap-chip muted">Aucune case</span>`;
+
+    const more = row.possibleCells.length > 5
+      ? `<span class="recap-chip muted">+${row.possibleCells.length - 5}</span>`
+      : "";
+
+    let status = "Passé";
+    let statusClass = "passed";
+
+    if (row.move) {
+      status = row.move.isValid ? "Placé juste" : "Placé faux";
+      statusClass = row.move.isValid ? "good" : "bad";
+    } else if (row.possibleCells.length > 0) {
+      status = "Jouable";
+      statusClass = "playable";
+    }
+
+    const placedLine = row.move
+      ? `<div class="recap-placed">Mis sur : <strong>${escapeHtml(getCategoryDisplayName(row.placedCategory))}</strong></div>`
+      : "";
+
+    return `
+      <article class="recap-row ${statusClass}">
+        <div class="recap-player">
+          <span class="recap-number">${row.index + 1}</span>
+          <strong>${escapeHtml(row.player.name)}</strong>
+          <em>${escapeHtml(status)}</em>
+        </div>
+        <div class="recap-cells">
+          ${possibleHtml}${more}
+        </div>
+        ${placedLine}
+      </article>
+    `;
+  }).join("");
+}
+
 
 function showFinishOverlay() {
   if (!finishOverlay) return;
