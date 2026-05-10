@@ -214,19 +214,20 @@ const PRESET_CONFIGS = {
     excludeTypes: [],
     requireTags: []
   },
-  "hardcore": {
-    playerMinScore: 0,
-    allowedTypes: [1, 2, 3, 4, 5, 6, 8],
-    categoryIds: [],
-    excludeTypes: [],
-    requireTags: []
-  },
   "ligue1": {
     playerMinScore: 1,
     allowedTypes: [1, 2, 3, 6, 8],
-    categoryIds: ["cat_172","cat_129","cat_215","cat_117","cat_159","cat_219","cat_3","cat_6","cat_5","cat_13","cat_18","cat_400","cat_403","cat_354","cat_355","cat_356","cat_425","cat_426","cat_547","cat_550","cat_611","cat_606"],
+    // Note : dans la BDD source, certains clubs L1 existent mais n'ont aucun joueur taggé.
+    // On garde donc une sélection L1 jouable : clubs L1 disponibles + championnats/nations/trophées/spéciaux liés aux joueurs passés en L1.
+    categoryIds: [
+      "cat_172","cat_215","cat_117",
+      "cat_611","cat_606","cat_607","cat_608","cat_609","cat_610","cat_601","cat_602","cat_600",
+      "cat_3","cat_6","cat_5","cat_13","cat_18","cat_8","cat_11","cat_12","cat_400","cat_403",
+      "cat_354","cat_355","cat_356","cat_425","cat_426","cat_564",
+      "cat_547","cat_550","cat_568","cat_567","cat_569"
+    ],
     excludeTypes: [4, 5],
-    requireTags: ["cat_172","cat_129","cat_215","cat_117","cat_159","cat_219","cat_606","cat_611"]
+    requireTags: ["cat_172","cat_215","cat_117","cat_606","cat_611"]
   },
   "premierleague": {
     playerMinScore: 1,
@@ -234,13 +235,6 @@ const PRESET_CONFIGS = {
     categoryIds: ["cat_84","cat_92","cat_93","cat_114","cat_133","cat_149","cat_179","cat_191","cat_204","cat_207","cat_1","cat_3","cat_5","cat_6","cat_13","cat_400","cat_403","cat_331","cat_332","cat_333","cat_354","cat_355","cat_356","cat_425","cat_426","cat_547","cat_550","cat_607"],
     excludeTypes: [4, 5],
     requireTags: ["cat_84","cat_92","cat_93","cat_114","cat_133","cat_149","cat_179","cat_191","cat_204","cat_207","cat_607","cat_331","cat_332","cat_333"]
-  },
-  "trophies": {
-    playerMinScore: 2,
-    allowedTypes: [6, 8],
-    categoryIds: ["cat_331","cat_332","cat_333","cat_334","cat_335","cat_336","cat_337","cat_338","cat_339","cat_354","cat_355","cat_356","cat_357","cat_358","cat_425","cat_426","cat_427","cat_547","cat_550","cat_555","cat_563","cat_564"],
-    excludeTypes: [],
-    requireTags: ["cat_331","cat_332","cat_333","cat_334","cat_335","cat_354","cat_355","cat_356","cat_357","cat_425","cat_426","cat_427","cat_564"]
   }
 };
 
@@ -309,10 +303,8 @@ function updatePresetHelp() {
     "global-easy": "Stars, grands clubs et catégories simples.",
     "global-normal": "Équilibré : joueurs connus, moins de profils obscurs.",
     "global-hard": "Plus large : joueurs moins évidents, mais encore filtrés.",
-    "hardcore": "Toute la base de données, y compris les joueurs obscurs.",
     "ligue1": "Joueurs passés par des clubs de Ligue 1 ou catégories liées.",
     "premierleague": "Joueurs passés par la Premier League ou catégories liées.",
-    "trophies": "Grille orientée trophées, titres, récompenses et grands palmarès."
   };
 
   presetHelp.textContent = labels[selectedPreset] || labels["global-normal"];
@@ -1651,8 +1643,18 @@ function completeGridFromFixedCategories(fixedGrid, categoryPool = ACTIVE_CATEGO
     })
   );
 
-  for (const category of candidates) {
+  const nonCombos = candidates.filter((category) => !isComboCategory(category));
+  const combos = candidates.filter(isComboCategory);
+
+  for (const category of nonCombos) {
     if (grid.length >= BOARD_SIZE) break;
+    selectedIds.add(category.id);
+    grid.push(category);
+  }
+
+  for (const category of combos) {
+    if (grid.length >= BOARD_SIZE) break;
+    if (countComboCells(grid) >= MAX_COMBO_CELLS) break;
     selectedIds.add(category.id);
     grid.push(category);
   }
