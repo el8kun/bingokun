@@ -65,46 +65,21 @@
         <div id="creatorLockedNotice" class="creator-locked-notice">
           Connecte-toi en admin pour créer une room. Les viewers peuvent uniquement rejoindre une room existante.
         </div>
-        <div id="siteDebugStatus" class="site-debug-status">Version v23 chargée</div>
 
         <label for="playerName">Ton pseudo</label>
         <input id="playerName" maxlength="20" placeholder="Ex : Kun" autocomplete="nickname" />
 
-        <div class="mode-panel">
-          <label>Type de partie</label>
-          <p class="mode-help">Choisis un sujet ou une difficulté pour filtrer les joueurs et les cases.</p>
-
-          <div class="choice-grid">
-            <button class="preset-choice active" type="button" data-preset="global-normal">
-              <strong>Global normal</strong>
-              <span>Connu, équilibré</span>
-            </button>
-            <button class="preset-choice" type="button" data-preset="global-easy">
-              <strong>Global facile</strong>
-              <span>Stars + grands clubs</span>
-            </button>
-            <button class="preset-choice" type="button" data-preset="global-hard">
-              <strong>Global difficile</strong>
-              <span>Plus large</span>
-            </button>
-            <button class="preset-choice" type="button" data-preset="hardcore">
-              <strong>Hardcore</strong>
-              <span>Toute la BDD</span>
-            </button>
-            <button class="preset-choice" type="button" data-preset="ligue1">
-              <strong>Ligue 1</strong>
-              <span>Joueurs passés en L1</span>
-            </button>
-            <button class="preset-choice" type="button" data-preset="premierleague">
-              <strong>Premier League</strong>
-              <span>Joueurs passés en PL</span>
-            </button>
-            <button class="preset-choice" type="button" data-preset="trophies">
-              <strong>Trophées</strong>
-              <span>Titres/récompenses</span>
-            </button>
-          </div>
-        </div>
+        <label for="presetMode">Type de partie</label>
+        <select id="presetMode" class="setup-select">
+          <option value="global-normal">Global normal — connu et équilibré</option>
+          <option value="global-easy">Global facile — stars + grands clubs</option>
+          <option value="global-hard">Global difficile — plus large</option>
+          <option value="hardcore">Hardcore — toute la BDD</option>
+          <option value="ligue1">Ligue 1 — joueurs passés en L1</option>
+          <option value="premierleague">Premier League — joueurs passés en PL</option>
+          <option value="trophies">Trophées — titres et récompenses</option>
+        </select>
+        <p id="presetHelp" class="hint preset-help">Global normal limite les joueurs trop obscurs.</p>
 
         <label for="gridMode">Mode de grille</label>
         <select id="gridMode" class="setup-select">

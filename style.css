@@ -3213,84 +3213,7 @@ body.overlay-open {
   }
 }
 
-/* --- Bingo Kun v20 : sujets / difficultés corrigés --- */
-.mode-panel {
-  margin: 10px 0 14px;
-  border: 1px solid rgba(255,255,255,.10);
-  border-radius: 22px;
-  padding: 14px;
-  background: rgba(255,255,255,.045);
-}
-
-.mode-panel label {
-  color: var(--muted);
-  font-weight: 1000;
-}
-
-.mode-help {
-  margin: 3px 0 0;
-  color: var(--muted);
-  font-size: .82rem;
-  line-height: 1.35;
-}
-
-.choice-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 9px;
-  margin-top: 12px;
-}
-
-.preset-choice {
-  min-height: 68px;
-  border-radius: 16px;
-  padding: 11px;
-  color: var(--text);
-  text-align: left;
-  background: rgba(255,255,255,.07);
-  border: 1px solid rgba(255,255,255,.10);
-  transition: transform .12s ease, border-color .12s ease, background .12s ease;
-}
-
-.preset-choice:hover {
-  transform: translateY(-1px);
-  border-color: rgba(39,242,195,.35);
-}
-
-.preset-choice.active {
-  color: #07100e;
-  background: linear-gradient(135deg, var(--cyan), var(--gold));
-  border-color: rgba(255,255,255,.18);
-}
-
-.preset-choice strong,
-.preset-choice span {
-  display: block;
-}
-
-.preset-choice strong {
-  font-size: .84rem;
-  font-weight: 1000;
-}
-
-.preset-choice span {
-  margin-top: 4px;
-  opacity: .78;
-  font-size: .71rem;
-  line-height: 1.18;
-}
-
-@media (max-width: 820px) {
-  .choice-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .preset-choice {
-    min-height: 58px;
-  }
-}
-
-/* --- Bingo Kun v21 : sécurité admin Google --- */
+/* --- Bingo Kun v24 : version propre sujets + admin --- */
 .admin-auth-line {
   margin-top: 6px;
   display: flex;
@@ -3324,11 +3247,8 @@ body.overlay-open {
   line-height: 1.35;
 }
 
-.primary-btn:disabled,
-.secondary-btn:disabled {
-  cursor: not-allowed;
-  opacity: .48;
-  filter: grayscale(.2);
+.preset-help {
+  margin-top: 7px;
 }
 
 .admin-gate {
@@ -3343,53 +3263,6 @@ body.overlay-open {
   display: none !important;
 }
 
-/* --- Bingo Kun v22 : bouton créer toujours cliquable + debug admin --- */
 #createRoomBtn {
   pointer-events: auto !important;
-}
-
-#createRoomBtn:disabled {
-  opacity: 1 !important;
-  filter: none !important;
-  cursor: pointer !important;
-}
-
-/* --- Bingo Kun v23 : fix clic créer room + debug visuel --- */
-#createRoomBtn {
-  position: relative !important;
-  z-index: 99999 !important;
-  pointer-events: auto !important;
-}
-
-.setup-card,
-.setup-screen,
-.page-shell {
-  position: relative;
-}
-
-.creator-locked-notice {
-  pointer-events: none;
-}
-
-.site-debug-status {
-  margin: 8px 0 10px;
-  padding: 8px 10px;
-  border-radius: 12px;
-  font-size: .76rem;
-  font-weight: 900;
-  color: var(--cyan);
-  background: rgba(39,242,195,.08);
-  border: 1px solid rgba(39,242,195,.12);
-}
-
-.site-debug-status.bad {
-  color: #ff9aa7;
-  background: rgba(255,77,93,.10);
-  border-color: rgba(255,77,93,.16);
-}
-
-.site-debug-status.good {
-  color: #baff3d;
-  background: rgba(186,255,61,.10);
-  border-color: rgba(186,255,61,.18);
 }

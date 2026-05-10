@@ -112,7 +112,8 @@ const adminAuthStatus = $("adminAuthStatus");
 const adminHeaderLink = $("adminHeaderLink");
 const creatorLockedNotice = $("creatorLockedNotice");
 const createRoomBtn = $("createRoomBtn");
-const siteDebugStatus = $("siteDebugStatus");
+const presetModeSelect = $("presetMode");
+const presetHelp = $("presetHelp");
 const gridModeSelect = $("gridMode");
 const customBuilder = $("customBuilder");
 const customCountEl = $("customCount");
@@ -121,7 +122,6 @@ const customSelectedGrid = $("customSelectedGrid");
 const customSearchResults = $("customSearchResults");
 const customAutoBtn = $("customAutoBtn");
 const customClearBtn = $("customClearBtn");
-const presetChoiceBtns = Array.from(document.querySelectorAll(".preset-choice"));
 const boardEl = $("board");
 const currentPlayerNameEl = $("currentPlayerName");
 const currentPlayerInitialsEl = $("currentPlayerInitials");
@@ -162,6 +162,7 @@ const copyFinishRoomBtn = $("copyFinishRoomBtn");
 
 let uid = null;
 let isAdminUser = false;
+let selectedPreset = "global-normal";
 let currentRoomCode = null;
 let roomData = null;
 let myData = null;
@@ -174,22 +175,12 @@ let clockInterval = null;
 let playerAutoInterval = null;
 let hasShownFinishOverlay = false;
 let customSelectedCategoryIds = [];
-let selectedPreset = "global-normal";
 let customSearchTimer = null;
 let categoryMatchCache = new Map();
 let savingResult = false;
 
-window.__BINGO_KUN_VERSION = "v23-fix-click";
 const savedName = localStorage.getItem("bingo-kun-name");
 if (savedName) playerNameInput.value = savedName;
-
-function setDebugStatus(message, variant = "") {
-  if (!siteDebugStatus) return;
-  siteDebugStatus.textContent = message;
-  siteDebugStatus.className = `site-debug-status ${variant}`.trim();
-}
-
-setDebugStatus("Version v23 chargée — bouton prêt");
 
 onAuthStateChanged(auth, async (user) => {
   uid = user?.uid || null;
@@ -214,24 +205,21 @@ if (!auth.currentUser) {
   });
 }
 
-document.addEventListener("click", (event) => {
-  const button = event.target.closest("#createRoomBtn");
-  if (!button) return;
-
-  event.preventDefault();
-  event.stopPropagation();
-
-  setDebugStatus("Clic détecté — création en cours…");
-
+createRoomBtn?.addEventListener("click", () => {
   createRoom().catch((error) => {
     console.error("Erreur création room :", error);
-    if (createRoomBtn) createRoomBtn.textContent = "Créer une room";
-    setDebugStatus("Erreur création room : " + (error?.message || error), "bad");
     alert("Erreur création room : " + (error?.message || error));
   });
-}, true);
+});
 adminLoginBtn?.addEventListener("click", signInAdmin);
 adminLogoutBtn?.addEventListener("click", signOutAdmin);
+presetModeSelect?.addEventListener("change", () => {
+  selectedPreset = presetModeSelect.value || "global-normal";
+  categoryMatchCache = new Map();
+  updatePresetHelp();
+  updatePresetHelp();
+renderCustomBuilder();
+});
 $("joinRoomBtn").addEventListener("click", () => joinRoom(joinCodeInput.value.trim().toUpperCase()));
 $("copyRoomBtn").addEventListener("click", copyRoomInfo);
 $("copyWaitingRoomBtn").addEventListener("click", copyRoomInfo);
@@ -241,15 +229,6 @@ startGameBtn.addEventListener("click", startGame);
 nextPlayerBtn.addEventListener("click", () => advanceMyPlayer(true));
 closeFinishOverlayBtn?.addEventListener("click", () => hideFinishOverlay());
 copyFinishRoomBtn?.addEventListener("click", copyRoomInfo);
-
-presetChoiceBtns.forEach((button) => {
-  button.addEventListener("click", () => {
-    selectedPreset = button.dataset.preset || "global-normal";
-    presetChoiceBtns.forEach((item) => item.classList.toggle("active", item === button));
-    categoryMatchCache = new Map();
-    renderCustomBuilder();
-  });
-});
 
 gridModeSelect?.addEventListener("change", renderCustomBuilder);
 customCategorySearch?.addEventListener("input", () => {
@@ -283,10 +262,6 @@ async function checkIsAdmin(userId) {
     return snap.exists();
   } catch (error) {
     console.warn("Vérification admin impossible :", error);
-    if (adminAuthStatus) {
-      adminAuthStatus.textContent = "Vérification admin impossible";
-      adminAuthStatus.className = "admin-auth-status bad";
-    }
     return false;
   }
 }
@@ -302,9 +277,6 @@ function updateAdminUi(user) {
   if (createRoomBtn) {
     createRoomBtn.disabled = false;
     createRoomBtn.textContent = isAdminUser ? "Créer une room" : "Créer une room";
-    createRoomBtn.title = isAdminUser
-      ? "Créer une room"
-      : "Clique ici après connexion admin. Si ton UID n'est pas autorisé, un message t'indiquera quoi faire.";
   }
 
   if (adminAuthStatus) {
@@ -340,36 +312,43 @@ async function signOutAdmin() {
   }
 }
 
+function updatePresetHelp() {
+  if (!presetHelp) return;
+
+  const labels = {
+    "global-easy": "Stars, grands clubs et catégories simples.",
+    "global-normal": "Équilibré : joueurs connus, moins de profils obscurs.",
+    "global-hard": "Plus large : joueurs moins évidents, mais encore filtrés.",
+    "hardcore": "Toute la base de données, y compris les joueurs obscurs.",
+    "ligue1": "Joueurs passés par des clubs de Ligue 1 ou catégories liées.",
+    "premierleague": "Joueurs passés par la Premier League ou catégories liées.",
+    "trophies": "Grille orientée trophées, titres, récompenses et grands palmarès."
+  };
+
+  presetHelp.textContent = labels[selectedPreset] || labels["global-normal"];
+}
+
 
 async function createRoom() {
-  setDebugStatus("Création room demandée…");
   const name = getPlayerName();
-  if (!name) {
-    setDebugStatus("Ajoute ton pseudo avant de créer une room.", "bad");
-    return;
-  }
-  if (!uid) {
-    setDebugStatus("Connexion Firebase en cours… réessaie dans 2 secondes.", "bad");
-    return alert("Connexion Firebase en cours, réessaie dans 2 secondes.");
-  }
+  if (!name) return;
+  if (!uid) return alert("Connexion Firebase en cours, réessaie dans 2 secondes.");
 
   isAdminUser = await checkIsAdmin(uid);
   updateAdminUi(auth.currentUser);
 
   if (!isAdminUser) {
-    const currentUid = uid || "UID introuvable";
-    setDebugStatus("Compte non reconnu admin — UID : " + currentUid, "bad");
     alert(
-      "Création bloquée : ce compte n'est pas reconnu admin.\n\n" +
-      "UID actuel : " + currentUid + "\n\n" +
-      "Dans Firestore, il faut un document : admins/" + currentUid
+      "Seul le compte admin peut créer une room.\n\n" +
+      "UID actuel : " + uid + "\n\n" +
+      "Dans Firestore, il faut créer : admins/" + uid
     );
     return;
   }
 
-  if (createRoomBtn) createRoomBtn.textContent = "Création en cours…";
-
   await loadDatabaseOverrides(true);
+
+  selectedPreset = presetModeSelect?.value || selectedPreset || "global-normal";
 
   const code = generateRoomCode();
   const requestedGrid = getRequestedCustomGrid();
@@ -403,20 +382,12 @@ async function createRoom() {
   await setDoc(doc(db, "rooms", code, "participants", uid), buildFreshParticipant(name, true));
 
   await joinRoom(code, true);
-  if (createRoomBtn) createRoomBtn.textContent = "Créer une room";
-  setDebugStatus("Room créée : " + code, "good");
 }
 
 async function joinRoom(code, alreadyJoined = false) {
   const name = getPlayerName();
-  if (!name) {
-    setDebugStatus("Ajoute ton pseudo avant de créer une room.", "bad");
-    return;
-  }
-  if (!uid) {
-    setDebugStatus("Connexion Firebase en cours… réessaie dans 2 secondes.", "bad");
-    return alert("Connexion Firebase en cours, réessaie dans 2 secondes.");
-  }
+  if (!name) return;
+  if (!uid) return alert("Connexion Firebase en cours, réessaie dans 2 secondes.");
 
   if (!/^[A-Z0-9]{4,6}$/.test(code)) {
     alert("Entre un code room valide.");
@@ -1159,6 +1130,7 @@ function iconForCategory(id) {
   return icons[id] || "★";
 }
 
+
 const PRESET_CONFIGS = {
   "global-easy": {
     playerMinScore: 7,
@@ -1276,11 +1248,10 @@ function generateGameSetup(requestedGrid = [], preset = selectedPreset) {
   const requiredPlayable = Math.min(MIN_PLAYABLE_PLAYERS, maxDeckSize);
 
   const categoryPool = getCategoriesForPreset(preset).filter((category) => getCategoryMatchCount(category, playerPoolAll) > 0);
-  const fixedGrid = normalizeRequestedGrid(requestedGrid)
-    .filter((category) => {
-      if (!categoryPool.length) return true;
-      return categoryPool.some((item) => item.id === category.id);
-    });
+  const fixedGrid = normalizeRequestedGrid(requestedGrid).filter((category) => {
+    if (!categoryPool.length) return true;
+    return categoryPool.some((item) => item.id === category.id);
+  });
 
   let bestSetup = null;
   const attempts = fixedGrid.length ? 300 : 1200;
@@ -1301,24 +1272,11 @@ function generateGameSetup(requestedGrid = [], preset = selectedPreset) {
     const score = deckPlayableCount * 100 + coveredCells;
 
     if (!bestSetup || score > bestSetup.score) {
-      bestSetup = {
-        grid,
-        deck,
-        playableCount: deckPlayableCount,
-        score
-      };
+      bestSetup = { grid, deck, playableCount: deckPlayableCount, score };
     }
 
-    if (
-      deck.length <= MAX_DECK_PLAYERS &&
-      deckPlayableCount >= requiredPlayable &&
-      deckCoversEveryCell
-    ) {
-      return {
-        grid,
-        deck,
-        playableCount: deckPlayableCount
-      };
+    if (deck.length <= MAX_DECK_PLAYERS && deckPlayableCount >= requiredPlayable && deckCoversEveryCell) {
+      return { grid, deck, playableCount: deckPlayableCount };
     }
   }
 
