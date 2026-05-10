@@ -111,6 +111,7 @@ const customSelectedGrid = $("customSelectedGrid");
 const customSearchResults = $("customSearchResults");
 const customAutoBtn = $("customAutoBtn");
 const customClearBtn = $("customClearBtn");
+const presetChoiceBtns = Array.from(document.querySelectorAll(".preset-choice"));
 const boardEl = $("board");
 const currentPlayerNameEl = $("currentPlayerName");
 const currentPlayerInitialsEl = $("currentPlayerInitials");
@@ -158,13 +159,11 @@ let participantsData = [];
 let unsubscribeRoom = null;
 let unsubscribeMe = null;
 let unsubscribePlayers = null;
-
-let selectedPreset = "global-normal";
-let selectedCustomCategories = [];
 let clockInterval = null;
 let playerAutoInterval = null;
 let hasShownFinishOverlay = false;
 let customSelectedCategoryIds = [];
+let selectedPreset = "global-normal";
 let customSearchTimer = null;
 let categoryMatchCache = new Map();
 let savingResult = false;
@@ -195,21 +194,9 @@ presetChoiceBtns.forEach((button) => {
   button.addEventListener("click", () => {
     selectedPreset = button.dataset.preset || "global-normal";
     presetChoiceBtns.forEach((item) => item.classList.toggle("active", item === button));
-    renderCategoryResults();
+    categoryMatchCache = new Map();
+    renderCustomBuilder();
   });
-});
-
-customGridToggle?.addEventListener("change", () => {
-  customBuilder?.classList.toggle("hidden", !customGridToggle.checked);
-  renderCategoryResults();
-  renderSelectedCategories();
-});
-
-categorySearchInput?.addEventListener("input", renderCategoryResults);
-autoFillCustomBtn?.addEventListener("click", () => {
-  selectedCustomCategories = autoCompleteCategories(selectedCustomCategories, selectedPreset);
-  renderSelectedCategories();
-  renderCategoryResults();
 });
 
 gridModeSelect?.addEventListener("change", renderCustomBuilder);
@@ -249,7 +236,7 @@ async function createRoom() {
     return;
   }
 
-  const setup = generateGameSetup(requestedGrid);
+  const setup = generateGameSetup(requestedGrid, selectedPreset);
   const grid = setup.grid;
   const deck = setup.deck.map((player) => player.id);
 
@@ -260,12 +247,11 @@ async function createRoom() {
     deck,
     playableCount: setup.playableCount,
     gridMode: requestedGrid.length ? "custom" : "random",
+    preset: selectedPreset,
     playerBase: "players-with-categories",
     maxDeckPlayers: MAX_DECK_PLAYERS,
     minPlayablePlayers: MIN_PLAYABLE_PLAYERS,
     secondsPerPlayer: AUTO_SECONDS,
-    preset: selectedPreset,
-    gridMode,
     status: "waiting",
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
@@ -1023,157 +1009,82 @@ function iconForCategory(id) {
   return icons[id] || "★";
 }
 
-
-function getCategoryLabel(category) {
-  return `${category.kicker ? category.kicker + " " : ""}${category.title || category.name || category.id}`.trim();
-}
-
-function renderCategoryResults() {
-  if (!categoryResultsEl) return;
-
-  const query = String(categorySearchInput?.value || "").trim().toLowerCase();
-  const pool = filterCategoriesForPreset(selectedPreset);
-  const selectedIds = new Set(selectedCustomCategories.map(String));
-
-  const results = pool
-    .filter((category) => {
-      if (selectedIds.has(String(category.id))) return false;
-      if (!query) return true;
-      return getCategoryLabel(category).toLowerCase().includes(query)
-        || String(category.shortLabel || "").toLowerCase().includes(query);
-    })
-    .slice(0, 24);
-
-  categoryResultsEl.innerHTML = results.map((category) => `
-    <button class="category-result" type="button" data-category-id="${escapeHtml(category.id)}">
-      <strong>${escapeHtml(category.shortLabel || category.displayName || "CAT")}</strong>
-      <span>${escapeHtml(getCategoryLabel(category))}</span>
-    </button>
-  `).join("");
-
-  categoryResultsEl.querySelectorAll(".category-result").forEach((button) => {
-    button.addEventListener("click", () => {
-      if (selectedCustomCategories.length >= BOARD_SIZE) return;
-      selectedCustomCategories.push(button.dataset.categoryId);
-      renderSelectedCategories();
-      renderCategoryResults();
-    });
-  });
-}
-
-function renderSelectedCategories() {
-  if (!selectedCategoriesEl || !selectedCountEl) return;
-
-  selectedCountEl.textContent = `${selectedCustomCategories.length} / ${BOARD_SIZE}`;
-
-  selectedCategoriesEl.innerHTML = selectedCustomCategories.length
-    ? selectedCustomCategories.map((categoryId, index) => {
-        const category = CATEGORIES.find((item) => String(item.id) === String(categoryId));
-        return `
-          <div class="selected-category">
-            <span>${index + 1}</span>
-            <strong>${escapeHtml(category?.shortLabel || category?.displayName || "CAT")}</strong>
-            <em>${escapeHtml(category ? getCategoryLabel(category) : categoryId)}</em>
-            <button type="button" data-remove-index="${index}">×</button>
-          </div>
-        `;
-      }).join("")
-    : `<p class="empty-history">Aucune case choisie. Recherche une catégorie ou clique sur compléter auto.</p>`;
-
-  selectedCategoriesEl.querySelectorAll("[data-remove-index]").forEach((button) => {
-    button.addEventListener("click", () => {
-      selectedCustomCategories.splice(Number(button.dataset.removeIndex), 1);
-      renderSelectedCategories();
-      renderCategoryResults();
-    });
-  });
-}
-
-function autoCompleteCategories(currentCategories = [], preset = "global-normal") {
-  const selected = [...currentCategories].slice(0, BOARD_SIZE);
-  const selectedIds = new Set(selected.map(String));
-  const pool = shuffle(filterCategoriesForPreset(preset).filter((category) => !selectedIds.has(String(category.id))));
-
-  for (const category of pool) {
-    if (selected.length >= BOARD_SIZE) break;
-    selected.push(category.id);
-    selectedIds.add(String(category.id));
-  }
-
-  return selected;
-}
-
-
 const PRESET_CONFIGS = {
   "global-easy": {
-    label: "Global facile",
-    playerMinScore: 5,
-    categoryTypes: [1, 2, 3, 6],
-    categoryWhitelist: [],
-    categoryBlacklist: [4, 5, 8],
-    requireAnyTags: [331, 332, 333, 334, 335, 354, 355, 356, 357, 425, 426, 427, 564]
+    playerMinScore: 7,
+    allowedTypes: [1, 2, 3, 6],
+    categoryIds: [],
+    excludeTypes: [4, 5],
+    requireTags: ["cat_331","cat_332","cat_333","cat_334","cat_335","cat_354","cat_355","cat_356","cat_357","cat_425","cat_426","cat_427","cat_564","cat_160","cat_112","cat_204","cat_93","cat_84","cat_83","cat_179","cat_172","cat_133","cat_167"]
   },
   "global-normal": {
-    label: "Global normal",
-    playerMinScore: 3,
-    categoryTypes: [1, 2, 3, 6, 8],
-    categoryWhitelist: [],
-    categoryBlacklist: [4, 5],
-    requireAnyTags: [83,84,86,93,99,112,129,133,160,167,172,176,179,204,215,262,331,332,333,334,335,354,355,356,357,425,426,427,547,550,564,607,608,609]
+    playerMinScore: 4,
+    allowedTypes: [1, 2, 3, 6, 8],
+    categoryIds: [],
+    excludeTypes: [4, 5],
+    requireTags: ["cat_83","cat_84","cat_86","cat_93","cat_99","cat_112","cat_129","cat_133","cat_160","cat_167","cat_172","cat_176","cat_179","cat_204","cat_215","cat_262","cat_331","cat_332","cat_333","cat_334","cat_335","cat_354","cat_355","cat_356","cat_357","cat_425","cat_426","cat_427","cat_547","cat_550","cat_564","cat_607","cat_608","cat_609"]
   },
   "global-hard": {
-    label: "Global difficile",
     playerMinScore: 2,
-    categoryTypes: [1, 2, 3, 4, 5, 6, 8],
-    categoryWhitelist: [],
-    categoryBlacklist: [],
-    requireAnyTags: []
+    allowedTypes: [1, 2, 3, 4, 5, 6, 8],
+    categoryIds: [],
+    excludeTypes: [],
+    requireTags: []
   },
   "hardcore": {
-    label: "Hardcore",
     playerMinScore: 0,
-    categoryTypes: [1, 2, 3, 4, 5, 6, 8],
-    categoryWhitelist: [],
-    categoryBlacklist: [],
-    requireAnyTags: []
+    allowedTypes: [1, 2, 3, 4, 5, 6, 8],
+    categoryIds: [],
+    excludeTypes: [],
+    requireTags: []
   },
   "ligue1": {
-    label: "Ligue 1",
     playerMinScore: 1,
-    categoryTypes: [1, 2, 3, 6, 8],
-    categoryWhitelist: [172,129,215,117,159,219,3,6,5,13,18,400,403,354,355,356,425,426,547,550,611],
-    categoryBlacklist: [4, 5],
-    requireAnyTags: [172,129,215,117,159,219,606,611]
+    allowedTypes: [1, 2, 3, 6, 8],
+    categoryIds: ["cat_172","cat_129","cat_215","cat_117","cat_159","cat_219","cat_3","cat_6","cat_5","cat_13","cat_18","cat_400","cat_403","cat_354","cat_355","cat_356","cat_425","cat_426","cat_547","cat_550","cat_611","cat_606"],
+    excludeTypes: [4, 5],
+    requireTags: ["cat_172","cat_129","cat_215","cat_117","cat_159","cat_219","cat_606","cat_611"]
   },
   "premierleague": {
-    label: "Premier League",
     playerMinScore: 1,
-    categoryTypes: [1, 2, 3, 6, 8],
-    categoryWhitelist: [84,92,93,114,133,149,179,191,204,207,1,3,5,6,13,400,403,331,332,333,354,355,356,425,426,547,550,607],
-    categoryBlacklist: [4, 5],
-    requireAnyTags: [84,92,93,114,133,149,179,191,204,207,607,331,332,333]
+    allowedTypes: [1, 2, 3, 6, 8],
+    categoryIds: ["cat_84","cat_92","cat_93","cat_114","cat_133","cat_149","cat_179","cat_191","cat_204","cat_207","cat_1","cat_3","cat_5","cat_6","cat_13","cat_400","cat_403","cat_331","cat_332","cat_333","cat_354","cat_355","cat_356","cat_425","cat_426","cat_547","cat_550","cat_607"],
+    excludeTypes: [4, 5],
+    requireTags: ["cat_84","cat_92","cat_93","cat_114","cat_133","cat_149","cat_179","cat_191","cat_204","cat_207","cat_607","cat_331","cat_332","cat_333"]
   },
   "trophies": {
-    label: "Trophées",
     playerMinScore: 2,
-    categoryTypes: [6, 8],
-    categoryWhitelist: [331,332,333,334,335,336,337,338,339,354,355,356,357,358,425,426,427,547,550,555,563,564],
-    categoryBlacklist: [],
-    requireAnyTags: [331,332,333,334,335,354,355,356,357,425,426,427,564]
+    allowedTypes: [6, 8],
+    categoryIds: ["cat_331","cat_332","cat_333","cat_334","cat_335","cat_336","cat_337","cat_338","cat_339","cat_354","cat_355","cat_356","cat_357","cat_358","cat_425","cat_426","cat_427","cat_547","cat_550","cat_555","cat_563","cat_564"],
+    excludeTypes: [],
+    requireTags: ["cat_331","cat_332","cat_333","cat_334","cat_335","cat_354","cat_355","cat_356","cat_357","cat_425","cat_426","cat_427","cat_564"]
   }
 };
+
+function getPresetConfig(preset = selectedPreset) {
+  return PRESET_CONFIGS[preset] || PRESET_CONFIGS["global-normal"];
+}
+
+function getCategoryType(category) {
+  const team = TEAMS[category.logo] || TEAMS[category.id];
+  if (team?.type) return Number(team.type);
+
+  const visualType = category.visualType || category.visuals?.[0]?.visualType || "";
+  const map = { flag: 1, club: 2, league: 3, coach: 4, player: 5, trophy: 6, special: 8 };
+  return map[visualType] || 0;
+}
 
 function getPlayerWeight(player) {
   const tags = player.tags || [];
   let score = 0;
 
-  const bigClubs = [83,84,86,93,99,112,129,133,160,167,172,176,179,204,215,262];
-  const bigTrophies = [331,332,333,334,335,354,355,356,357,425,426,427,564];
-  const bigLeagues = [607,608,609,610,611,598,599,600,601,602,603,604,606,620];
+  const bigClubs = ["cat_83","cat_84","cat_86","cat_93","cat_99","cat_112","cat_129","cat_133","cat_160","cat_167","cat_172","cat_176","cat_179","cat_204","cat_215","cat_262"];
+  const bigTrophies = ["cat_331","cat_332","cat_333","cat_334","cat_335","cat_354","cat_355","cat_356","cat_357","cat_425","cat_426","cat_427","cat_564"];
+  const bigLeagues = ["cat_607","cat_608","cat_609","cat_610","cat_611","cat_598","cat_599","cat_600","cat_601","cat_602","cat_603","cat_604","cat_606","cat_620"];
 
-  score += tags.filter((tag) => bigClubs.includes(Number(tag))).length * 2;
-  score += tags.filter((tag) => bigTrophies.includes(Number(tag))).length * 2;
-  score += tags.filter((tag) => bigLeagues.includes(Number(tag))).length;
+  score += tags.filter((tag) => bigClubs.includes(tag)).length * 2;
+  score += tags.filter((tag) => bigTrophies.includes(tag)).length * 2;
+  score += tags.filter((tag) => bigLeagues.includes(tag)).length;
   if (player.position) score += 1;
   if (tags.length >= 8) score += 2;
   if (tags.length >= 12) score += 2;
@@ -1181,77 +1092,55 @@ function getPlayerWeight(player) {
   return score;
 }
 
-function getPresetConfig(preset = "global-normal") {
-  return PRESET_CONFIGS[preset] || PRESET_CONFIGS["global-normal"];
-}
-
-function filterPlayersForPreset(preset, grid = []) {
+function getPlayersForPreset(preset = selectedPreset, grid = []) {
   const config = getPresetConfig(preset);
-  const required = config.requireAnyTags || [];
+  const required = config.requireTags || [];
 
-  return PLAYERS.filter((player) => {
-    const tags = (player.tags || []).map(Number);
+  return ACTIVE_PLAYERS.filter((player) => {
     if (getPlayerWeight(player) < config.playerMinScore) return false;
-    if (required.length && !tags.some((tag) => required.includes(tag))) return false;
+    if (required.length && !player.tags.some((tag) => required.includes(tag))) return false;
     if (grid.length && !canPlayerFillAnyCell(player, grid)) return false;
     return true;
   });
 }
 
-function filterCategoriesForPreset(preset) {
+function getCategoriesForPreset(preset = selectedPreset) {
   const config = getPresetConfig(preset);
-  const allowedTypes = config.categoryTypes || [1, 2, 3, 4, 5, 6, 8];
-  const whitelist = config.categoryWhitelist || [];
-  const blacklist = config.categoryBlacklist || [];
+  const allowedTypes = config.allowedTypes || [1, 2, 3, 4, 5, 6, 8];
+  const whitelist = new Set(config.categoryIds || []);
+  const excludeTypes = new Set(config.excludeTypes || []);
 
-  return CATEGORIES.filter((category) => {
-    const sourceIds = (category.sourceIds || category.tags || []).map(Number);
-    const mainType = Number(category.type || category.visuals?.[0]?.visualType || 0);
-
-    if (blacklist.length && sourceIds.some((id) => blacklist.includes(id))) return false;
-    if (whitelist.length && !sourceIds.some((id) => whitelist.includes(id))) return false;
-    if (category.categoryType && !allowedTypes.includes(Number(category.categoryType))) return false;
-
-    const visuals = category.visuals || [];
-    if (visuals.length) {
-      const visualOk = visuals.some((visual) => {
-        const typeMap = { flag: 1, club: 2, league: 3, coach: 4, player: 5, trophy: 6, special: 8 };
-        return allowedTypes.includes(typeMap[visual.visualType] || 0);
-      });
-      if (!visualOk && !whitelist.length) return false;
-    }
-
+  return ACTIVE_CATEGORIES.filter((category) => {
+    const type = getCategoryType(category);
+    if (excludeTypes.has(type)) return false;
+    if (whitelist.size) return whitelist.has(category.id);
+    if (!allowedTypes.includes(type)) return false;
     return true;
   });
 }
 
-function generateGameSetup(options = {}) {
-  const preset = options.preset || "global-normal";
-  const customCategories = Array.isArray(options.customCategories) ? options.customCategories : [];
-  const maxDeckSize = Math.min(MAX_DECK_PLAYERS, PLAYERS.length);
+
+function generateGameSetup(requestedGrid = [], preset = selectedPreset) {
+  const playerPoolAll = getPlayersForPreset(preset);
+  const maxDeckSize = Math.min(MAX_DECK_PLAYERS, playerPoolAll.length || ACTIVE_PLAYERS.length);
   const requiredPlayable = Math.min(MIN_PLAYABLE_PLAYERS, maxDeckSize);
 
-  let baseCategories = filterCategoriesForPreset(preset);
-  let gridSeed = customCategories
-    .map((categoryId) => CATEGORIES.find((category) => category.id === categoryId || String(category.id) === String(categoryId)))
-    .filter(Boolean)
-    .slice(0, BOARD_SIZE);
-
-  const missing = Math.max(0, BOARD_SIZE - gridSeed.length);
-  if (missing > 0) {
-    const already = new Set(gridSeed.map((category) => String(category.id)));
-    const candidates = shuffle(baseCategories.filter((category) => !already.has(String(category.id))));
-    gridSeed = [...gridSeed, ...candidates.slice(0, missing)];
-  }
+  const categoryPool = getCategoriesForPreset(preset).filter((category) => getCategoryMatchCount(category, playerPoolAll) > 0);
+  const fixedGrid = normalizeRequestedGrid(requestedGrid)
+    .filter((category) => {
+      if (!categoryPool.length) return true;
+      return categoryPool.some((item) => item.id === category.id);
+    });
 
   let bestSetup = null;
+  const attempts = fixedGrid.length ? 300 : 1200;
 
-  for (let attempt = 0; attempt < 800; attempt++) {
-    const grid = attempt === 0
-      ? gridSeed.slice(0, BOARD_SIZE)
-      : shuffle(baseCategories).slice(0, BOARD_SIZE);
+  for (let attempt = 0; attempt < attempts; attempt++) {
+    const grid = fixedGrid.length
+      ? completeGridFromFixedCategories(fixedGrid, categoryPool, playerPoolAll)
+      : shuffle(categoryPool.length ? categoryPool : ACTIVE_CATEGORIES).slice(0, BOARD_SIZE);
 
-    const playerPool = filterPlayersForPreset(preset, grid);
+    const playerPool = getPlayersForPreset(preset, grid);
     const playablePlayers = playerPool.filter((player) => canPlayerFillAnyCell(player, grid));
     const coveredCells = grid.filter((category) => playablePlayers.some((player) => canPlayerFillCategory(player, category))).length;
 
@@ -1262,15 +1151,28 @@ function generateGameSetup(options = {}) {
     const score = deckPlayableCount * 100 + coveredCells;
 
     if (!bestSetup || score > bestSetup.score) {
-      bestSetup = { grid, deck, playableCount: deckPlayableCount, score };
+      bestSetup = {
+        grid,
+        deck,
+        playableCount: deckPlayableCount,
+        score
+      };
     }
 
-    if (deck.length <= MAX_DECK_PLAYERS && deckPlayableCount >= requiredPlayable && deckCoversEveryCell) {
-      return { grid, deck, playableCount: deckPlayableCount };
+    if (
+      deck.length <= MAX_DECK_PLAYERS &&
+      deckPlayableCount >= requiredPlayable &&
+      deckCoversEveryCell
+    ) {
+      return {
+        grid,
+        deck,
+        playableCount: deckPlayableCount
+      };
     }
   }
 
-  console.warn("Bingo Kun : meilleure configuration utilisée pour le preset", preset, bestSetup);
+  console.warn("Bingo Kun : meilleure configuration utilisée pour", preset, bestSetup);
   return {
     grid: bestSetup.grid,
     deck: bestSetup.deck,
@@ -1278,7 +1180,7 @@ function generateGameSetup(options = {}) {
   };
 }
 
-function buildDeck(grid, playablePlayers, maxDeckSize, preset = "global-normal") {
+function buildDeck(grid, playablePlayers, maxDeckSize, preset = selectedPreset) {
   const selected = new Map();
 
   grid.forEach((category) => {
@@ -1295,8 +1197,9 @@ function buildDeck(grid, playablePlayers, maxDeckSize, preset = "global-normal")
   }
 
   const selectedIds = new Set(selected.keys());
+  const presetPool = getPlayersForPreset(preset);
   const nonPlayablePlayers = shuffle(
-    ACTIVE_PLAYERS.filter((player) => !selectedIds.has(player.id) && !canPlayerFillAnyCell(player, grid))
+    presetPool.filter((player) => !selectedIds.has(player.id) && !canPlayerFillAnyCell(player, grid))
   );
 
   const deck = [...selected.values()];
@@ -1306,7 +1209,7 @@ function buildDeck(grid, playablePlayers, maxDeckSize, preset = "global-normal")
     deck.push(player);
   }
 
-  for (const player of shuffle(ACTIVE_PLAYERS.filter((player) => !deck.some((item) => item.id === player.id)))) {
+  for (const player of shuffle(presetPool.filter((player) => !deck.some((item) => item.id === player.id)))) {
     if (deck.length >= maxDeckSize) break;
     deck.push(player);
   }

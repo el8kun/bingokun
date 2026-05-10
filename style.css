@@ -3213,16 +3213,21 @@ body.overlay-open {
   }
 }
 
-/* --- Bingo Kun v19 : sujets + niveaux de difficulté --- */
+/* --- Bingo Kun v20 : sujets / difficultés corrigés --- */
 .mode-panel {
-  margin: 8px 0 4px;
+  margin: 10px 0 14px;
   border: 1px solid rgba(255,255,255,.10);
   border-radius: 22px;
   padding: 14px;
   background: rgba(255,255,255,.045);
 }
 
-.mode-panel-head p {
+.mode-panel label {
+  color: var(--muted);
+  font-weight: 1000;
+}
+
+.mode-help {
   margin: 3px 0 0;
   color: var(--muted);
   font-size: .82rem;
@@ -3237,7 +3242,7 @@ body.overlay-open {
 }
 
 .preset-choice {
-  min-height: 74px;
+  min-height: 68px;
   border-radius: 16px;
   padding: 11px;
   color: var(--text);
@@ -3264,162 +3269,23 @@ body.overlay-open {
 }
 
 .preset-choice strong {
-  font-size: .86rem;
+  font-size: .84rem;
   font-weight: 1000;
 }
 
 .preset-choice span {
   margin-top: 4px;
   opacity: .78;
-  font-size: .72rem;
+  font-size: .71rem;
   line-height: 1.18;
 }
 
-.custom-toggle-row {
-  margin-top: 13px;
-}
-
-.switch-line {
-  display: flex !important;
-  align-items: center;
-  gap: 10px;
-  color: var(--text) !important;
-  font-size: .9rem;
-  cursor: pointer;
-}
-
-.switch-line input {
-  width: auto;
-}
-
-.custom-builder {
-  margin-top: 13px;
-  display: grid;
-  gap: 12px;
-}
-
-.custom-builder-top {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 10px;
-  align-items: end;
-}
-
-.category-results {
-  max-height: 230px;
-  overflow: auto;
-  display: grid;
-  gap: 8px;
-  padding-right: 4px;
-}
-
-.category-result {
-  display: grid;
-  grid-template-columns: 58px 1fr;
-  align-items: center;
-  gap: 10px;
-  border-radius: 14px;
-  padding: 9px 10px;
-  color: var(--text);
-  background: rgba(255,255,255,.06);
-  border: 1px solid rgba(255,255,255,.09);
-  text-align: left;
-}
-
-.category-result strong {
-  display: grid;
-  place-items: center;
-  min-height: 28px;
-  border-radius: 999px;
-  color: #07100e;
-  background: rgba(255,255,255,.82);
-  font-size: .65rem;
-  font-weight: 1000;
-}
-
-.category-result span {
-  font-size: .78rem;
-  font-weight: 900;
-  line-height: 1.2;
-}
-
-.selected-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  color: var(--muted);
-}
-
-.selected-head strong {
-  color: var(--cyan);
-  text-transform: uppercase;
-  font-size: .78rem;
-  letter-spacing: .1em;
-}
-
-.selected-categories {
-  display: grid;
-  gap: 7px;
-  max-height: 220px;
-  overflow: auto;
-  padding-right: 4px;
-}
-
-.selected-category {
-  display: grid;
-  grid-template-columns: 24px 52px minmax(0, 1fr) 28px;
-  gap: 8px;
-  align-items: center;
-  border-radius: 14px;
-  padding: 8px;
-  background: rgba(39,242,195,.08);
-  border: 1px solid rgba(39,242,195,.12);
-}
-
-.selected-category span {
-  color: var(--muted);
-  font-size: .72rem;
-  font-weight: 1000;
-}
-
-.selected-category strong {
-  display: grid;
-  place-items: center;
-  min-height: 26px;
-  border-radius: 999px;
-  color: #07100e;
-  background: linear-gradient(135deg, var(--cyan), var(--gold));
-  font-size: .62rem;
-  font-weight: 1000;
-}
-
-.selected-category em {
-  min-width: 0;
-  color: var(--text);
-  font-style: normal;
-  font-size: .76rem;
-  font-weight: 900;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-.selected-category button {
-  width: 28px;
-  height: 28px;
-  border-radius: 999px;
-  color: white;
-  background: rgba(255,77,93,.22);
-  font-weight: 1000;
-}
-
 @media (max-width: 820px) {
-  .choice-grid,
-  .custom-builder-top {
+  .choice-grid {
     grid-template-columns: 1fr;
   }
 
   .preset-choice {
-    min-height: 62px;
+    min-height: 58px;
   }
 }
