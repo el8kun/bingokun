@@ -61,6 +61,33 @@
         <label for="playerName">Ton pseudo</label>
         <input id="playerName" maxlength="20" placeholder="Ex : Kun" autocomplete="nickname" />
 
+        <label for="gridMode">Mode de grille</label>
+        <select id="gridMode" class="setup-select">
+          <option value="random">Grille aléatoire</option>
+          <option value="custom">Bingo custom</option>
+        </select>
+
+        <div id="customBuilder" class="custom-builder hidden">
+          <div class="custom-builder-head">
+            <div>
+              <strong>Choisis tes cases</strong>
+              <span id="customCount">0 / 20 cases</span>
+            </div>
+            <button id="customClearBtn" class="tiny-btn" type="button">Vider</button>
+          </div>
+
+          <input id="customCategorySearch" placeholder="Cherche OM, PSG, France, LDC, gardien..." autocomplete="off" />
+
+          <div class="custom-builder-actions">
+            <button id="customAutoBtn" class="secondary-btn" type="button">Compléter automatiquement</button>
+          </div>
+
+          <div id="customSelectedGrid" class="custom-selected-grid"></div>
+          <div id="customSearchResults" class="custom-search-results"></div>
+
+          <p class="hint custom-hint">Tu peux choisir 1 à 20 cases. Si tu n’en mets pas 20, le jeu complète automatiquement la grille.</p>
+        </div>
+
         <button id="createRoomBtn" class="primary-btn" type="button">Créer une room</button>
 
         <div class="separator"><span>ou</span></div>

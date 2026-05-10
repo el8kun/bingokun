@@ -74,6 +74,7 @@ async function loadDatabaseOverrides(force = false) {
     console.warn("Bingo Kun : impossible de charger les corrections admin.", error);
   }
 
+  categoryMatchCache = new Map();
   databaseOverridesLoaded = true;
 }
 
@@ -102,6 +103,14 @@ const startGameBtn = $("startGameBtn");
 const waitingHostHint = $("waitingHostHint");
 const playerNameInput = $("playerName");
 const joinCodeInput = $("joinCode");
+const gridModeSelect = $("gridMode");
+const customBuilder = $("customBuilder");
+const customCountEl = $("customCount");
+const customCategorySearch = $("customCategorySearch");
+const customSelectedGrid = $("customSelectedGrid");
+const customSearchResults = $("customSearchResults");
+const customAutoBtn = $("customAutoBtn");
+const customClearBtn = $("customClearBtn");
 const boardEl = $("board");
 const currentPlayerNameEl = $("currentPlayerName");
 const currentPlayerInitialsEl = $("currentPlayerInitials");
@@ -152,6 +161,9 @@ let unsubscribePlayers = null;
 let clockInterval = null;
 let playerAutoInterval = null;
 let hasShownFinishOverlay = false;
+let customSelectedCategoryIds = [];
+let customSearchTimer = null;
+let categoryMatchCache = new Map();
 let savingResult = false;
 
 const savedName = localStorage.getItem("bingo-kun-name");
@@ -176,6 +188,29 @@ nextPlayerBtn.addEventListener("click", () => advanceMyPlayer(true));
 closeFinishOverlayBtn?.addEventListener("click", () => hideFinishOverlay());
 copyFinishRoomBtn?.addEventListener("click", copyRoomInfo);
 
+gridModeSelect?.addEventListener("change", renderCustomBuilder);
+customCategorySearch?.addEventListener("input", () => {
+  clearTimeout(customSearchTimer);
+  customSearchTimer = setTimeout(renderCustomSearchResults, 100);
+});
+customAutoBtn?.addEventListener("click", autoCompleteCustomGrid);
+customClearBtn?.addEventListener("click", () => {
+  customSelectedCategoryIds = [];
+  renderCustomBuilder();
+});
+customSearchResults?.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-add-category]");
+  if (!button) return;
+  addCustomCategory(button.dataset.addCategory);
+});
+customSelectedGrid?.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-remove-category]");
+  if (!button) return;
+  removeCustomCategory(button.dataset.removeCategory);
+});
+
+renderCustomBuilder();
+
 async function createRoom() {
   const name = getPlayerName();
   if (!name) return;
@@ -184,7 +219,13 @@ async function createRoom() {
   await loadDatabaseOverrides(true);
 
   const code = generateRoomCode();
-  const setup = generateGameSetup();
+  const requestedGrid = getRequestedCustomGrid();
+  if (gridModeSelect?.value === "custom" && !requestedGrid.length) {
+    alert("Choisis au moins une catégorie pour lancer un Bingo custom.");
+    return;
+  }
+
+  const setup = generateGameSetup(requestedGrid);
   const grid = setup.grid;
   const deck = setup.deck.map((player) => player.id);
 
@@ -194,6 +235,8 @@ async function createRoom() {
     grid,
     deck,
     playableCount: setup.playableCount,
+    gridMode: requestedGrid.length ? "custom" : "random",
+    playerBase: "players-with-categories",
     maxDeckPlayers: MAX_DECK_PLAYERS,
     minPlayablePlayers: MIN_PLAYABLE_PLAYERS,
     secondsPerPlayer: AUTO_SECONDS,
@@ -835,7 +878,8 @@ function getCurrentPlayer() {
 }
 
 function getDisplaySurname(name) {
-  const parts = String(name || "")
+  const cleanName = String(name || "").replace(/\s*\([^)]*\)\s*$/g, "");
+  const parts = cleanName
     .replace(/[’']/g, " ")
     .split(/\s+/)
     .filter(Boolean);
@@ -953,14 +997,20 @@ function iconForCategory(id) {
   return icons[id] || "★";
 }
 
-function generateGameSetup() {
+function generateGameSetup(requestedGrid = []) {
   const maxDeckSize = Math.min(MAX_DECK_PLAYERS, ACTIVE_PLAYERS.length);
   const requiredPlayable = Math.min(MIN_PLAYABLE_PLAYERS, maxDeckSize);
 
+  const fixedGrid = normalizeRequestedGrid(requestedGrid);
   let bestSetup = null;
 
-  for (let attempt = 0; attempt < 1200; attempt++) {
-    const grid = shuffle(ACTIVE_CATEGORIES).slice(0, BOARD_SIZE);
+  const attempts = fixedGrid.length ? 300 : 1200;
+
+  for (let attempt = 0; attempt < attempts; attempt++) {
+    const grid = fixedGrid.length
+      ? completeGridFromFixedCategories(fixedGrid)
+      : shuffle(ACTIVE_CATEGORIES).slice(0, BOARD_SIZE);
+
     const playablePlayers = ACTIVE_PLAYERS.filter((player) => canPlayerFillAnyCell(player, grid));
     const coveredCells = grid.filter((category) => playablePlayers.some((player) => canPlayerFillCategory(player, category))).length;
 
@@ -992,12 +1042,190 @@ function generateGameSetup() {
     }
   }
 
-  console.warn("Bingo Kun : impossible de garantir parfaitement 60 joueurs jouables avec cette base. Meilleure configuration utilisée.", bestSetup);
+  console.warn("Bingo Kun : impossible de garantir parfaitement 60 joueurs jouables avec cette grille. Meilleure configuration utilisée.", bestSetup);
   return {
     grid: bestSetup.grid,
     deck: bestSetup.deck,
     playableCount: bestSetup.playableCount
   };
+}
+
+function normalizeRequestedGrid(requestedGrid = []) {
+  const selectedIds = new Set();
+  const selected = [];
+
+  requestedGrid.forEach((category) => {
+    if (!category?.id || selectedIds.has(category.id)) return;
+    const liveCategory = ACTIVE_CATEGORIES.find((item) => item.id === category.id) || category;
+    selectedIds.add(liveCategory.id);
+    selected.push(liveCategory);
+  });
+
+  return selected.slice(0, BOARD_SIZE);
+}
+
+function completeGridFromFixedCategories(fixedGrid) {
+  const selectedIds = new Set(fixedGrid.map((category) => category.id));
+  const grid = [...fixedGrid];
+
+  const candidates = shuffle(
+    ACTIVE_CATEGORIES.filter((category) => {
+      if (selectedIds.has(category.id)) return false;
+      return getCategoryMatchCount(category) > 0;
+    })
+  );
+
+  for (const category of candidates) {
+    if (grid.length >= BOARD_SIZE) break;
+    selectedIds.add(category.id);
+    grid.push(category);
+  }
+
+  return grid.slice(0, BOARD_SIZE);
+}
+
+function getRequestedCustomGrid() {
+  if (gridModeSelect?.value !== "custom") return [];
+
+  return customSelectedCategoryIds
+    .map((id) => ACTIVE_CATEGORIES.find((category) => category.id === id))
+    .filter(Boolean)
+    .slice(0, BOARD_SIZE);
+}
+
+function renderCustomBuilder() {
+  if (!customBuilder || !gridModeSelect) return;
+
+  const isCustom = gridModeSelect.value === "custom";
+  customBuilder.classList.toggle("hidden", !isCustom);
+
+  if (!isCustom) return;
+
+  customSelectedCategoryIds = customSelectedCategoryIds
+    .filter((id, index, array) => array.indexOf(id) === index)
+    .filter((id) => ACTIVE_CATEGORIES.some((category) => category.id === id))
+    .slice(0, BOARD_SIZE);
+
+  if (customCountEl) {
+    customCountEl.textContent = `${customSelectedCategoryIds.length} / ${BOARD_SIZE} cases`;
+  }
+
+  renderCustomSelectedGrid();
+  renderCustomSearchResults();
+}
+
+function renderCustomSelectedGrid() {
+  if (!customSelectedGrid) return;
+
+  if (!customSelectedCategoryIds.length) {
+    customSelectedGrid.innerHTML = `<div class="custom-empty">Aucune case choisie pour l'instant.</div>`;
+    return;
+  }
+
+  customSelectedGrid.innerHTML = customSelectedCategoryIds.map((id, index) => {
+    const category = ACTIVE_CATEGORIES.find((item) => item.id === id);
+    if (!category) return "";
+
+    return `
+      <button class="custom-chip" type="button" data-remove-category="${escapeHtml(id)}">
+        <span>${index + 1}</span>
+        <strong>${escapeHtml(category.title || category.name || category.id)}</strong>
+        <small>${escapeHtml(category.kicker || "Critère")}</small>
+      </button>
+    `;
+  }).join("");
+}
+
+function renderCustomSearchResults() {
+  if (!customSearchResults || gridModeSelect?.value !== "custom") return;
+
+  const query = normalizeSearch(customCategorySearch?.value || "");
+  const selected = new Set(customSelectedCategoryIds);
+
+  const pool = ACTIVE_CATEGORIES
+    .filter((category) => !selected.has(category.id))
+    .map((category) => ({
+      category,
+      count: getCategoryMatchCount(category),
+      haystack: normalizeSearch(`${category.title || ""} ${category.name || ""} ${category.kicker || ""} ${category.shortLabel || ""}`)
+    }))
+    .filter((item) => item.count > 0)
+    .filter((item) => !query || item.haystack.includes(query))
+    .sort((a, b) => {
+      if (query) {
+        const aStarts = a.haystack.startsWith(query) ? 1 : 0;
+        const bStarts = b.haystack.startsWith(query) ? 1 : 0;
+        if (aStarts !== bStarts) return bStarts - aStarts;
+      }
+      return b.count - a.count;
+    })
+    .slice(0, 24);
+
+  if (!pool.length) {
+    customSearchResults.innerHTML = `<div class="custom-empty">Aucune catégorie trouvée.</div>`;
+    return;
+  }
+
+  customSearchResults.innerHTML = pool.map(({ category, count }) => `
+    <button class="custom-result" type="button" data-add-category="${escapeHtml(category.id)}" ${customSelectedCategoryIds.length >= BOARD_SIZE ? "disabled" : ""}>
+      <span class="custom-result-visual">${renderCategoryVisual(category)}</span>
+      <span class="custom-result-meta">
+        <strong>${escapeHtml(category.title || category.name || category.id)}</strong>
+        <small>${escapeHtml(category.kicker || "Critère")} · ${count} joueurs</small>
+      </span>
+    </button>
+  `).join("");
+}
+
+function addCustomCategory(id) {
+  if (!id || customSelectedCategoryIds.includes(id)) return;
+  if (customSelectedCategoryIds.length >= BOARD_SIZE) {
+    alert(`La grille est déjà complète : ${BOARD_SIZE} cases.`);
+    return;
+  }
+
+  customSelectedCategoryIds.push(id);
+  renderCustomBuilder();
+}
+
+function removeCustomCategory(id) {
+  customSelectedCategoryIds = customSelectedCategoryIds.filter((item) => item !== id);
+  renderCustomBuilder();
+}
+
+function autoCompleteCustomGrid() {
+  const selected = new Set(customSelectedCategoryIds);
+  const candidates = shuffle(
+    ACTIVE_CATEGORIES.filter((category) => !selected.has(category.id) && getCategoryMatchCount(category) > 0)
+  );
+
+  for (const category of candidates) {
+    if (customSelectedCategoryIds.length >= BOARD_SIZE) break;
+    selected.add(category.id);
+    customSelectedCategoryIds.push(category.id);
+  }
+
+  renderCustomBuilder();
+}
+
+function getCategoryMatchCount(category) {
+  if (!category?.id) return 0;
+  if (categoryMatchCache.has(category.id)) return categoryMatchCache.get(category.id);
+
+  const count = ACTIVE_PLAYERS.reduce((total, player) => {
+    return total + (canPlayerFillCategory(player, category) ? 1 : 0);
+  }, 0);
+
+  categoryMatchCache.set(category.id, count);
+  return count;
+}
+
+function normalizeSearch(text) {
+  return String(text || "")
+    .normalize("NFD")
+    .replace(/[\\u0300-\\u036f]/g, "")
+    .toLowerCase()
+    .trim();
 }
 
 function buildDeck(grid, playablePlayers, maxDeckSize) {
