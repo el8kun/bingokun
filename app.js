@@ -91,7 +91,9 @@ const BOARD_COLS = 4;
 const BOARD_SIZE = BOARD_ROWS * BOARD_COLS;
 const AUTO_SECONDS = 15;
 const MAX_DECK_PLAYERS = 75;
-const MIN_PLAYABLE_PLAYERS = 60;
+const MIN_PLAYABLE_PLAYERS = 70;
+const MIN_PLAYERS_PER_CELL = 3;
+const MAX_COMBO_CELLS = 6;
 
 const $ = (id) => document.getElementById(id);
 
@@ -479,6 +481,16 @@ async function createRoom() {
   }
 
   const setup = generateGameSetup(requestedGrid, selectedPreset);
+
+  if (!setup.perfectSolvable || setup.deck.length !== MAX_DECK_PLAYERS || setup.playableCount < MIN_PLAYABLE_PLAYERS) {
+    alert(
+      "Impossible de générer une grille équilibrée avec ces paramètres.\n\n" +
+      `Objectif : ${MAX_DECK_PLAYERS} joueurs, minimum ${MIN_PLAYABLE_PLAYERS} utiles, minimum ${MIN_PLAYERS_PER_CELL} solutions par case, maximum ${MAX_COMBO_CELLS} combos.\n\n` +
+      "Essaie un autre type de partie, ou enlève quelques catégories custom trop rares."
+    );
+    return;
+  }
+
   const grid = setup.grid;
   const deck = setup.deck.map((player) => player.id);
 
@@ -490,6 +502,15 @@ async function createRoom() {
     playableCount: setup.playableCount,
     minPlayersPerCell: setup.minPlayersPerCell || 0,
     weakCells: setup.weakCells || [],
+    perfectSolvable: true,
+    perfectAssignment: setup.perfectAssignment || [],
+    comboCount: setup.comboCount || countComboCells(grid),
+    generationRules: {
+      deckSize: MAX_DECK_PLAYERS,
+      minPlayablePlayers: MIN_PLAYABLE_PLAYERS,
+      minPlayersPerCell: MIN_PLAYERS_PER_CELL,
+      maxComboCells: MAX_COMBO_CELLS
+    },
     gridMode: requestedGrid.length ? "custom" : "random",
     preset: selectedPreset,
     playerBase: "players-with-categories",
@@ -1358,6 +1379,15 @@ function iconForCategory(id) {
 }
 
 
+
+function isComboCategory(category) {
+  return Array.isArray(category?.visuals) && category.visuals.length > 1;
+}
+
+function countComboCells(grid) {
+  return grid.filter(isComboCategory).length;
+}
+
 function countDeckMatchesForCategory(deck, category) {
   return deck.reduce((total, player) => {
     return total + (canPlayerFillCategory(player, category) ? 1 : 0);
@@ -1374,16 +1404,83 @@ function getGridCoverageStats(grid, deck) {
   return {
     perCell,
     minMatches: perCell.length ? Math.min(...perCell.map((item) => item.count)) : 0,
-    allCellsHaveTwoPlayers: perCell.every((item) => item.count >= 2),
-    weakCells: perCell.filter((item) => item.count < 2)
+    allCellsHaveEnoughPlayers: perCell.every((item) => item.count >= MIN_PLAYERS_PER_CELL),
+    weakCells: perCell.filter((item) => item.count < MIN_PLAYERS_PER_CELL)
   };
 }
+
+function getPerfectAssignment(grid, deck) {
+  const matchesByCell = grid.map((category, cellIndex) => ({
+    cellIndex,
+    category,
+    playerIndexes: deck
+      .map((player, playerIndex) => ({ player, playerIndex }))
+      .filter(({ player }) => canPlayerFillCategory(player, category))
+      .map(({ playerIndex }) => playerIndex)
+  }));
+
+  // On traite d'abord les cases les plus difficiles.
+  matchesByCell.sort((a, b) => a.playerIndexes.length - b.playerIndexes.length);
+
+  const playerToCell = new Map();
+
+  function tryAssign(cellOrderIndex, seenPlayers) {
+    if (cellOrderIndex >= matchesByCell.length) return true;
+
+    const cell = matchesByCell[cellOrderIndex];
+
+    for (const playerIndex of cell.playerIndexes) {
+      if (seenPlayers.has(playerIndex)) continue;
+      seenPlayers.add(playerIndex);
+
+      const previousCellOrderIndex = playerToCell.get(playerIndex);
+      if (
+        previousCellOrderIndex === undefined ||
+        tryAssign(previousCellOrderIndex, seenPlayers)
+      ) {
+        playerToCell.set(playerIndex, cellOrderIndex);
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  for (let cellOrderIndex = 0; cellOrderIndex < matchesByCell.length; cellOrderIndex++) {
+    if (!tryAssign(cellOrderIndex, new Set())) {
+      return {
+        solvable: false,
+        assignedCells: cellOrderIndex,
+        assignment: []
+      };
+    }
+  }
+
+  const assignment = Array.from(playerToCell.entries()).map(([playerIndex, cellOrderIndex]) => ({
+    playerId: deck[playerIndex]?.id,
+    playerName: deck[playerIndex]?.name,
+    cellIndex: matchesByCell[cellOrderIndex]?.cellIndex,
+    categoryId: matchesByCell[cellOrderIndex]?.category?.id,
+    categoryTitle: matchesByCell[cellOrderIndex]?.category?.title || matchesByCell[cellOrderIndex]?.category?.name
+  }));
+
+  return {
+    solvable: assignment.length >= grid.length,
+    assignedCells: assignment.length,
+    assignment
+  };
+}
+
+function isPerfectSolvable(grid, deck) {
+  return getPerfectAssignment(grid, deck).solvable;
+}
+
 
 
 function generateGameSetup(requestedGrid = [], preset = selectedPreset) {
   const playerPoolAll = getPlayersForPreset(preset);
-  const maxDeckSize = Math.min(MAX_DECK_PLAYERS, playerPoolAll.length || ACTIVE_PLAYERS.length);
-  const requiredPlayable = Math.min(MIN_PLAYABLE_PLAYERS, maxDeckSize);
+  const maxDeckSize = MAX_DECK_PLAYERS;
+  const requiredPlayable = MIN_PLAYABLE_PLAYERS;
 
   const categoryPool = getCategoriesForPreset(preset).filter((category) => getCategoryMatchCount(category, playerPoolAll) > 0);
   const fixedGrid = normalizeRequestedGrid(requestedGrid).filter((category) => {
@@ -1391,24 +1488,72 @@ function generateGameSetup(requestedGrid = [], preset = selectedPreset) {
     return categoryPool.some((item) => item.id === category.id);
   });
 
+  const fixedComboCount = countComboCells(fixedGrid);
+
+  if (fixedComboCount > MAX_COMBO_CELLS) {
+    return {
+      grid: fixedGrid,
+      deck: [],
+      playableCount: 0,
+      minPlayersPerCell: 0,
+      weakCells: [],
+      perfectSolvable: false,
+      perfectAssignment: [],
+      comboCount: fixedComboCount,
+      error: `Trop de combos dans la grille custom : ${fixedComboCount}/${MAX_COMBO_CELLS}`
+    };
+  }
+
   let bestSetup = null;
-  const attempts = fixedGrid.length ? 300 : 1200;
+  const attempts = fixedGrid.length ? 2000 : 6000;
 
   for (let attempt = 0; attempt < attempts; attempt++) {
     const grid = fixedGrid.length
       ? completeGridFromFixedCategories(fixedGrid, categoryPool, playerPoolAll)
-      : shuffle(categoryPool.length ? categoryPool : ACTIVE_CATEGORIES).slice(0, BOARD_SIZE);
+      : buildBalancedRandomGrid(categoryPool.length ? categoryPool : ACTIVE_CATEGORIES, playerPoolAll);
+
+    if (!grid || grid.length !== BOARD_SIZE) continue;
+
+    const comboCount = countComboCells(grid);
+    if (comboCount > MAX_COMBO_CELLS) continue;
 
     const playerPool = getPlayersForPreset(preset, grid);
     const playablePlayers = playerPool.filter((player) => canPlayerFillAnyCell(player, grid));
     const coveredCells = grid.filter((category) => playablePlayers.some((player) => canPlayerFillCategory(player, category))).length;
 
+    if (playablePlayers.length < requiredPlayable) {
+      const score = playablePlayers.length * 100 + coveredCells - (comboCount * 10);
+      if (!bestSetup || score > bestSetup.score) {
+        bestSetup = {
+          grid,
+          deck: playablePlayers.slice(0, maxDeckSize),
+          playableCount: playablePlayers.length,
+          score,
+          coverageStats: getGridCoverageStats(grid, playablePlayers.slice(0, maxDeckSize)),
+          perfectAssignment: { solvable: false, assignedCells: 0, assignment: [] },
+          perfectSolvable: false,
+          comboCount
+        };
+      }
+      continue;
+    }
+
     const deck = buildDeck(grid, playablePlayers, maxDeckSize, preset);
     const deckPlayableCount = deck.filter((player) => canPlayerFillAnyCell(player, grid)).length;
     const coverageStats = getGridCoverageStats(grid, deck);
-    const deckCoversEveryCell = coverageStats.allCellsHaveTwoPlayers;
+    const perfectAssignment = getPerfectAssignment(grid, deck);
+    const deckCoversEveryCell = coverageStats.allCellsHaveEnoughPlayers;
+    const perfectSolvable = perfectAssignment.solvable;
+    const deckHas75Players = deck.length === MAX_DECK_PLAYERS;
 
-    const score = deckPlayableCount * 100 + coveredCells + (coverageStats.minMatches * 25);
+    const score =
+      deckPlayableCount * 100 +
+      coveredCells +
+      (coverageStats.minMatches * 50) +
+      (perfectAssignment.assignedCells * 75) +
+      (deckHas75Players ? 2500 : 0) +
+      (perfectSolvable ? 5000 : 0) -
+      (comboCount * 20);
 
     if (!bestSetup || score > bestSetup.score) {
       bestSetup = {
@@ -1416,29 +1561,69 @@ function generateGameSetup(requestedGrid = [], preset = selectedPreset) {
         deck,
         playableCount: deckPlayableCount,
         score,
-        coverageStats
+        coverageStats,
+        perfectAssignment,
+        perfectSolvable,
+        comboCount
       };
     }
 
-    if (deck.length <= MAX_DECK_PLAYERS && deckPlayableCount >= requiredPlayable && deckCoversEveryCell) {
+    if (
+      deckHas75Players &&
+      deckPlayableCount >= requiredPlayable &&
+      deckCoversEveryCell &&
+      perfectSolvable &&
+      comboCount <= MAX_COMBO_CELLS
+    ) {
       return {
         grid,
         deck,
         playableCount: deckPlayableCount,
         minPlayersPerCell: coverageStats.minMatches,
-        weakCells: coverageStats.weakCells
+        weakCells: coverageStats.weakCells,
+        perfectSolvable: true,
+        perfectAssignment: perfectAssignment.assignment,
+        comboCount
       };
     }
   }
 
-  console.warn("Bingo Kun : meilleure configuration utilisée pour", preset, bestSetup);
+  console.warn("Bingo Kun : aucune grille v32 parfaite trouvée, meilleure configuration :", preset, bestSetup);
   return {
-    grid: bestSetup.grid,
-    deck: bestSetup.deck,
-    playableCount: bestSetup.playableCount,
-    minPlayersPerCell: bestSetup.coverageStats?.minMatches || 0,
-    weakCells: bestSetup.coverageStats?.weakCells || []
+    grid: bestSetup?.grid || [],
+    deck: bestSetup?.deck || [],
+    playableCount: bestSetup?.playableCount || 0,
+    minPlayersPerCell: bestSetup?.coverageStats?.minMatches || 0,
+    weakCells: bestSetup?.coverageStats?.weakCells || [],
+    perfectSolvable: Boolean(bestSetup?.perfectSolvable),
+    perfectAssignment: bestSetup?.perfectAssignment?.assignment || [],
+    comboCount: bestSetup?.comboCount || 0
   };
+}
+
+function buildBalancedRandomGrid(categoryPool, playerPool) {
+  const shuffled = shuffle(categoryPool.filter((category) => getCategoryMatchCount(category, playerPool) > 0));
+  const combos = shuffled.filter(isComboCategory);
+  const nonCombos = shuffled.filter((category) => !isComboCategory(category));
+
+  const comboTarget = Math.min(MAX_COMBO_CELLS, Math.max(4, Math.floor(Math.random() * (MAX_COMBO_CELLS + 1))));
+  const selectedCombos = combos.slice(0, comboTarget);
+  const grid = [...selectedCombos];
+
+  for (const category of nonCombos) {
+    if (grid.length >= BOARD_SIZE) break;
+    grid.push(category);
+  }
+
+  // Si un mode manque de catégories non-combo, on complète sans dépasser le max combo si possible.
+  for (const category of shuffled) {
+    if (grid.length >= BOARD_SIZE) break;
+    if (grid.some((item) => item.id === category.id)) continue;
+    if (isComboCategory(category) && countComboCells(grid) >= MAX_COMBO_CELLS) continue;
+    grid.push(category);
+  }
+
+  return shuffle(grid).slice(0, BOARD_SIZE);
 }
 
 function normalizeRequestedGrid(requestedGrid = []) {
@@ -1624,38 +1809,55 @@ function normalizeSearch(text) {
     .trim();
 }
 
-function buildDeck(grid, playablePlayers, maxDeckSize, preset = selectedPreset) {
+function buildDeck(grid, playablePlayers, maxDeckSize = MAX_DECK_PLAYERS, preset = selectedPreset) {
   const selected = new Map();
 
-  grid.forEach((category) => {
-    const candidates = shuffle(playablePlayers).filter((player) => canPlayerFillCategory(player, category));
-    if (candidates[0]) selected.set(candidates[0].id, candidates[0]);
+  // On sécurise d'abord les cases les plus rares.
+  const categoriesByDifficulty = [...grid].sort((a, b) => {
+    const countA = playablePlayers.filter((player) => canPlayerFillCategory(player, a)).length;
+    const countB = playablePlayers.filter((player) => canPlayerFillCategory(player, b)).length;
+    return countA - countB;
   });
 
-  const requiredPlayable = Math.min(MIN_PLAYABLE_PLAYERS, maxDeckSize);
+  categoriesByDifficulty.forEach((category) => {
+    const candidates = shuffle(playablePlayers).filter((player) => canPlayerFillCategory(player, category));
+    for (const player of candidates) {
+      if (selected.size >= maxDeckSize) break;
+      if (!selected.has(player.id)) {
+        selected.set(player.id, player);
+        break;
+      }
+    }
+  });
+
+  // Puis on ajoute un maximum de joueurs utiles.
   const remainingPlayable = shuffle(playablePlayers.filter((player) => !selected.has(player.id)));
 
   for (const player of remainingPlayable) {
-    if (selected.size >= requiredPlayable) break;
+    if (selected.size >= maxDeckSize) break;
     selected.set(player.id, player);
   }
 
-  const selectedIds = new Set(selected.keys());
-  const presetPool = getPlayersForPreset(preset);
-  const nonPlayablePlayers = shuffle(
-    presetPool.filter((player) => !selectedIds.has(player.id) && !canPlayerFillAnyCell(player, grid))
-  );
-
   const deck = [...selected.values()];
 
-  for (const player of nonPlayablePlayers) {
+  // Si un mode/preset ne fournit pas 75 joueurs utiles, on complète quand même à 75
+  // avec le pool du mode, puis avec toute la base en dernier recours.
+  const usedIds = new Set(deck.map((player) => player.id));
+  const presetPool = getPlayersForPreset(preset);
+  const presetFillers = shuffle(presetPool.filter((player) => !usedIds.has(player.id)));
+
+  for (const player of presetFillers) {
     if (deck.length >= maxDeckSize) break;
     deck.push(player);
+    usedIds.add(player.id);
   }
 
-  for (const player of shuffle(presetPool.filter((player) => !deck.some((item) => item.id === player.id)))) {
+  const globalFillers = shuffle(ACTIVE_PLAYERS.filter((player) => !usedIds.has(player.id)));
+
+  for (const player of globalFillers) {
     if (deck.length >= maxDeckSize) break;
     deck.push(player);
+    usedIds.add(player.id);
   }
 
   return shuffle(deck).slice(0, maxDeckSize);
