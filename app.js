@@ -104,6 +104,8 @@ const topTimer = $("topTimer");
 const roomPill = $("roomPill");
 const roomCodeDisplay = $("roomCodeDisplay");
 const waitingRoomCodeDisplay = $("waitingRoomCodeDisplay");
+const liveRoomCodeMini = $("liveRoomCodeMini");
+const liveModeMini = $("liveModeMini");
 const waitingPlayersList = $("waitingPlayersList");
 const waitingPlayerCount = $("waitingPlayerCount");
 const waitingGridInfo = $("waitingGridInfo");
@@ -748,6 +750,9 @@ function renderGame() {
 
   const currentPlayer = getCurrentPlayer();
   const finished = Boolean(myData.finished);
+
+  if (liveRoomCodeMini) liveRoomCodeMini.textContent = currentRoomCode || roomData.code || "----";
+  if (liveModeMini) liveModeMini.textContent = roomData.presetLabel || getPresetLabel(roomData.preset);
   const board = myData.board || {};
   const filledCount = myData.filledCount || 0;
   const validCount = countValidMoves(board);
