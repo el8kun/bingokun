@@ -2,12 +2,15 @@ import { firebaseConfig } from "./firebase-config.js";
 import { CATEGORIES, PLAYERS, TEAMS } from "./data.js";
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
 const firebaseApp = initializeApp(firebaseConfig);
 const auth = getAuth(firebaseApp);
 const db = getFirestore(firebaseApp);
+let authReady = setPersistence(auth, browserLocalPersistence).catch((error) => {
+  console.warn("Persistence Firebase impossible :", error);
+});
 
 const $ = (id) => document.getElementById(id);
 
@@ -57,6 +60,7 @@ onAuthStateChanged(auth, async (user) => {
 
 adminGoogleLoginBtn?.addEventListener("click", async () => {
   try {
+    await authReady;
     const provider = new GoogleAuthProvider();
     await signInWithPopup(auth, provider);
   } catch (error) {

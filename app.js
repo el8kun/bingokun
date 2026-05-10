@@ -8,7 +8,9 @@ import {
   onAuthStateChanged,
   GoogleAuthProvider,
   signInWithPopup,
-  signOut
+  signOut,
+  setPersistence,
+  browserLocalPersistence
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 import {
   getFirestore,
@@ -25,6 +27,9 @@ import {
 const firebaseApp = initializeApp(firebaseConfig);
 const auth = getAuth(firebaseApp);
 const db = getFirestore(firebaseApp);
+let authReady = setPersistence(auth, browserLocalPersistence).catch((error) => {
+  console.warn("Persistence Firebase impossible :", error);
+});
 
 function clonePlayers(source) {
   return source.map((player) => ({
@@ -322,18 +327,19 @@ onAuthStateChanged(auth, async (user) => {
 
   updateAdminUi(user);
 
+  // Important : ne pas reconnecter en anonyme au chargement avant que Firebase
+  // ait restauré la session Google locale.
   if (!user) {
-    signInAnonymously(auth).catch((error) => {
-      alert("Erreur Firebase Auth : " + error.message);
-    });
+    await authReady;
+    setTimeout(() => {
+      if (!auth.currentUser) {
+        signInAnonymously(auth).catch((error) => {
+          alert("Erreur Firebase Auth : " + error.message);
+        });
+      }
+    }, 500);
   }
 });
-
-if (!auth.currentUser) {
-  signInAnonymously(auth).catch((error) => {
-    alert("Erreur Firebase Auth : " + error.message);
-  });
-}
 
 createRoomBtn?.addEventListener("click", () => {
   createRoom().catch((error) => {
@@ -427,6 +433,7 @@ async function signInAdmin() {
   const provider = new GoogleAuthProvider();
 
   try {
+    await authReady;
     await signInWithPopup(auth, provider);
   } catch (error) {
     alert("Connexion Google impossible : " + error.message);
