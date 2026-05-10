@@ -77,7 +77,9 @@ async function loadDatabaseOverrides(force = false) {
   databaseOverridesLoaded = true;
 }
 
-const BOARD_SIZE = 25;
+const BOARD_ROWS = 5;
+const BOARD_COLS = 4;
+const BOARD_SIZE = BOARD_ROWS * BOARD_COLS;
 const AUTO_SECONDS = 15;
 const MAX_DECK_PLAYERS = 75;
 const MIN_PLAYABLE_PLAYERS = 60;
@@ -120,6 +122,7 @@ const myBingosEl = $("myBingos");
 const leaderboardEl = $("leaderboard");
 const scoreDisplayEl = $("scoreDisplay");
 const scoreSublineEl = $("scoreSubline");
+const compactScoreDisplayEl = $("compactScoreDisplay");
 const liveBingosEl = $("liveBingos");
 const myRankEl = $("myRank");
 const myWrongEl = $("myWrong");
@@ -378,7 +381,7 @@ function renderLeaderboard(players = participantsData) {
   leaderboardEl.innerHTML = sorted.map((player, index) => {
     const rank = index + 1;
     const score = player.finished ? (player.finalScore || 0) : (player.filledCount || 0);
-    const progress = Math.max(0, Math.min(100, Math.round((score / 25) * 100)));
+    const progress = Math.max(0, Math.min(100, Math.round((score / BOARD_SIZE) * 100)));
     const bingos = (player.bingos || []).length;
     const medal = rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : `#${rank}`;
     const statusText = player.finished ? "TERMINÉ" : "EN JEU";
@@ -395,7 +398,7 @@ function renderLeaderboard(players = participantsData) {
               <span class="leaderboard-status">${statusText}</span>
             </div>
             <div class="leaderboard-subline">
-              <span>${score}/25</span>
+              <span>${score}/${BOARD_SIZE}</span>
               <span>${bingos} bingo${bingos > 1 ? "s" : ""}</span>
             </div>
             <div class="leaderboard-progress"><span style="width:${progress}%"></span></div>
@@ -444,7 +447,7 @@ function renderGame() {
       ? "Choisis une case vide : ton rythme n'impacte pas les autres joueurs."
       : "Tu as terminé ta liste de joueurs.";
 
-  myFilledEl.textContent = `${filledCount} / 25`;
+  myFilledEl.textContent = `${filledCount} / ${BOARD_SIZE}`;
   playersRemainingEl.textContent = `${remainingPlayers} / ${deckLength}`;
   if (liveBingosEl) liveBingosEl.textContent = `${liveBingos}`;
   if (myRankEl) myRankEl.textContent = myRank ? `#${myRank}` : "#-";
@@ -455,10 +458,11 @@ function renderGame() {
     const finalBingos = (myData.bingos || []).length;
     const accuracy = Math.round((finalScore / BOARD_SIZE) * 100);
     scoreDisplayEl.textContent = finalScore;
+    if (compactScoreDisplayEl) compactScoreDisplayEl.textContent = `${finalScore}/${BOARD_SIZE}`;
     scoreSublineEl.textContent = "score final";
     hiddenResultBox.classList.add("hidden");
     finalResultBox.classList.remove("hidden");
-    myResultEl.textContent = `${finalScore} / 25`;
+    myResultEl.textContent = `${finalScore} / ${BOARD_SIZE}`;
     myBingosEl.textContent = `${finalBingos}`;
     if (myWrongEl) myWrongEl.textContent = `${BOARD_SIZE - finalScore}`;
     if (myFinalRankEl) myFinalRankEl.textContent = myRank ? `#${myRank}` : "#-";
@@ -471,6 +475,7 @@ function renderGame() {
     }
   } else {
     scoreDisplayEl.textContent = filledCount;
+    if (compactScoreDisplayEl) compactScoreDisplayEl.textContent = `${filledCount}/${BOARD_SIZE}`;
     scoreSublineEl.textContent = "cases";
     hiddenResultBox.classList.remove("hidden");
     finalResultBox.classList.add("hidden");
@@ -735,7 +740,7 @@ function updateFinishOverlay(finalScore, bingoCount, wrongCount, accuracy, rank,
 
   finishTitleEl.textContent = title;
   finishSubtitleEl.textContent = subtitle;
-  finishScoreEl.textContent = `${finalScore} / 25`;
+  finishScoreEl.textContent = `${finalScore} / ${BOARD_SIZE}`;
   finishBingosEl.textContent = String(bingoCount);
   finishWrongEl.textContent = String(wrongCount);
   finishAccuracyEl.textContent = `${accuracy}%`;
@@ -882,16 +887,19 @@ function renderPlayedPlayers(currentIndex) {
 function calculateBingos(board) {
   const lines = [];
 
-  for (let row = 0; row < 5; row++) {
-    lines.push({ id: `row-${row}`, cells: [0, 1, 2, 3, 4].map((col) => row * 5 + col) });
+  for (let row = 0; row < BOARD_ROWS; row++) {
+    lines.push({
+      id: `row-${row}`,
+      cells: Array.from({ length: BOARD_COLS }, (_, col) => row * BOARD_COLS + col)
+    });
   }
 
-  for (let col = 0; col < 5; col++) {
-    lines.push({ id: `col-${col}`, cells: [0, 1, 2, 3, 4].map((row) => row * 5 + col) });
+  for (let col = 0; col < BOARD_COLS; col++) {
+    lines.push({
+      id: `col-${col}`,
+      cells: Array.from({ length: BOARD_ROWS }, (_, row) => row * BOARD_COLS + col)
+    });
   }
-
-  lines.push({ id: "diag-1", cells: [0, 6, 12, 18, 24] });
-  lines.push({ id: "diag-2", cells: [4, 8, 12, 16, 20] });
 
   return lines
     .filter((line) => line.cells.every((cellIndex) => board[cellIndex]?.isValid))
@@ -901,16 +909,13 @@ function calculateBingos(board) {
 function getLineCells(lineId) {
   if (lineId.startsWith("row-")) {
     const row = Number(lineId.replace("row-", ""));
-    return [0, 1, 2, 3, 4].map((col) => row * 5 + col);
+    return Array.from({ length: BOARD_COLS }, (_, col) => row * BOARD_COLS + col);
   }
 
   if (lineId.startsWith("col-")) {
     const col = Number(lineId.replace("col-", ""));
-    return [0, 1, 2, 3, 4].map((row) => row * 5 + col);
+    return Array.from({ length: BOARD_ROWS }, (_, row) => row * BOARD_COLS + col);
   }
-
-  if (lineId === "diag-1") return [0, 6, 12, 18, 24];
-  if (lineId === "diag-2") return [4, 8, 12, 16, 20];
 
   return [];
 }

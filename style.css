@@ -401,7 +401,7 @@ input:focus {
 
 .status-row {
   display: grid;
-  grid-template-columns: 1fr 170px;
+  grid-template-columns: 1fr 128px;
   gap: 16px;
   margin-bottom: 16px;
 }
@@ -527,7 +527,7 @@ input:focus {
 
 .board-grid {
   display: grid;
-  grid-template-columns: repeat(5, minmax(110px, 1fr));
+  grid-template-columns: repeat(4, minmax(118px, 1fr));
   gap: 10px;
 }
 
@@ -804,7 +804,7 @@ input:focus {
   }
 
   .board-grid {
-    grid-template-columns: repeat(5, minmax(92px, 1fr));
+    grid-template-columns: repeat(4, minmax(82px, 1fr));
     gap: 8px;
   }
 
@@ -2827,5 +2827,155 @@ body.overlay-open {
     max-height: 22px;
     font-size: .68rem;
     padding: 3px 8px;
+  }
+}
+
+
+/* --- Bingo Kun v16 : mobile compact + grille 5x4 --- */
+.board-grid {
+  grid-template-columns: repeat(4, minmax(118px, 1fr));
+}
+
+.game-center {
+  width: min(740px, 100%);
+}
+
+.compact-score-badge {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  padding: 5px 9px;
+  color: #07100e;
+  background: linear-gradient(135deg, var(--gold), var(--cyan));
+  font-size: .66rem;
+  font-weight: 1000;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 820px) {
+  .status-row {
+    grid-template-columns: 1fr;
+  }
+
+  .score-card {
+    display: none;
+  }
+
+  .compact-score-badge {
+    display: inline-flex;
+  }
+
+  .current-player-card {
+    grid-template-columns: 58px minmax(0, 1fr) auto;
+    gap: 10px;
+    padding: 12px;
+    min-height: 92px;
+  }
+
+  .round-timer {
+    width: 58px;
+    height: 58px;
+  }
+
+  .round-timer span {
+    font-size: 1.45rem;
+  }
+
+  .round-timer small {
+    margin-bottom: 9px;
+    font-size: .5rem;
+  }
+
+  .current-player-info h2 {
+    font-size: 1.22rem;
+  }
+
+  .current-player-info p,
+  .current-player-subline {
+    display: none;
+  }
+
+  .current-player-initials {
+    width: 42px;
+    height: 42px;
+    flex-basis: 42px;
+    border-radius: 13px;
+    font-size: .95rem;
+  }
+
+  .player-card-topline {
+    margin-bottom: 6px;
+    gap: 5px;
+  }
+
+  .player-counter-badge,
+  .live-badge,
+  .compact-score-badge {
+    font-size: .55rem;
+    padding: 4px 7px;
+  }
+
+  .skip-btn {
+    grid-column: auto;
+    padding: 9px 10px;
+    font-size: .72rem;
+  }
+
+  .board-grid {
+    grid-template-columns: repeat(4, minmax(76px, 1fr));
+    gap: 8px;
+  }
+
+  .board-panel {
+    padding: 10px;
+  }
+
+  .cell {
+    min-height: 128px;
+    padding: 8px 6px;
+  }
+
+  .cell-inner {
+    min-height: 112px;
+    grid-template-rows: 46px 14px 30px 34px;
+    gap: 3px;
+  }
+
+  .cell-image,
+  .cell-visual-club .cell-image,
+  .cell-visual-trophy .cell-image,
+  .cell-visual-player .cell-image,
+  .cell-visual-coach .cell-image,
+  .cell-visual-special .cell-image,
+  .cell-visual-league .cell-image {
+    width: 40px;
+    height: 40px;
+  }
+
+  .cell-visual-images.is-combo .cell-image {
+    width: 31px;
+    height: 31px;
+  }
+
+  .cell-visual-flag .cell-image {
+    width: 43px;
+    height: 29px;
+  }
+
+  .cell-kicker {
+    font-size: .48rem;
+  }
+
+  .cell-title {
+    font-size: .66rem;
+    min-height: 30px;
+  }
+
+  .placed-player {
+    font-size: .62rem;
+    max-width: 96%;
+    padding: 3px 7px;
   }
 }

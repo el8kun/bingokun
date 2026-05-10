@@ -120,7 +120,7 @@ function aggregateResults(results) {
     const score = Number(result.score ?? result.finalScore ?? 0);
     const bingos = Number(result.bingos ?? 0);
     const points = Number(result.points ?? calculateRankingPoints(score, bingos));
-    const accuracy = Number(result.accuracy ?? Math.round((score / 25) * 100));
+    const accuracy = Number(result.accuracy ?? Math.round((score / 20) * 100));
 
     row.playerName = result.playerName || row.playerName;
     row.games += 1;
@@ -129,7 +129,7 @@ function aggregateResults(results) {
     row.totalBingos += bingos;
     row.bestScore = Math.max(row.bestScore, score);
     row.bestPoints = Math.max(row.bestPoints, points);
-    row.perfects += score >= 25 ? 1 : 0;
+    row.perfects += score >= 20 ? 1 : 0;
     row.totalAccuracy += accuracy;
 
     const playedAt = getMillis(result.finishedAt || result.createdAt);
@@ -149,7 +149,7 @@ function renderStats(results, rows) {
   statGames.textContent = results.length;
   const best = results.reduce((max, result) => Math.max(max, Number(result.score ?? result.finalScore ?? 0)), 0);
   const bingos = results.reduce((sum, result) => sum + Number(result.bingos || 0), 0);
-  statBestScore.textContent = `${best}/25`;
+  statBestScore.textContent = `${best}/20`;
   statBingos.textContent = bingos;
 }
 
@@ -171,10 +171,10 @@ function renderRanking(rows) {
         <div class="ranking-player-block">
           <div class="ranking-player-name">${escapeHtml(row.playerName)}</div>
           <div class="ranking-player-subline">
-            ${row.games} partie${row.games > 1 ? "s" : ""} · moyenne ${avgScore.toFixed(1)}/25 · précision ${avgAccuracy}%
+            ${row.games} partie${row.games > 1 ? "s" : ""} · moyenne ${avgScore.toFixed(1)}/20 · précision ${avgAccuracy}%
           </div>
           <div class="ranking-mini-stats">
-            <span>Best ${row.bestScore}/25</span>
+            <span>Best ${row.bestScore}/20</span>
             <span>${row.totalBingos} bingo${row.totalBingos > 1 ? "s" : ""}</span>
             <span>${row.perfects} perfect</span>
           </div>
@@ -206,7 +206,7 @@ function renderRecent(results) {
           <span>${formatDate(result.finishedAt || result.createdAt)} · room ${escapeHtml(result.roomCode || "----")}</span>
         </div>
         <div class="recent-score">
-          <strong>${score}/25</strong>
+          <strong>${score}/20</strong>
           <span>${bingos} bingo${bingos > 1 ? "s" : ""} · ${points} pts</span>
         </div>
       </div>
@@ -215,7 +215,7 @@ function renderRecent(results) {
 }
 
 function calculateRankingPoints(score, bingoCount) {
-  const perfectBonus = Number(score || 0) >= 25 ? 10 : 0;
+  const perfectBonus = Number(score || 0) >= 20 ? 10 : 0;
   const bingoBonus = Number(bingoCount || 0) >= 5 ? 5 : 0;
   return Number(score || 0) + (Number(bingoCount || 0) * 3) + perfectBonus + bingoBonus;
 }
