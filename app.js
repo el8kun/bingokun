@@ -329,6 +329,31 @@ function updatePresetHelp() {
 }
 
 
+
+function getRequestedCustomGrid() {
+  if (gridModeSelect?.value !== "custom") return [];
+
+  return customSelectedCategoryIds
+    .map((id) => ACTIVE_CATEGORIES.find((category) => category.id === id))
+    .filter(Boolean)
+    .slice(0, BOARD_SIZE);
+}
+
+function normalizeRequestedGrid(requestedGrid = []) {
+  const selectedIds = new Set();
+  const selected = [];
+
+  requestedGrid.forEach((category) => {
+    if (!category?.id || selectedIds.has(category.id)) return;
+    const liveCategory = ACTIVE_CATEGORIES.find((item) => item.id === category.id) || category;
+    selectedIds.add(liveCategory.id);
+    selected.push(liveCategory);
+  });
+
+  return selected.slice(0, BOARD_SIZE);
+}
+
+
 async function createRoom() {
   const name = getPlayerName();
   if (!name) return;
