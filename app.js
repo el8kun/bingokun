@@ -86,8 +86,8 @@ async function loadDatabaseOverrides(force = false) {
   databaseOverridesLoaded = true;
 }
 
-const BOARD_ROWS = 4;
-const BOARD_COLS = 5;
+const BOARD_ROWS = 5;
+const BOARD_COLS = 4;
 const BOARD_SIZE = BOARD_ROWS * BOARD_COLS;
 const AUTO_SECONDS = 15;
 const MAX_DECK_PLAYERS = 75;
@@ -104,8 +104,6 @@ const topTimer = $("topTimer");
 const roomPill = $("roomPill");
 const roomCodeDisplay = $("roomCodeDisplay");
 const waitingRoomCodeDisplay = $("waitingRoomCodeDisplay");
-const liveRoomCodeMini = $("liveRoomCodeMini");
-const liveModeMini = $("liveModeMini");
 const waitingPlayersList = $("waitingPlayersList");
 const waitingPlayerCount = $("waitingPlayerCount");
 const waitingGridInfo = $("waitingGridInfo");
@@ -487,23 +485,16 @@ async function createRoom() {
 
   const setup = generateGameSetup(requestedGrid, selectedPreset);
 
-  if (
-    !setup.perfectSolvable ||
-    !Array.isArray(setup.grid) ||
-    setup.grid.length !== BOARD_SIZE ||
-    !Array.isArray(setup.deck) ||
-    setup.deck.length !== MAX_DECK_PLAYERS ||
-    setup.playableCount < MIN_PLAYABLE_PLAYERS
-  ) {
+  if (!setup.perfectSolvable || setup.deck.length !== MAX_DECK_PLAYERS || setup.playableCount < MIN_PLAYABLE_PLAYERS) {
     alert(
       "Impossible de générer une grille équilibrée avec ces paramètres.\n\n" +
-      `Objectif : ${MAX_DECK_PLAYERS} joueurs, ${BOARD_SIZE} cases, minimum ${MIN_PLAYABLE_PLAYERS} utiles, minimum ${MIN_PLAYERS_PER_CELL} solutions par case, maximum ${MAX_COMBO_CELLS} combos.\n\n` +
-      "Relance la création ou choisis un autre type de partie."
+      `Objectif : ${MAX_DECK_PLAYERS} joueurs, minimum ${MIN_PLAYABLE_PLAYERS} utiles, minimum ${MIN_PLAYERS_PER_CELL} solutions par case, maximum ${MAX_COMBO_CELLS} combos.\n\n` +
+      "Essaie un autre type de partie, ou enlève quelques catégories custom trop rares."
     );
     return;
   }
 
-  const grid = setup.grid.slice(0, BOARD_SIZE);
+  const grid = setup.grid;
   const deck = setup.deck.map((player) => player.id);
 
   await setDoc(doc(db, "rooms", code), {
@@ -637,20 +628,6 @@ function subscribeToRoom(code) {
 function renderViews() {
   if (!roomData || !myData) return;
 
-  if (roomData.status !== "waiting" && (!Array.isArray(roomData.grid) || roomData.grid.length !== BOARD_SIZE)) {
-    waitingView.classList.add("hidden");
-    gameView.classList.remove("hidden");
-    topTimer.classList.add("hidden");
-    boardEl.innerHTML = `
-      <div class="empty-board-warning">
-        <strong>Grille introuvable</strong>
-        <span>Cette room a été créée avec une ancienne version ou une génération incomplète. Crée une nouvelle room.</span>
-      </div>
-    `;
-    setMessage("Grille introuvable : crée une nouvelle room.", "bad");
-    return;
-  }
-
   if (roomData.status === "waiting") {
     stopTimers();
     waitingView.classList.remove("hidden");
@@ -771,9 +748,6 @@ function renderGame() {
 
   const currentPlayer = getCurrentPlayer();
   const finished = Boolean(myData.finished);
-
-  if (liveRoomCodeMini) liveRoomCodeMini.textContent = currentRoomCode || roomData.code || "----";
-  if (liveModeMini) liveModeMini.textContent = roomData.presetLabel || getPresetLabel(roomData.preset);
   const board = myData.board || {};
   const filledCount = myData.filledCount || 0;
   const validCount = countValidMoves(board);
@@ -793,40 +767,14 @@ function renderGame() {
 
   const remainingPlayers = currentPlayer ? Math.max(0, deckLength - currentIndex - 1) : 0;
 
-  const currentPlayerId = getCurrentPlayerId();
-  const missingPlayer = !finished && currentPlayerId && !currentPlayer;
-
-  currentPlayerNameEl.textContent = currentPlayer
-    ? currentPlayer.name
-    : finished
-      ? "Grille terminée"
-      : missingPlayer
-        ? "Joueur introuvable"
-        : "Fin du deck";
-
-  currentPlayerInitialsEl.textContent = currentPlayer
-    ? getPlayerInitials(currentPlayer.name)
-    : finished
-      ? "✓"
-      : missingPlayer
-        ? "!"
-        : "—";
-
-  playerCounterBadgeEl.textContent = currentPlayer
-    ? `Joueur ${currentIndex + 1} / ${deckLength}`
-    : finished
-      ? `Partie terminée`
-      : missingPlayer
-        ? `ID ${String(currentPlayerId).slice(0, 10)}`
-        : `Deck terminé`;
-
+  currentPlayerNameEl.textContent = currentPlayer ? currentPlayer.name : finished ? "Grille terminée" : "Fin du deck";
+  currentPlayerInitialsEl.textContent = currentPlayer ? getPlayerInitials(currentPlayer.name) : finished ? "✓" : "—";
+  playerCounterBadgeEl.textContent = currentPlayer ? `Joueur ${currentIndex + 1} / ${deckLength}` : finished ? `Partie terminée` : `Deck terminé`;
   currentPlayerSublineEl.textContent = finished
     ? "Ton score final est verrouillé. Consulte le classement et tes bingos."
     : currentPlayer
       ? "Choisis une case vide : ton rythme n'impacte pas les autres joueurs."
-      : missingPlayer
-        ? "Ce joueur n’existe pas dans ton data.js actuel. Crée une nouvelle room après avoir uploadé le bon data.js."
-        : "Tu as terminé ta liste de joueurs.";
+      : "Tu as terminé ta liste de joueurs.";
 
   myFilledEl.textContent = `${filledCount} / ${BOARD_SIZE}`;
   playersRemainingEl.textContent = `${remainingPlayers} / ${deckLength}`;
@@ -870,21 +818,11 @@ function renderGame() {
 function renderBoard(currentPlayer) {
   boardEl.innerHTML = "";
 
-  if (!Array.isArray(roomData?.grid) || roomData.grid.length !== BOARD_SIZE) {
-    boardEl.innerHTML = `
-      <div class="empty-board-warning">
-        <strong>Grille introuvable</strong>
-        <span>Cette room n’a pas les ${BOARD_SIZE} cases nécessaires. Crée une nouvelle room.</span>
-      </div>
-    `;
-    return;
-  }
-
   const board = myData.board || {};
   const reveal = Boolean(myData.finished);
   const bingoCells = reveal ? new Set((myData.bingos || []).flatMap(getLineCells)) : new Set();
 
-  roomData.grid.slice(0, BOARD_SIZE).forEach((category, index) => {
+  roomData.grid.forEach((category, index) => {
     const move = board[index];
     const cell = document.createElement("button");
     cell.className = "cell";
@@ -1236,7 +1174,7 @@ function renderFinishRecap() {
 
   const rows = shownIds
     .map((playerId, index) => {
-      const player = findPlayerByAnyId(playerId);
+      const player = ACTIVE_PLAYERS.find((item) => item.id === playerId);
       if (!player) return null;
 
       const possibleCells = roomData.grid
@@ -1372,28 +1310,10 @@ function getMyCurrentIndex() {
   return Math.max(0, Number(myData?.currentIndex || 0));
 }
 
-function getCurrentPlayerId() {
-  if (!roomData?.deck) return null;
-  return roomData.deck[getMyCurrentIndex()] ?? null;
-}
-
-function findPlayerByAnyId(rawId) {
-  if (rawId === null || rawId === undefined) return null;
-
-  const wanted = String(rawId);
-
-  return ACTIVE_PLAYERS.find((player) => {
-    return (
-      String(player.id) === wanted ||
-      String(player.sourceId) === wanted ||
-      String(player.slug) === wanted
-    );
-  }) || null;
-}
-
 function getCurrentPlayer() {
-  const id = getCurrentPlayerId();
-  return findPlayerByAnyId(id);
+  if (!roomData?.deck) return null;
+  const id = roomData.deck[getMyCurrentIndex()];
+  return ACTIVE_PLAYERS.find((player) => player.id === id) || null;
 }
 
 function getDisplaySurname(name) {
