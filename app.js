@@ -793,14 +793,40 @@ function renderGame() {
 
   const remainingPlayers = currentPlayer ? Math.max(0, deckLength - currentIndex - 1) : 0;
 
-  currentPlayerNameEl.textContent = currentPlayer ? currentPlayer.name : finished ? "Grille terminée" : "Fin du deck";
-  currentPlayerInitialsEl.textContent = currentPlayer ? getPlayerInitials(currentPlayer.name) : finished ? "✓" : "—";
-  playerCounterBadgeEl.textContent = currentPlayer ? `Joueur ${currentIndex + 1} / ${deckLength}` : finished ? `Partie terminée` : `Deck terminé`;
+  const currentPlayerId = getCurrentPlayerId();
+  const missingPlayer = !finished && currentPlayerId && !currentPlayer;
+
+  currentPlayerNameEl.textContent = currentPlayer
+    ? currentPlayer.name
+    : finished
+      ? "Grille terminée"
+      : missingPlayer
+        ? "Joueur introuvable"
+        : "Fin du deck";
+
+  currentPlayerInitialsEl.textContent = currentPlayer
+    ? getPlayerInitials(currentPlayer.name)
+    : finished
+      ? "✓"
+      : missingPlayer
+        ? "!"
+        : "—";
+
+  playerCounterBadgeEl.textContent = currentPlayer
+    ? `Joueur ${currentIndex + 1} / ${deckLength}`
+    : finished
+      ? `Partie terminée`
+      : missingPlayer
+        ? `ID ${String(currentPlayerId).slice(0, 10)}`
+        : `Deck terminé`;
+
   currentPlayerSublineEl.textContent = finished
     ? "Ton score final est verrouillé. Consulte le classement et tes bingos."
     : currentPlayer
       ? "Choisis une case vide : ton rythme n'impacte pas les autres joueurs."
-      : "Tu as terminé ta liste de joueurs.";
+      : missingPlayer
+        ? "Ce joueur n’existe pas dans ton data.js actuel. Crée une nouvelle room après avoir uploadé le bon data.js."
+        : "Tu as terminé ta liste de joueurs.";
 
   myFilledEl.textContent = `${filledCount} / ${BOARD_SIZE}`;
   playersRemainingEl.textContent = `${remainingPlayers} / ${deckLength}`;
@@ -1210,7 +1236,7 @@ function renderFinishRecap() {
 
   const rows = shownIds
     .map((playerId, index) => {
-      const player = ACTIVE_PLAYERS.find((item) => item.id === playerId);
+      const player = findPlayerByAnyId(playerId);
       if (!player) return null;
 
       const possibleCells = roomData.grid
@@ -1346,10 +1372,28 @@ function getMyCurrentIndex() {
   return Math.max(0, Number(myData?.currentIndex || 0));
 }
 
-function getCurrentPlayer() {
+function getCurrentPlayerId() {
   if (!roomData?.deck) return null;
-  const id = roomData.deck[getMyCurrentIndex()];
-  return ACTIVE_PLAYERS.find((player) => player.id === id) || null;
+  return roomData.deck[getMyCurrentIndex()] ?? null;
+}
+
+function findPlayerByAnyId(rawId) {
+  if (rawId === null || rawId === undefined) return null;
+
+  const wanted = String(rawId);
+
+  return ACTIVE_PLAYERS.find((player) => {
+    return (
+      String(player.id) === wanted ||
+      String(player.sourceId) === wanted ||
+      String(player.slug) === wanted
+    );
+  }) || null;
+}
+
+function getCurrentPlayer() {
+  const id = getCurrentPlayerId();
+  return findPlayerByAnyId(id);
 }
 
 function getDisplaySurname(name) {
