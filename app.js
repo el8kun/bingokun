@@ -92,7 +92,8 @@ const BOARD_SIZE = BOARD_ROWS * BOARD_COLS;
 const AUTO_SECONDS = 15;
 const MAX_DECK_PLAYERS = 75;
 const MIN_PLAYABLE_PLAYERS = 65;
-const MIN_PLAYERS_PER_CELL = 3;
+const MIN_PLAYERS_PER_STANDARD_CELL = 3;
+const MIN_PLAYERS_PER_COMBO_CELL = 2;
 const MAX_COMBO_CELLS = 6;
 
 const $ = (id) => document.getElementById(id);
@@ -496,7 +497,7 @@ async function createRoom() {
   if (!setup.perfectSolvable || setup.deck.length !== MAX_DECK_PLAYERS || setup.playableCount < MIN_PLAYABLE_PLAYERS) {
     alert(
       "Impossible de générer une grille équilibrée avec ces paramètres.\n\n" +
-      `Objectif : ${MAX_DECK_PLAYERS} joueurs, minimum ${MIN_PLAYABLE_PLAYERS} utiles, minimum ${MIN_PLAYERS_PER_CELL} solutions par case, maximum ${MAX_COMBO_CELLS} combos.\n\n` +
+      `Objectif : ${MAX_DECK_PLAYERS} joueurs, minimum ${MIN_PLAYABLE_PLAYERS} utiles, minimum 3 solutions par case simple, 2 par combo, maximum ${MAX_COMBO_CELLS} combos.\n\n` +
       "Essaie un autre type de partie, ou enlève quelques catégories custom trop rares."
     );
     return;
@@ -519,7 +520,8 @@ async function createRoom() {
     generationRules: {
       deckSize: MAX_DECK_PLAYERS,
       minPlayablePlayers: MIN_PLAYABLE_PLAYERS,
-      minPlayersPerCell: MIN_PLAYERS_PER_CELL,
+      minPlayersPerStandardCell: MIN_PLAYERS_PER_STANDARD_CELL,
+      minPlayersPerComboCell: MIN_PLAYERS_PER_COMBO_CELL,
       maxComboCells: MAX_COMBO_CELLS
     },
     gridMode: requestedGrid.length ? "custom" : "random",
@@ -1456,6 +1458,10 @@ function countComboCells(grid) {
   return grid.filter(isComboCategory).length;
 }
 
+function getMinPlayersForCategory(category) {
+  return isComboCategory(category) ? MIN_PLAYERS_PER_COMBO_CELL : MIN_PLAYERS_PER_STANDARD_CELL;
+}
+
 function countDeckMatchesForCategory(deck, category) {
   return deck.reduce((total, player) => {
     return total + (canPlayerFillCategory(player, category) ? 1 : 0);
@@ -1463,17 +1469,23 @@ function countDeckMatchesForCategory(deck, category) {
 }
 
 function getGridCoverageStats(grid, deck) {
-  const perCell = grid.map((category, index) => ({
-    index,
-    categoryId: category.id,
-    count: countDeckMatchesForCategory(deck, category)
-  }));
+  const perCell = grid.map((category, index) => {
+    const required = getMinPlayersForCategory(category);
+    return {
+      index,
+      categoryId: category.id,
+      title: category.title || category.name || category.id,
+      isCombo: isComboCategory(category),
+      required,
+      count: countDeckMatchesForCategory(deck, category)
+    };
+  });
 
   return {
     perCell,
     minMatches: perCell.length ? Math.min(...perCell.map((item) => item.count)) : 0,
-    allCellsHaveEnoughPlayers: perCell.every((item) => item.count >= MIN_PLAYERS_PER_CELL),
-    weakCells: perCell.filter((item) => item.count < MIN_PLAYERS_PER_CELL)
+    allCellsHaveEnoughPlayers: perCell.every((item) => item.count >= item.required),
+    weakCells: perCell.filter((item) => item.count < item.required)
   };
 }
 
@@ -1550,7 +1562,7 @@ function generateGameSetup(requestedGrid = [], preset = selectedPreset) {
   const maxDeckSize = MAX_DECK_PLAYERS;
   const requiredPlayable = MIN_PLAYABLE_PLAYERS;
 
-  const categoryPool = getCategoriesForPreset(preset).filter((category) => getCategoryMatchCount(category, playerPoolAll) > 0);
+  const categoryPool = getCategoriesForPreset(preset).filter((category) => getCategoryMatchCount(category, playerPoolAll) >= getMinPlayersForCategory(category));
   const fixedGrid = normalizeRequestedGrid(requestedGrid).filter((category) => {
     if (!categoryPool.length) return true;
     return categoryPool.some((item) => item.id === category.id);
