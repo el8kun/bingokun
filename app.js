@@ -182,6 +182,118 @@ let savingResult = false;
 const savedName = localStorage.getItem("bingo-kun-name");
 if (savedName) playerNameInput.value = savedName;
 
+const PRESET_CONFIGS = {
+  "global-easy": {
+    playerMinScore: 7,
+    allowedTypes: [1, 2, 3, 6],
+    categoryIds: [],
+    excludeTypes: [4, 5],
+    requireTags: ["cat_331","cat_332","cat_333","cat_334","cat_335","cat_354","cat_355","cat_356","cat_357","cat_425","cat_426","cat_427","cat_564","cat_160","cat_112","cat_204","cat_93","cat_84","cat_83","cat_179","cat_172","cat_133","cat_167"]
+  },
+  "global-normal": {
+    playerMinScore: 4,
+    allowedTypes: [1, 2, 3, 6, 8],
+    categoryIds: [],
+    excludeTypes: [4, 5],
+    requireTags: ["cat_83","cat_84","cat_86","cat_93","cat_99","cat_112","cat_129","cat_133","cat_160","cat_167","cat_172","cat_176","cat_179","cat_204","cat_215","cat_262","cat_331","cat_332","cat_333","cat_334","cat_335","cat_354","cat_355","cat_356","cat_357","cat_425","cat_426","cat_427","cat_547","cat_550","cat_564","cat_607","cat_608","cat_609"]
+  },
+  "global-hard": {
+    playerMinScore: 2,
+    allowedTypes: [1, 2, 3, 4, 5, 6, 8],
+    categoryIds: [],
+    excludeTypes: [],
+    requireTags: []
+  },
+  "hardcore": {
+    playerMinScore: 0,
+    allowedTypes: [1, 2, 3, 4, 5, 6, 8],
+    categoryIds: [],
+    excludeTypes: [],
+    requireTags: []
+  },
+  "ligue1": {
+    playerMinScore: 1,
+    allowedTypes: [1, 2, 3, 6, 8],
+    categoryIds: ["cat_172","cat_129","cat_215","cat_117","cat_159","cat_219","cat_3","cat_6","cat_5","cat_13","cat_18","cat_400","cat_403","cat_354","cat_355","cat_356","cat_425","cat_426","cat_547","cat_550","cat_611","cat_606"],
+    excludeTypes: [4, 5],
+    requireTags: ["cat_172","cat_129","cat_215","cat_117","cat_159","cat_219","cat_606","cat_611"]
+  },
+  "premierleague": {
+    playerMinScore: 1,
+    allowedTypes: [1, 2, 3, 6, 8],
+    categoryIds: ["cat_84","cat_92","cat_93","cat_114","cat_133","cat_149","cat_179","cat_191","cat_204","cat_207","cat_1","cat_3","cat_5","cat_6","cat_13","cat_400","cat_403","cat_331","cat_332","cat_333","cat_354","cat_355","cat_356","cat_425","cat_426","cat_547","cat_550","cat_607"],
+    excludeTypes: [4, 5],
+    requireTags: ["cat_84","cat_92","cat_93","cat_114","cat_133","cat_149","cat_179","cat_191","cat_204","cat_207","cat_607","cat_331","cat_332","cat_333"]
+  },
+  "trophies": {
+    playerMinScore: 2,
+    allowedTypes: [6, 8],
+    categoryIds: ["cat_331","cat_332","cat_333","cat_334","cat_335","cat_336","cat_337","cat_338","cat_339","cat_354","cat_355","cat_356","cat_357","cat_358","cat_425","cat_426","cat_427","cat_547","cat_550","cat_555","cat_563","cat_564"],
+    excludeTypes: [],
+    requireTags: ["cat_331","cat_332","cat_333","cat_334","cat_335","cat_354","cat_355","cat_356","cat_357","cat_425","cat_426","cat_427","cat_564"]
+  }
+};
+
+function getPresetConfig(preset = selectedPreset) {
+  return PRESET_CONFIGS[preset] || PRESET_CONFIGS["global-normal"];
+}
+
+function getCategoryType(category) {
+  const team = TEAMS[category.logo] || TEAMS[category.id];
+  if (team?.type) return Number(team.type);
+
+  const visualType = category.visualType || category.visuals?.[0]?.visualType || "";
+  const map = { flag: 1, club: 2, league: 3, coach: 4, player: 5, trophy: 6, special: 8 };
+  return map[visualType] || 0;
+}
+
+function getPlayerWeight(player) {
+  const tags = player.tags || [];
+  let score = 0;
+
+  const bigClubs = ["cat_83","cat_84","cat_86","cat_93","cat_99","cat_112","cat_129","cat_133","cat_160","cat_167","cat_172","cat_176","cat_179","cat_204","cat_215","cat_262"];
+  const bigTrophies = ["cat_331","cat_332","cat_333","cat_334","cat_335","cat_354","cat_355","cat_356","cat_357","cat_425","cat_426","cat_427","cat_564"];
+  const bigLeagues = ["cat_607","cat_608","cat_609","cat_610","cat_611","cat_598","cat_599","cat_600","cat_601","cat_602","cat_603","cat_604","cat_606","cat_620"];
+
+  score += tags.filter((tag) => bigClubs.includes(tag)).length * 2;
+  score += tags.filter((tag) => bigTrophies.includes(tag)).length * 2;
+  score += tags.filter((tag) => bigLeagues.includes(tag)).length;
+  if (player.position) score += 1;
+  if (tags.length >= 8) score += 2;
+  if (tags.length >= 12) score += 2;
+
+  return score;
+}
+
+function getPlayersForPreset(preset = selectedPreset, grid = []) {
+  const config = getPresetConfig(preset);
+  const required = config.requireTags || [];
+
+  return ACTIVE_PLAYERS.filter((player) => {
+    if (getPlayerWeight(player) < config.playerMinScore) return false;
+    if (required.length && !player.tags.some((tag) => required.includes(tag))) return false;
+    if (grid.length && !canPlayerFillAnyCell(player, grid)) return false;
+    return true;
+  });
+}
+
+function getCategoriesForPreset(preset = selectedPreset) {
+  const config = getPresetConfig(preset);
+  const allowedTypes = config.allowedTypes || [1, 2, 3, 4, 5, 6, 8];
+  const whitelist = new Set(config.categoryIds || []);
+  const excludeTypes = new Set(config.excludeTypes || []);
+
+  return ACTIVE_CATEGORIES.filter((category) => {
+    const type = getCategoryType(category);
+    if (excludeTypes.has(type)) return false;
+    if (whitelist.size) return whitelist.has(category.id);
+    if (!allowedTypes.includes(type)) return false;
+    return true;
+  });
+}
+
+
+
 onAuthStateChanged(auth, async (user) => {
   uid = user?.uid || null;
   isAdminUser = false;
@@ -217,8 +329,7 @@ presetModeSelect?.addEventListener("change", () => {
   selectedPreset = presetModeSelect.value || "global-normal";
   categoryMatchCache = new Map();
   updatePresetHelp();
-  updatePresetHelp();
-renderCustomBuilder();
+  renderCustomBuilder();
 });
 $("joinRoomBtn").addEventListener("click", () => joinRoom(joinCodeInput.value.trim().toUpperCase()));
 $("copyRoomBtn").addEventListener("click", copyRoomInfo);
@@ -1153,117 +1264,6 @@ function iconForCategory(id) {
   };
 
   return icons[id] || "★";
-}
-
-
-const PRESET_CONFIGS = {
-  "global-easy": {
-    playerMinScore: 7,
-    allowedTypes: [1, 2, 3, 6],
-    categoryIds: [],
-    excludeTypes: [4, 5],
-    requireTags: ["cat_331","cat_332","cat_333","cat_334","cat_335","cat_354","cat_355","cat_356","cat_357","cat_425","cat_426","cat_427","cat_564","cat_160","cat_112","cat_204","cat_93","cat_84","cat_83","cat_179","cat_172","cat_133","cat_167"]
-  },
-  "global-normal": {
-    playerMinScore: 4,
-    allowedTypes: [1, 2, 3, 6, 8],
-    categoryIds: [],
-    excludeTypes: [4, 5],
-    requireTags: ["cat_83","cat_84","cat_86","cat_93","cat_99","cat_112","cat_129","cat_133","cat_160","cat_167","cat_172","cat_176","cat_179","cat_204","cat_215","cat_262","cat_331","cat_332","cat_333","cat_334","cat_335","cat_354","cat_355","cat_356","cat_357","cat_425","cat_426","cat_427","cat_547","cat_550","cat_564","cat_607","cat_608","cat_609"]
-  },
-  "global-hard": {
-    playerMinScore: 2,
-    allowedTypes: [1, 2, 3, 4, 5, 6, 8],
-    categoryIds: [],
-    excludeTypes: [],
-    requireTags: []
-  },
-  "hardcore": {
-    playerMinScore: 0,
-    allowedTypes: [1, 2, 3, 4, 5, 6, 8],
-    categoryIds: [],
-    excludeTypes: [],
-    requireTags: []
-  },
-  "ligue1": {
-    playerMinScore: 1,
-    allowedTypes: [1, 2, 3, 6, 8],
-    categoryIds: ["cat_172","cat_129","cat_215","cat_117","cat_159","cat_219","cat_3","cat_6","cat_5","cat_13","cat_18","cat_400","cat_403","cat_354","cat_355","cat_356","cat_425","cat_426","cat_547","cat_550","cat_611","cat_606"],
-    excludeTypes: [4, 5],
-    requireTags: ["cat_172","cat_129","cat_215","cat_117","cat_159","cat_219","cat_606","cat_611"]
-  },
-  "premierleague": {
-    playerMinScore: 1,
-    allowedTypes: [1, 2, 3, 6, 8],
-    categoryIds: ["cat_84","cat_92","cat_93","cat_114","cat_133","cat_149","cat_179","cat_191","cat_204","cat_207","cat_1","cat_3","cat_5","cat_6","cat_13","cat_400","cat_403","cat_331","cat_332","cat_333","cat_354","cat_355","cat_356","cat_425","cat_426","cat_547","cat_550","cat_607"],
-    excludeTypes: [4, 5],
-    requireTags: ["cat_84","cat_92","cat_93","cat_114","cat_133","cat_149","cat_179","cat_191","cat_204","cat_207","cat_607","cat_331","cat_332","cat_333"]
-  },
-  "trophies": {
-    playerMinScore: 2,
-    allowedTypes: [6, 8],
-    categoryIds: ["cat_331","cat_332","cat_333","cat_334","cat_335","cat_336","cat_337","cat_338","cat_339","cat_354","cat_355","cat_356","cat_357","cat_358","cat_425","cat_426","cat_427","cat_547","cat_550","cat_555","cat_563","cat_564"],
-    excludeTypes: [],
-    requireTags: ["cat_331","cat_332","cat_333","cat_334","cat_335","cat_354","cat_355","cat_356","cat_357","cat_425","cat_426","cat_427","cat_564"]
-  }
-};
-
-function getPresetConfig(preset = selectedPreset) {
-  return PRESET_CONFIGS[preset] || PRESET_CONFIGS["global-normal"];
-}
-
-function getCategoryType(category) {
-  const team = TEAMS[category.logo] || TEAMS[category.id];
-  if (team?.type) return Number(team.type);
-
-  const visualType = category.visualType || category.visuals?.[0]?.visualType || "";
-  const map = { flag: 1, club: 2, league: 3, coach: 4, player: 5, trophy: 6, special: 8 };
-  return map[visualType] || 0;
-}
-
-function getPlayerWeight(player) {
-  const tags = player.tags || [];
-  let score = 0;
-
-  const bigClubs = ["cat_83","cat_84","cat_86","cat_93","cat_99","cat_112","cat_129","cat_133","cat_160","cat_167","cat_172","cat_176","cat_179","cat_204","cat_215","cat_262"];
-  const bigTrophies = ["cat_331","cat_332","cat_333","cat_334","cat_335","cat_354","cat_355","cat_356","cat_357","cat_425","cat_426","cat_427","cat_564"];
-  const bigLeagues = ["cat_607","cat_608","cat_609","cat_610","cat_611","cat_598","cat_599","cat_600","cat_601","cat_602","cat_603","cat_604","cat_606","cat_620"];
-
-  score += tags.filter((tag) => bigClubs.includes(tag)).length * 2;
-  score += tags.filter((tag) => bigTrophies.includes(tag)).length * 2;
-  score += tags.filter((tag) => bigLeagues.includes(tag)).length;
-  if (player.position) score += 1;
-  if (tags.length >= 8) score += 2;
-  if (tags.length >= 12) score += 2;
-
-  return score;
-}
-
-function getPlayersForPreset(preset = selectedPreset, grid = []) {
-  const config = getPresetConfig(preset);
-  const required = config.requireTags || [];
-
-  return ACTIVE_PLAYERS.filter((player) => {
-    if (getPlayerWeight(player) < config.playerMinScore) return false;
-    if (required.length && !player.tags.some((tag) => required.includes(tag))) return false;
-    if (grid.length && !canPlayerFillAnyCell(player, grid)) return false;
-    return true;
-  });
-}
-
-function getCategoriesForPreset(preset = selectedPreset) {
-  const config = getPresetConfig(preset);
-  const allowedTypes = config.allowedTypes || [1, 2, 3, 4, 5, 6, 8];
-  const whitelist = new Set(config.categoryIds || []);
-  const excludeTypes = new Set(config.excludeTypes || []);
-
-  return ACTIVE_CATEGORIES.filter((category) => {
-    const type = getCategoryType(category);
-    if (excludeTypes.has(type)) return false;
-    if (whitelist.size) return whitelist.has(category.id);
-    if (!allowedTypes.includes(type)) return false;
-    return true;
-  });
 }
 
 
