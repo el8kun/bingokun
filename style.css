@@ -3780,3 +3780,383 @@ body.overlay-open {
     font-size: .82rem;
   }
 }
+
+
+/* =========================================================
+   Bingo Kun v49 — mobile live lisible
+   Objectif : voir le joueur actuel + les cases d'un coup d'œil
+   ========================================================= */
+
+@media (max-width: 760px) {
+  body {
+    overflow-x: hidden;
+  }
+
+  .game-header {
+    min-height: auto !important;
+    padding: 8px 10px !important;
+  }
+
+  .profile-block {
+    gap: 8px !important;
+  }
+
+  .avatar {
+    width: 40px !important;
+    height: 40px !important;
+    border-radius: 14px !important;
+    font-size: .8rem !important;
+  }
+
+  .brand-title strong {
+    font-size: .9rem !important;
+  }
+
+  .room-line,
+  .admin-auth-line,
+  .header-links {
+    font-size: .62rem !important;
+  }
+
+  .top-timer {
+    padding: 0 8px !important;
+    gap: 8px !important;
+  }
+
+  .timer-count {
+    min-width: 34px !important;
+    font-size: .8rem !important;
+  }
+
+  .top-timer-track {
+    height: 5px !important;
+  }
+
+  .page-shell {
+    width: min(100%, calc(100% - 10px)) !important;
+    padding: 54px 0 12px !important;
+  }
+
+  .game-screen {
+    display: block !important;
+  }
+
+  .game-center {
+    width: 100% !important;
+  }
+
+  /*
+    Sur mobile, le joueur actuel reste visible en haut,
+    mais en version très compacte pour ne pas manger l'écran.
+  */
+  .status-row {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 50 !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) 72px !important;
+    gap: 6px !important;
+    margin-bottom: 7px !important;
+    padding: 5px 0 !important;
+    background: linear-gradient(180deg, rgba(4,8,13,.96), rgba(4,8,13,.78)) !important;
+    backdrop-filter: blur(10px) !important;
+  }
+
+  .current-player-card {
+    min-height: 66px !important;
+    grid-template-columns: 42px 44px minmax(0, 1fr) 58px !important;
+    gap: 6px !important;
+    padding: 7px !important;
+    border-radius: 14px !important;
+  }
+
+  .round-timer {
+    width: 38px !important;
+    height: 38px !important;
+  }
+
+  .round-timer span {
+    font-size: 1rem !important;
+  }
+
+  .round-timer small {
+    font-size: .42rem !important;
+    margin-bottom: 5px !important;
+  }
+
+  .current-player-initials {
+    width: 40px !important;
+    height: 40px !important;
+    border-radius: 11px !important;
+    font-size: .88rem !important;
+  }
+
+  .current-player-info {
+    min-width: 0 !important;
+  }
+
+  .player-card-topline {
+    margin-bottom: 2px !important;
+    gap: 4px !important;
+  }
+
+  .player-counter-badge,
+  .live-badge {
+    padding: 3px 5px !important;
+    font-size: .46rem !important;
+    letter-spacing: .06em !important;
+  }
+
+  .current-player-info p {
+    display: none !important;
+  }
+
+  .current-player-info h2 {
+    margin: 0 !important;
+    font-size: 1rem !important;
+    line-height: 1 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .current-player-subline {
+    display: none !important;
+  }
+
+  .current-player-actions {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+  }
+
+  .skip-btn {
+    height: 34px !important;
+    min-width: 52px !important;
+    padding: 0 7px !important;
+    border-radius: 10px !important;
+    font-size: .55rem !important;
+  }
+
+  .score-card {
+    min-height: 66px !important;
+    padding: 7px !important;
+    border-radius: 14px !important;
+  }
+
+  .score-card span {
+    font-size: .52rem !important;
+  }
+
+  .score-card strong {
+    font-size: 1.8rem !important;
+  }
+
+  .score-card small {
+    font-size: .56rem !important;
+  }
+
+  .board-panel {
+    padding: 7px !important;
+    border-radius: 15px !important;
+  }
+
+  /*
+    4 colonnes sur mobile :
+    20 cases = 5 lignes, donc on évite le format interminable en 3 colonnes.
+  */
+  .board-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 5px !important;
+  }
+
+  .cell {
+    min-height: 78px !important;
+    padding: 5px 4px !important;
+    border-radius: 12px !important;
+  }
+
+  .cell-visual {
+    min-height: 21px !important;
+    margin-bottom: 2px !important;
+  }
+
+  .cell-image {
+    width: 23px !important;
+    height: 23px !important;
+  }
+
+  .cell-visual-images.is-combo {
+    gap: 2px !important;
+  }
+
+  .cell-visual-images.is-combo .cell-image {
+    width: 18px !important;
+    height: 18px !important;
+  }
+
+  .cell-kicker {
+    font-size: .36rem !important;
+    letter-spacing: .08em !important;
+    margin-bottom: 2px !important;
+  }
+
+  .cell-title {
+    font-size: .57rem !important;
+    line-height: 1.02 !important;
+  }
+
+  .cell-points {
+    margin-top: 2px !important;
+    padding: 2px 5px !important;
+    font-size: .46rem !important;
+  }
+
+  .placed-player {
+    margin-top: 2px !important;
+    padding: 2px 5px !important;
+    font-size: .50rem !important;
+    max-width: 100% !important;
+  }
+
+  .result-chip {
+    font-size: .44rem !important;
+    padding: 2px 4px !important;
+  }
+
+  .cell.filled.valid::after,
+  .cell.filled:not(.invalid)::after,
+  .cell.invalid::after {
+    width: 18px !important;
+    height: 18px !important;
+    top: 5px !important;
+    right: 5px !important;
+    font-size: .65rem !important;
+  }
+
+  /*
+    Les panneaux de droite passent sous la grille, en compact.
+    Comme ça, le premier écran mobile est réservé au jeu.
+  */
+  .right-panel {
+    margin-top: 8px !important;
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+  }
+
+  .side-card {
+    border-radius: 14px !important;
+    padding: 10px !important;
+  }
+
+  .side-title {
+    margin-bottom: 7px !important;
+    font-size: .66rem !important;
+  }
+
+  .side-stat {
+    padding: 7px 0 !important;
+    font-size: .76rem !important;
+  }
+
+  .locked-box,
+  .message {
+    padding: 8px !important;
+    border-radius: 11px !important;
+    font-size: .72rem !important;
+  }
+
+  .played-players-list {
+    max-height: 145px !important;
+    overflow-y: auto !important;
+  }
+
+  .leaderboard-list {
+    max-height: 150px !important;
+    overflow-y: auto !important;
+  }
+
+  .leave-btn {
+    min-height: 36px !important;
+    padding: 8px 12px !important;
+    border-radius: 11px !important;
+    font-size: .72rem !important;
+  }
+}
+
+@media (max-width: 420px) {
+  .page-shell {
+    width: min(100%, calc(100% - 6px)) !important;
+  }
+
+  .board-grid {
+    gap: 4px !important;
+  }
+
+  .cell {
+    min-height: 72px !important;
+    padding: 4px 3px !important;
+  }
+
+  .cell-image {
+    width: 21px !important;
+    height: 21px !important;
+  }
+
+  .cell-visual-images.is-combo .cell-image {
+    width: 16px !important;
+    height: 16px !important;
+  }
+
+  .cell-title {
+    font-size: .52rem !important;
+  }
+
+  .cell-kicker {
+    font-size: .32rem !important;
+  }
+
+  .cell-points {
+    font-size: .42rem !important;
+  }
+
+  .current-player-card {
+    grid-template-columns: 38px 40px minmax(0, 1fr) 50px !important;
+  }
+
+  .round-timer {
+    width: 35px !important;
+    height: 35px !important;
+  }
+
+  .current-player-initials {
+    width: 36px !important;
+    height: 36px !important;
+  }
+
+  .current-player-info h2 {
+    font-size: .9rem !important;
+  }
+
+  .skip-btn {
+    min-width: 46px !important;
+    font-size: .50rem !important;
+  }
+}
+
+
+/* Bingo Kun v50 — anti double clic / double action */
+.board-grid.is-action-locked {
+  pointer-events: none;
+  opacity: .92;
+}
+
+.board-grid.is-action-locked .cell {
+  cursor: wait;
+}
+
+.skip-btn:disabled {
+  opacity: .55;
+  cursor: wait;
+}

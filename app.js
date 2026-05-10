@@ -192,6 +192,7 @@ let customSelectedCategoryIds = [];
 let customSearchTimer = null;
 let categoryMatchCache = new Map();
 let savingResult = false;
+let actionInProgress = false;
 
 const savedName = localStorage.getItem("bingo-kun-name");
 if (savedName) playerNameInput.value = savedName;
@@ -404,6 +405,34 @@ customSelectedGrid?.addEventListener("click", (event) => {
 });
 
 renderCustomBuilder();
+
+
+
+function setActionLock(locked) {
+  actionInProgress = Boolean(locked);
+
+  if (nextPlayerBtn) {
+    nextPlayerBtn.disabled = actionInProgress || !getCurrentPlayer() || Boolean(myData?.finished);
+  }
+
+  if (boardEl) {
+    boardEl.classList.toggle("is-action-locked", actionInProgress);
+  }
+}
+
+async function runPlayerAction(callback) {
+  if (actionInProgress) return false;
+
+  setActionLock(true);
+
+  try {
+    await callback();
+    return true;
+  } finally {
+    // Petit délai pour absorber les doubles clics / double taps mobile.
+    setTimeout(() => setActionLock(false), 180);
+  }
+}
 
 
 async function checkIsAdmin(userId) {
@@ -778,7 +807,7 @@ function renderGame() {
   const myRank = getParticipantRank(uid);
 
   nextPlayerBtn.classList.toggle("hidden", finished);
-  nextPlayerBtn.disabled = !currentPlayer || finished;
+  nextPlayerBtn.disabled = actionInProgress || !currentPlayer || finished;
 
   const deckLength = roomData.deck?.length || 0;
   const currentIndex = getMyCurrentIndex();
@@ -918,75 +947,78 @@ function renderCategoryVisual(category) {
 
 async function placeCurrentPlayer(cellIndex) {
   if (!roomData || !myData || roomData.status !== "playing" || myData.finished) return;
+  if (actionInProgress) return;
 
-  const currentPlayer = getCurrentPlayer();
-  if (!currentPlayer) return;
+  await runPlayerAction(async () => {
+    const currentPlayer = getCurrentPlayer();
+    if (!currentPlayer) return;
 
-  const board = myData.board || {};
+    const board = myData.board || {};
 
-  if (board[cellIndex]) {
-    setMessage("Cette case est déjà remplie.", "bad");
-    return;
-  }
-
-  const playerAlreadyUsed = Object.values(board).some((move) => move.playerId === currentPlayer.id);
-  if (playerAlreadyUsed) {
-    setMessage("Tu as déjà utilisé ce joueur sur ta grille.", "bad");
-    return;
-  }
-
-  const category = roomData.grid[cellIndex];
-  const isValid = canPlayerFillCategory(currentPlayer, category);
-
-  const newBoard = {
-    ...board,
-    [cellIndex]: {
-      playerId: currentPlayer.id,
-      playerName: currentPlayer.name,
-      categoryId: category.id,
-      isValid,
-      placedAt: Date.now()
+    if (board[cellIndex]) {
+      setMessage("Cette case est déjà remplie.", "bad");
+      return;
     }
-  };
 
-  const filledCount = Object.keys(newBoard).length;
-  const updatePayload = {
-    board: newBoard,
-    filledCount
-  };
+    const playerAlreadyUsed = Object.values(board).some((move) => move.playerId === currentPlayer.id);
+    if (playerAlreadyUsed) {
+      setMessage("Tu as déjà utilisé ce joueur sur ta grille.", "bad");
+      return;
+    }
 
-  if (filledCount >= BOARD_SIZE) {
-    const finalScore = calculateBoardScore(newBoard, roomData.grid);
-    updatePayload.finished = true;
-    updatePayload.finalScore = finalScore;
-    updatePayload.validCells = countValidCells(newBoard);
-    updatePayload.scoreMax = getMaxBoardScore(roomData.grid);
-    updatePayload.bingos = calculateBingos(newBoard);
-    updatePayload.resultSaved = false;
-    setMessage("Grille complète ! Le verdict est révélé.", "good");
-  } else {
-    const deckLength = roomData.deck?.length || 0;
-    const nextIndex = Math.min(getMyCurrentIndex() + 1, deckLength);
-    updatePayload.currentIndex = nextIndex;
-    updatePayload.currentStartedAt = serverTimestamp();
+    const category = roomData.grid[cellIndex];
+    const isValid = canPlayerFillCategory(currentPlayer, category);
 
-    if (nextIndex >= deckLength) {
+    const newBoard = {
+      ...board,
+      [cellIndex]: {
+        playerId: currentPlayer.id,
+        playerName: currentPlayer.name,
+        categoryId: category.id,
+        isValid,
+        placedAt: Date.now()
+      }
+    };
+
+    const filledCount = Object.keys(newBoard).length;
+    const updatePayload = {
+      board: newBoard,
+      filledCount
+    };
+
+    if (filledCount >= BOARD_SIZE) {
       const finalScore = calculateBoardScore(newBoard, roomData.grid);
       updatePayload.finished = true;
       updatePayload.finalScore = finalScore;
       updatePayload.validCells = countValidCells(newBoard);
       updatePayload.scoreMax = getMaxBoardScore(roomData.grid);
       updatePayload.bingos = calculateBingos(newBoard);
-      updatePayload.finishReason = "deck_finished";
       updatePayload.resultSaved = false;
-      updatePayload.finishedAt = serverTimestamp();
-      setMessage("Deck terminé ! Ton score final est calculé.", "good");
+      setMessage("Grille complète ! Le verdict est révélé.", "good");
     } else {
-      setMessage("Joueur placé. Le prochain joueur arrive pour toi uniquement.", "good");
-    }
-  }
+      const deckLength = roomData.deck?.length || 0;
+      const nextIndex = Math.min(getMyCurrentIndex() + 1, deckLength);
+      updatePayload.currentIndex = nextIndex;
+      updatePayload.currentStartedAt = serverTimestamp();
 
-  await updateDoc(doc(db, "rooms", currentRoomCode, "participants", uid), updatePayload);
+      if (nextIndex >= deckLength) {
+        const finalScore = calculateBoardScore(newBoard, roomData.grid);
+        updatePayload.finished = true;
+        updatePayload.finalScore = finalScore;
+        updatePayload.validCells = countValidCells(newBoard);
+        updatePayload.scoreMax = getMaxBoardScore(roomData.grid);
+        updatePayload.bingos = calculateBingos(newBoard);
+        updatePayload.finishReason = "deck_finished";
+        updatePayload.resultSaved = false;
+        updatePayload.finishedAt = serverTimestamp();
+        setMessage("Deck terminé ! Ton score final est calculé.", "good");
+      } else {
+        setMessage("Joueur placé. Le prochain joueur arrive pour toi uniquement.", "good");
+      }
+    }
+
+    await updateDoc(doc(db, "rooms", currentRoomCode, "participants", uid), updatePayload);
+  });
 }
 
 
@@ -1018,54 +1050,64 @@ async function finishParticipant(reason = "deck_finished") {
 
 async function advanceMyPlayer(manual = false) {
   if (!roomData || !currentRoomCode || roomData.status !== "playing" || !myData || myData.finished) return;
+  if (actionInProgress) return;
 
-  const participantRef = doc(db, "rooms", currentRoomCode, "participants", uid);
+  await runPlayerAction(async () => {
+    const participantRef = doc(db, "rooms", currentRoomCode, "participants", uid);
 
-  const advanced = await runTransaction(db, async (transaction) => {
-    const participantSnap = await transaction.get(participantRef);
-    if (!participantSnap.exists()) return false;
+    const advanced = await runTransaction(db, async (transaction) => {
+      const participantSnap = await transaction.get(participantRef);
+      if (!participantSnap.exists()) return false;
 
-    const liveParticipant = participantSnap.data();
-    if (liveParticipant.finished) return false;
+      const liveParticipant = participantSnap.data();
+      if (liveParticipant.finished) return false;
 
-    const currentIndex = Number(liveParticipant.currentIndex || 0);
-    const deckLength = roomData.deck?.length || 0;
+      const currentIndex = Number(liveParticipant.currentIndex || 0);
+      const deckLength = roomData.deck?.length || 0;
 
-    if (currentIndex >= deckLength) {
-      const board = liveParticipant.board || {};
-      const finalScore = calculateBoardScore(board, roomData.grid);
-      transaction.update(participantRef, {
-        finished: true,
-        finalScore,
-        bingos: calculateBingos(board),
-        finishReason: "deck_finished",
-        resultSaved: false,
-        finishedAt: serverTimestamp()
-      });
+      if (currentIndex >= deckLength) {
+        const board = liveParticipant.board || {};
+        const finalScore = calculateBoardScore(board, roomData.grid);
+        transaction.update(participantRef, {
+          finished: true,
+          finalScore,
+          validCells: countValidCells(board),
+          scoreMax: getMaxBoardScore(roomData.grid),
+          bingos: calculateBingos(board),
+          finishReason: "deck_finished",
+          resultSaved: false,
+          finishedAt: serverTimestamp()
+        });
+        return true;
+      }
+
+      const nextIndex = Math.min(currentIndex + 1, deckLength);
+      const updatePayload = {
+        currentIndex: nextIndex,
+        currentStartedAt: serverTimestamp()
+      };
+
+      if (nextIndex >= deckLength) {
+        const board = liveParticipant.board || {};
+        const finalScore = calculateBoardScore(board, roomData.grid);
+        updatePayload.finished = true;
+        updatePayload.finalScore = finalScore;
+        updatePayload.validCells = countValidCells(board);
+        updatePayload.scoreMax = getMaxBoardScore(roomData.grid);
+        updatePayload.bingos = calculateBingos(board);
+        updatePayload.finishReason = "deck_finished";
+        updatePayload.resultSaved = false;
+        updatePayload.finishedAt = serverTimestamp();
+      }
+
+      transaction.update(participantRef, updatePayload);
       return true;
+    });
+
+    if (manual && advanced) {
+      setMessage("Joueur passé pour toi uniquement.", "good");
     }
-
-    const nextIndex = Math.min(currentIndex + 1, deckLength);
-    const updatePayload = {
-      currentIndex: nextIndex,
-      currentStartedAt: serverTimestamp()
-    };
-
-    if (nextIndex >= deckLength) {
-      const board = liveParticipant.board || {};
-      const finalScore = calculateBoardScore(board, roomData.grid);
-      updatePayload.finished = true;
-      updatePayload.finalScore = finalScore;
-      updatePayload.bingos = calculateBingos(board);
-      updatePayload.finishReason = "deck_finished";
-    }
-
-    transaction.update(participantRef, updatePayload);
-
-    return true;
   });
-
-  if (manual && advanced) setMessage("Joueur passé pour toi uniquement.", "good");
 }
 
 function countValidMoves(board) {
@@ -1304,6 +1346,7 @@ function startTimers() {
 
   playerAutoInterval = setInterval(() => {
     if (!roomData || roomData.status !== "playing" || !myData || myData.finished) return;
+    if (actionInProgress) return;
     if (!getCurrentPlayer()) return;
     if (getRemainingSeconds() <= 0) advanceMyPlayer(false);
   }, 1000);
