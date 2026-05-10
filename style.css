@@ -4209,3 +4209,66 @@ body.overlay-open {
     display: none !important;
   }
 }
+
+
+/* Bingo Kun v52 — gestion classement admin */
+.ranking-admin-panel {
+  margin-top: 22px;
+}
+
+.ranking-admin-tools {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 220px;
+  gap: 10px;
+  margin: 14px 0;
+}
+
+.ranking-admin-list {
+  display: grid;
+  gap: 10px;
+}
+
+.ranking-admin-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 13px;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 16px;
+  background: rgba(255,255,255,.055);
+}
+
+.ranking-admin-row strong,
+.ranking-admin-row span {
+  display: block;
+}
+
+.ranking-admin-row span {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: .82rem;
+}
+
+.ranking-admin-row-actions {
+  flex: 0 0 auto;
+}
+
+.danger-btn {
+  border-color: rgba(255, 77, 93, .45) !important;
+}
+
+.danger-btn:hover {
+  background: rgba(255, 77, 93, .16) !important;
+}
+
+@media (max-width: 760px) {
+  .ranking-admin-tools {
+    grid-template-columns: 1fr;
+  }
+
+  .ranking-admin-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

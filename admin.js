@@ -3,7 +3,7 @@ import { CATEGORIES, PLAYERS, TEAMS } from "./data.js";
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, serverTimestamp, collection, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
 const firebaseApp = initializeApp(firebaseConfig);
 const auth = getAuth(firebaseApp);
@@ -30,12 +30,21 @@ const adminGate = $("adminGate");
 const adminContent = $("adminContent");
 const adminGoogleLoginBtn = $("adminGoogleLoginBtn");
 const adminGateStatus = $("adminGateStatus");
+const loadRankingAdminBtn = $("loadRankingAdminBtn");
+const resetMonthlyRankingBtn = $("resetMonthlyRankingBtn");
+const resetAllRankingBtn = $("resetAllRankingBtn");
+const rankingAdminStatus = $("rankingAdminStatus");
+const rankingAdminList = $("rankingAdminList");
+const rankingAdminSearch = $("rankingAdminSearch");
+const rankingAdminMonth = $("rankingAdminMonth");
 
 let uid = null;
 let playerOverrides = {};
 let selectedPlayer = null;
 let editedTags = [];
 let editedNote = "";
+let rankingResults = [];
+let rankingSelectedMonth = getCurrentMonthKey();
 
 const categoriesByTag = buildCategoriesByTag();
 
@@ -103,6 +112,15 @@ $("exportOverridesBtn").addEventListener("click", exportOverrides);
 adminNote.addEventListener("input", () => {
   editedNote = adminNote.value;
 });
+
+loadRankingAdminBtn?.addEventListener("click", loadRankingAdmin);
+rankingAdminSearch?.addEventListener("input", renderRankingAdmin);
+rankingAdminMonth?.addEventListener("change", () => {
+  rankingSelectedMonth = rankingAdminMonth.value || getCurrentMonthKey();
+  renderRankingAdmin();
+});
+resetMonthlyRankingBtn?.addEventListener("click", resetMonthlyRanking);
+resetAllRankingBtn?.addEventListener("click", resetAllRanking);
 
 renderPlayersList();
 renderCategoriesList();
@@ -287,6 +305,209 @@ function exportOverrides() {
   a.click();
   URL.revokeObjectURL(url);
 }
+
+
+async function loadRankingAdmin() {
+  try {
+    setRankingStatus("Chargement du classement…");
+    const snap = await getDocs(collection(db, "results"));
+    rankingResults = [];
+    snap.forEach((docSnap) => rankingResults.push({ id: docSnap.id, ...docSnap.data() }));
+
+    buildRankingMonthSelect();
+    renderRankingAdmin();
+    setRankingStatus(`${rankingResults.length} résultat(s) chargé(s).`, "good");
+  } catch (error) {
+    setRankingStatus("Impossible de charger le classement : " + error.message, "bad");
+  }
+}
+
+function buildRankingMonthSelect() {
+  if (!rankingAdminMonth) return;
+
+  const months = [...new Set(rankingResults.map((result) => result.monthKey).filter(Boolean))].sort().reverse();
+  const current = getCurrentMonthKey();
+  if (!months.includes(current)) months.unshift(current);
+
+  rankingAdminMonth.innerHTML = months.map((month) => {
+    return `<option value="${escapeHtml(month)}">${escapeHtml(formatMonth(month))}</option>`;
+  }).join("");
+
+  if (!months.includes(rankingSelectedMonth)) rankingSelectedMonth = months[0] || current;
+  rankingAdminMonth.value = rankingSelectedMonth;
+}
+
+function renderRankingAdmin() {
+  if (!rankingAdminList) return;
+
+  const query = normalize(rankingAdminSearch?.value || "");
+  const rows = aggregateRankingAdmin(rankingResults)
+    .filter((row) => !query || normalize(row.playerName).includes(query) || normalize(row.playerKey).includes(query))
+    .sort((a, b) => {
+      if (b.totalPoints !== a.totalPoints) return b.totalPoints - a.totalPoints;
+      if (b.bestScore !== a.bestScore) return b.bestScore - a.bestScore;
+      return b.games - a.games;
+    });
+
+  if (!rows.length) {
+    rankingAdminList.innerHTML = `<div class="admin-empty-list">Aucun joueur trouvé dans le classement.</div>`;
+    return;
+  }
+
+  rankingAdminList.innerHTML = rows.map((row, index) => {
+    return `
+      <div class="ranking-admin-row">
+        <div>
+          <strong>#${index + 1} ${escapeHtml(row.playerName)}</strong>
+          <span>${row.games} résultat(s) · ${row.totalPoints} pts · best ${row.bestScore}/${row.scoreMax || 30}</span>
+        </div>
+        <div class="ranking-admin-row-actions">
+          <button class="tiny-btn" type="button" data-delete-player="${escapeHtml(row.playerKey)}">Supprimer ce joueur</button>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  rankingAdminList.querySelectorAll("[data-delete-player]").forEach((button) => {
+    button.addEventListener("click", () => deleteRankingPlayer(button.dataset.deletePlayer));
+  });
+}
+
+function aggregateRankingAdmin(results) {
+  const month = rankingSelectedMonth;
+  const filtered = results.filter((result) => !month || result.monthKey === month);
+  const map = new Map();
+
+  for (const result of filtered) {
+    const key = result.playerKey || normalizePlayerKey(result.playerName);
+    if (!map.has(key)) {
+      map.set(key, {
+        playerKey: key,
+        playerName: result.playerName || "Joueur",
+        games: 0,
+        totalPoints: 0,
+        bestScore: 0,
+        scoreMax: Number(result.scoreMax || 30),
+        resultIds: []
+      });
+    }
+
+    const row = map.get(key);
+    const score = Number(result.score ?? result.finalScore ?? 0);
+    row.playerName = result.playerName || row.playerName;
+    row.games += 1;
+    row.totalPoints += Number(result.points || score || 0);
+    row.bestScore = Math.max(row.bestScore, score);
+    row.scoreMax = Number(result.scoreMax || row.scoreMax || 30);
+    row.resultIds.push(result.id);
+  }
+
+  return [...map.values()];
+}
+
+async function deleteRankingPlayer(playerKey) {
+  const row = aggregateRankingAdmin(rankingResults).find((item) => item.playerKey === playerKey);
+  if (!row) return;
+
+  const confirmation = confirm(
+    `Supprimer ${row.playerName} du classement ${formatMonth(rankingSelectedMonth)} ?\n\n` +
+    `${row.resultIds.length} résultat(s) seront supprimés.`
+  );
+
+  if (!confirmation) return;
+
+  await deleteResultIds(row.resultIds);
+  setRankingStatus(`${row.playerName} supprimé du classement ${formatMonth(rankingSelectedMonth)}.`, "good");
+  await loadRankingAdmin();
+}
+
+async function resetMonthlyRanking() {
+  const month = rankingSelectedMonth || getCurrentMonthKey();
+  const ids = rankingResults.filter((result) => result.monthKey === month).map((result) => result.id);
+
+  if (!ids.length) {
+    setRankingStatus(`Aucun résultat à supprimer pour ${formatMonth(month)}.`, "bad");
+    return;
+  }
+
+  const confirmation = confirm(
+    `Réinitialiser le classement ${formatMonth(month)} ?\n\n` +
+    `${ids.length} résultat(s) seront supprimés. Cette action est définitive.`
+  );
+
+  if (!confirmation) return;
+
+  await deleteResultIds(ids);
+  setRankingStatus(`Classement ${formatMonth(month)} réinitialisé.`, "good");
+  await loadRankingAdmin();
+}
+
+async function resetAllRanking() {
+  if (!rankingResults.length) {
+    await loadRankingAdmin();
+  }
+
+  const ids = rankingResults.map((result) => result.id);
+
+  if (!ids.length) {
+    setRankingStatus("Aucun résultat à supprimer.", "bad");
+    return;
+  }
+
+  const typed = prompt(
+    `Tu vas supprimer TOUT le classement (${ids.length} résultat(s)).\n\n` +
+    `Tape RESET pour confirmer.`
+  );
+
+  if (typed !== "RESET") {
+    setRankingStatus("Reset total annulé.", "bad");
+    return;
+  }
+
+  await deleteResultIds(ids);
+  setRankingStatus("Classement total réinitialisé.", "good");
+  await loadRankingAdmin();
+}
+
+async function deleteResultIds(ids = []) {
+  const uniqueIds = [...new Set(ids)].filter(Boolean);
+
+  for (const id of uniqueIds) {
+    await deleteDoc(doc(db, "results", id));
+  }
+
+  rankingResults = rankingResults.filter((result) => !uniqueIds.includes(result.id));
+  renderRankingAdmin();
+}
+
+function setRankingStatus(message, type = "") {
+  if (!rankingAdminStatus) return;
+  rankingAdminStatus.textContent = message;
+  rankingAdminStatus.className = "admin-status";
+  if (type) rankingAdminStatus.classList.add(type);
+}
+
+function normalizePlayerKey(name) {
+  return String(name || "joueur")
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "") || "joueur";
+}
+
+function getCurrentMonthKey() {
+  const date = new Date();
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+}
+
+function formatMonth(monthKey) {
+  const [year, month] = String(monthKey).split("-").map(Number);
+  if (!year || !month) return monthKey;
+  return new Intl.DateTimeFormat("fr-FR", { month: "long", year: "numeric" }).format(new Date(year, month - 1, 1));
+}
+
 
 function buildCategoriesByTag() {
   const map = new Map();

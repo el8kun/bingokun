@@ -93,6 +93,28 @@
         </div>
       </section>
     </section>
+
+    <section class="admin-panel ranking-admin-panel">
+      <p class="mini-title">Classement</p>
+      <h1>Gérer les résultats enregistrés</h1>
+      <p>Supprime un joueur du classement ou réinitialise tout le classement. Cette action touche la collection Firebase <strong>results</strong>.</p>
+
+      <div class="admin-actions">
+        <button id="loadRankingAdminBtn" class="secondary-btn" type="button">Charger le classement</button>
+        <button id="resetMonthlyRankingBtn" class="secondary-btn danger-btn" type="button">Reset mois actuel</button>
+        <button id="resetAllRankingBtn" class="primary-btn danger-btn" type="button">Reset total</button>
+      </div>
+
+      <p id="rankingAdminStatus" class="admin-status">Classement non chargé.</p>
+
+      <div class="ranking-admin-tools">
+        <input id="rankingAdminSearch" placeholder="Cherche un pseudo à supprimer…" />
+        <select id="rankingAdminMonth"></select>
+      </div>
+
+      <div id="rankingAdminList" class="ranking-admin-list"></div>
+    </section>
+
     </div>
   </main>
 
