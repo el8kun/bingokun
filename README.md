@@ -1,26 +1,47 @@
-# Bingo Kun — Gaming UI
+# Outils logos PlayFootball → Bingo Kun
 
-Fichiers à remplacer sur GitHub :
+Le HAR que tu as envoyé confirme le modèle d'URL :
 
-- `index.html`
-- `style.css`
-- `app.js`
-- `data.js`
+`https://playfootball.games/media/categories/ID.webp`
 
-Important : garde ton fichier existant `firebase-config.js`.
+Images vues dans ton HAR : 8, 11, 15, 24, 27, 41, 84, 99, 172, 219, 306, 316, 333, 336, 427, 598
 
-Après upload sur GitHub :
-1. Commit changes
-2. Attends 1 à 2 minutes
-3. Ouvre ton site
-4. Fais Ctrl + F5
-5. Crée une nouvelle room
+J'ai aussi préparé une liste de 169 IDs détectés dans ton `data.js`.
 
-Fonctions incluses :
-- affichage gaming sombre inspiré de la maquette
-- grille 5x5
-- joueurs automatiques toutes les 15 secondes
-- bouton Skip pour le créateur de la room
-- réponses cachées jusqu’à la grille complète
-- score révélé à la fin
-- badges clubs/pays en texte
+## Étapes
+
+1. Copie `download-category-icons.js` à la racine de ton projet Bingo Kun.
+2. Lance :
+
+```bash
+node download-category-icons.js
+```
+
+3. Les images seront téléchargées ici :
+
+```txt
+assets/icons/imported/
+```
+
+4. Ensuite, tu peux lancer :
+
+```bash
+node patch-data-icons.js
+```
+
+pour faire pointer `data.js` vers :
+
+```txt
+./assets/icons/imported/ID.webp
+```
+
+Un backup sera créé :
+
+```txt
+data.js.backup-before-icons
+```
+
+## Conseil
+
+Teste d'abord avec `download-category-icons.js` seul.  
+Si les images se téléchargent bien, lance ensuite `patch-data-icons.js`.
