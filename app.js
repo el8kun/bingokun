@@ -760,6 +760,11 @@ function renderGame() {
 
   const deckLength = roomData.deck?.length || 0;
   const currentIndex = getMyCurrentIndex();
+
+  if (!finished && deckLength > 0 && currentIndex >= deckLength) {
+    finishParticipant("deck_finished");
+  }
+
   const remainingPlayers = currentPlayer ? Math.max(0, deckLength - currentIndex - 1) : 0;
 
   currentPlayerNameEl.textContent = currentPlayer ? currentPlayer.name : finished ? "Grille terminée" : "Fin du deck";
@@ -931,14 +936,52 @@ async function placeCurrentPlayer(cellIndex) {
     updatePayload.resultSaved = false;
     setMessage("Grille complète ! Le verdict est révélé.", "good");
   } else {
-    const nextIndex = Math.min(getMyCurrentIndex() + 1, roomData.deck?.length || 0);
+    const deckLength = roomData.deck?.length || 0;
+    const nextIndex = Math.min(getMyCurrentIndex() + 1, deckLength);
     updatePayload.currentIndex = nextIndex;
     updatePayload.currentStartedAt = serverTimestamp();
-    setMessage("Joueur placé. Le prochain joueur arrive pour toi uniquement.", "good");
+
+    if (nextIndex >= deckLength) {
+      const validCount = countValidMoves(newBoard);
+      updatePayload.finished = true;
+      updatePayload.finalScore = validCount;
+      updatePayload.bingos = calculateBingos(newBoard);
+      updatePayload.finishReason = "deck_finished";
+      updatePayload.resultSaved = false;
+      updatePayload.finishedAt = serverTimestamp();
+      setMessage("Deck terminé ! Ton score final est calculé.", "good");
+    } else {
+      setMessage("Joueur placé. Le prochain joueur arrive pour toi uniquement.", "good");
+    }
   }
 
   await updateDoc(doc(db, "rooms", currentRoomCode, "participants", uid), updatePayload);
 }
+
+
+async function finishParticipant(reason = "deck_finished") {
+  if (!roomData || !currentRoomCode || !myData || myData.finished) return;
+
+  const board = myData.board || {};
+  const finalScore = countValidMoves(board);
+
+  const updatePayload = {
+    finished: true,
+    finalScore,
+    bingos: calculateBingos(board),
+    finishReason: reason,
+    resultSaved: false,
+    finishedAt: serverTimestamp()
+  };
+
+  try {
+    await updateDoc(doc(db, "rooms", currentRoomCode, "participants", uid), updatePayload);
+    setMessage(reason === "deck_finished" ? "Deck terminé ! Ton score final est calculé." : "Partie terminée.", "good");
+  } catch (error) {
+    console.warn("Impossible de terminer la partie :", error);
+  }
+}
+
 
 async function advanceMyPlayer(manual = false) {
   if (!roomData || !currentRoomCode || roomData.status !== "playing" || !myData || myData.finished) return;
@@ -955,7 +998,19 @@ async function advanceMyPlayer(manual = false) {
     const currentIndex = Number(liveParticipant.currentIndex || 0);
     const deckLength = roomData.deck?.length || 0;
 
-    if (currentIndex >= deckLength) return false;
+    if (currentIndex >= deckLength) {
+      const board = liveParticipant.board || {};
+      const finalScore = countValidMoves(board);
+      transaction.update(participantRef, {
+        finished: true,
+        finalScore,
+        bingos: calculateBingos(board),
+        finishReason: "deck_finished",
+        resultSaved: false,
+        finishedAt: serverTimestamp()
+      });
+      return true;
+    }
 
     const nextIndex = Math.min(currentIndex + 1, deckLength);
     const updatePayload = {
