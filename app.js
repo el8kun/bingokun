@@ -487,16 +487,23 @@ async function createRoom() {
 
   const setup = generateGameSetup(requestedGrid, selectedPreset);
 
-  if (!setup.perfectSolvable || setup.deck.length !== MAX_DECK_PLAYERS || setup.playableCount < MIN_PLAYABLE_PLAYERS) {
+  if (
+    !setup.perfectSolvable ||
+    !Array.isArray(setup.grid) ||
+    setup.grid.length !== BOARD_SIZE ||
+    !Array.isArray(setup.deck) ||
+    setup.deck.length !== MAX_DECK_PLAYERS ||
+    setup.playableCount < MIN_PLAYABLE_PLAYERS
+  ) {
     alert(
       "Impossible de générer une grille équilibrée avec ces paramètres.\n\n" +
-      `Objectif : ${MAX_DECK_PLAYERS} joueurs, minimum ${MIN_PLAYABLE_PLAYERS} utiles, minimum ${MIN_PLAYERS_PER_CELL} solutions par case, maximum ${MAX_COMBO_CELLS} combos.\n\n` +
-      "Essaie un autre type de partie, ou enlève quelques catégories custom trop rares."
+      `Objectif : ${MAX_DECK_PLAYERS} joueurs, ${BOARD_SIZE} cases, minimum ${MIN_PLAYABLE_PLAYERS} utiles, minimum ${MIN_PLAYERS_PER_CELL} solutions par case, maximum ${MAX_COMBO_CELLS} combos.\n\n` +
+      "Relance la création ou choisis un autre type de partie."
     );
     return;
   }
 
-  const grid = setup.grid;
+  const grid = setup.grid.slice(0, BOARD_SIZE);
   const deck = setup.deck.map((player) => player.id);
 
   await setDoc(doc(db, "rooms", code), {
@@ -629,6 +636,20 @@ function subscribeToRoom(code) {
 
 function renderViews() {
   if (!roomData || !myData) return;
+
+  if (roomData.status !== "waiting" && (!Array.isArray(roomData.grid) || roomData.grid.length !== BOARD_SIZE)) {
+    waitingView.classList.add("hidden");
+    gameView.classList.remove("hidden");
+    topTimer.classList.add("hidden");
+    boardEl.innerHTML = `
+      <div class="empty-board-warning">
+        <strong>Grille introuvable</strong>
+        <span>Cette room a été créée avec une ancienne version ou une génération incomplète. Crée une nouvelle room.</span>
+      </div>
+    `;
+    setMessage("Grille introuvable : crée une nouvelle room.", "bad");
+    return;
+  }
 
   if (roomData.status === "waiting") {
     stopTimers();
@@ -823,11 +844,21 @@ function renderGame() {
 function renderBoard(currentPlayer) {
   boardEl.innerHTML = "";
 
+  if (!Array.isArray(roomData?.grid) || roomData.grid.length !== BOARD_SIZE) {
+    boardEl.innerHTML = `
+      <div class="empty-board-warning">
+        <strong>Grille introuvable</strong>
+        <span>Cette room n’a pas les ${BOARD_SIZE} cases nécessaires. Crée une nouvelle room.</span>
+      </div>
+    `;
+    return;
+  }
+
   const board = myData.board || {};
   const reveal = Boolean(myData.finished);
   const bingoCells = reveal ? new Set((myData.bingos || []).flatMap(getLineCells)) : new Set();
 
-  roomData.grid.forEach((category, index) => {
+  roomData.grid.slice(0, BOARD_SIZE).forEach((category, index) => {
     const move = board[index];
     const cell = document.createElement("button");
     cell.className = "cell";
