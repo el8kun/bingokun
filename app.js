@@ -182,6 +182,7 @@ let savingResult = false;
 const savedName = localStorage.getItem("bingo-kun-name");
 if (savedName) playerNameInput.value = savedName;
 
+
 const PRESET_CONFIGS = {
   "global-easy": {
     playerMinScore: 7,
@@ -292,6 +293,21 @@ function getCategoriesForPreset(preset = selectedPreset) {
   });
 }
 
+function updatePresetHelp() {
+  if (!presetHelp) return;
+
+  const labels = {
+    "global-easy": "Stars, grands clubs et catégories simples.",
+    "global-normal": "Équilibré : joueurs connus, moins de profils obscurs.",
+    "global-hard": "Plus large : joueurs moins évidents, mais encore filtrés.",
+    "hardcore": "Toute la base de données, y compris les joueurs obscurs.",
+    "ligue1": "Joueurs passés par des clubs de Ligue 1 ou catégories liées.",
+    "premierleague": "Joueurs passés par la Premier League ou catégories liées.",
+    "trophies": "Grille orientée trophées, titres, récompenses et grands palmarès."
+  };
+
+  presetHelp.textContent = labels[selectedPreset] || labels["global-normal"];
+}
 
 
 onAuthStateChanged(auth, async (user) => {
@@ -329,7 +345,8 @@ presetModeSelect?.addEventListener("change", () => {
   selectedPreset = presetModeSelect.value || "global-normal";
   categoryMatchCache = new Map();
   updatePresetHelp();
-  renderCustomBuilder();
+  updatePresetHelp();
+renderCustomBuilder();
 });
 $("joinRoomBtn").addEventListener("click", () => joinRoom(joinCodeInput.value.trim().toUpperCase()));
 $("copyRoomBtn").addEventListener("click", copyRoomInfo);
@@ -387,7 +404,7 @@ function updateAdminUi(user) {
 
   if (createRoomBtn) {
     createRoomBtn.disabled = false;
-    createRoomBtn.textContent = isAdminUser ? "Créer une room" : "Créer une room";
+    createRoomBtn.textContent = "Créer une room";
   }
 
   if (adminAuthStatus) {
@@ -421,47 +438,6 @@ async function signOutAdmin() {
   } catch (error) {
     alert("Déconnexion impossible : " + error.message);
   }
-}
-
-function updatePresetHelp() {
-  if (!presetHelp) return;
-
-  const labels = {
-    "global-easy": "Stars, grands clubs et catégories simples.",
-    "global-normal": "Équilibré : joueurs connus, moins de profils obscurs.",
-    "global-hard": "Plus large : joueurs moins évidents, mais encore filtrés.",
-    "hardcore": "Toute la base de données, y compris les joueurs obscurs.",
-    "ligue1": "Joueurs passés par des clubs de Ligue 1 ou catégories liées.",
-    "premierleague": "Joueurs passés par la Premier League ou catégories liées.",
-    "trophies": "Grille orientée trophées, titres, récompenses et grands palmarès."
-  };
-
-  presetHelp.textContent = labels[selectedPreset] || labels["global-normal"];
-}
-
-
-
-function getRequestedCustomGrid() {
-  if (gridModeSelect?.value !== "custom") return [];
-
-  return customSelectedCategoryIds
-    .map((id) => ACTIVE_CATEGORIES.find((category) => category.id === id))
-    .filter(Boolean)
-    .slice(0, BOARD_SIZE);
-}
-
-function normalizeRequestedGrid(requestedGrid = []) {
-  const selectedIds = new Set();
-  const selected = [];
-
-  requestedGrid.forEach((category) => {
-    if (!category?.id || selectedIds.has(category.id)) return;
-    const liveCategory = ACTIVE_CATEGORIES.find((item) => item.id === category.id) || category;
-    selectedIds.add(liveCategory.id);
-    selected.push(liveCategory);
-  });
-
-  return selected.slice(0, BOARD_SIZE);
 }
 
 
@@ -1266,7 +1242,6 @@ function iconForCategory(id) {
   return icons[id] || "★";
 }
 
-
 function generateGameSetup(requestedGrid = [], preset = selectedPreset) {
   const playerPoolAll = getPlayersForPreset(preset);
   const maxDeckSize = Math.min(MAX_DECK_PLAYERS, playerPoolAll.length || ACTIVE_PLAYERS.length);
@@ -1311,6 +1286,189 @@ function generateGameSetup(requestedGrid = [], preset = selectedPreset) {
     deck: bestSetup.deck,
     playableCount: bestSetup.playableCount
   };
+}
+
+function normalizeRequestedGrid(requestedGrid = []) {
+  const selectedIds = new Set();
+  const selected = [];
+
+  requestedGrid.forEach((category) => {
+    if (!category?.id || selectedIds.has(category.id)) return;
+    const liveCategory = ACTIVE_CATEGORIES.find((item) => item.id === category.id) || category;
+    selectedIds.add(liveCategory.id);
+    selected.push(liveCategory);
+  });
+
+  return selected.slice(0, BOARD_SIZE);
+}
+
+function completeGridFromFixedCategories(fixedGrid, categoryPool = ACTIVE_CATEGORIES, playerPool = ACTIVE_PLAYERS) {
+  const selectedIds = new Set(fixedGrid.map((category) => category.id));
+  const grid = [...fixedGrid];
+
+  const candidates = shuffle(
+    categoryPool.filter((category) => {
+      if (selectedIds.has(category.id)) return false;
+      return getCategoryMatchCount(category, playerPool) > 0;
+    })
+  );
+
+  for (const category of candidates) {
+    if (grid.length >= BOARD_SIZE) break;
+    selectedIds.add(category.id);
+    grid.push(category);
+  }
+
+  return grid.slice(0, BOARD_SIZE);
+}
+
+function getRequestedCustomGrid() {
+  if (gridModeSelect?.value !== "custom") return [];
+
+  return customSelectedCategoryIds
+    .map((id) => ACTIVE_CATEGORIES.find((category) => category.id === id))
+    .filter(Boolean)
+    .slice(0, BOARD_SIZE);
+}
+
+function renderCustomBuilder() {
+  if (!customBuilder || !gridModeSelect) return;
+
+  const isCustom = gridModeSelect.value === "custom";
+  customBuilder.classList.toggle("hidden", !isCustom);
+
+  if (!isCustom) return;
+
+  customSelectedCategoryIds = customSelectedCategoryIds
+    .filter((id, index, array) => array.indexOf(id) === index)
+    .filter((id) => ACTIVE_CATEGORIES.some((category) => category.id === id))
+    .slice(0, BOARD_SIZE);
+
+  if (customCountEl) {
+    customCountEl.textContent = `${customSelectedCategoryIds.length} / ${BOARD_SIZE} cases`;
+  }
+
+  renderCustomSelectedGrid();
+  renderCustomSearchResults();
+}
+
+function renderCustomSelectedGrid() {
+  if (!customSelectedGrid) return;
+
+  if (!customSelectedCategoryIds.length) {
+    customSelectedGrid.innerHTML = `<div class="custom-empty">Aucune case choisie pour l'instant.</div>`;
+    return;
+  }
+
+  customSelectedGrid.innerHTML = customSelectedCategoryIds.map((id, index) => {
+    const category = ACTIVE_CATEGORIES.find((item) => item.id === id);
+    if (!category) return "";
+
+    return `
+      <button class="custom-chip" type="button" data-remove-category="${escapeHtml(id)}">
+        <span>${index + 1}</span>
+        <strong>${escapeHtml(category.title || category.name || category.id)}</strong>
+        <small>${escapeHtml(category.kicker || "Critère")}</small>
+      </button>
+    `;
+  }).join("");
+}
+
+function renderCustomSearchResults() {
+  if (!customSearchResults || gridModeSelect?.value !== "custom") return;
+
+  const query = normalizeSearch(customCategorySearch?.value || "");
+  const selected = new Set(customSelectedCategoryIds);
+
+  const playerPool = getPlayersForPreset(selectedPreset);
+  const categoryPool = getCategoriesForPreset(selectedPreset);
+
+  const pool = categoryPool
+    .filter((category) => !selected.has(category.id))
+    .map((category) => ({
+      category,
+      count: getCategoryMatchCount(category, playerPool),
+      haystack: normalizeSearch(`${category.title || ""} ${category.name || ""} ${category.kicker || ""} ${category.shortLabel || ""}`)
+    }))
+    .filter((item) => item.count > 0)
+    .filter((item) => !query || item.haystack.includes(query))
+    .sort((a, b) => {
+      if (query) {
+        const aStarts = a.haystack.startsWith(query) ? 1 : 0;
+        const bStarts = b.haystack.startsWith(query) ? 1 : 0;
+        if (aStarts !== bStarts) return bStarts - aStarts;
+      }
+      return b.count - a.count;
+    })
+    .slice(0, 24);
+
+  if (!pool.length) {
+    customSearchResults.innerHTML = `<div class="custom-empty">Aucune catégorie trouvée.</div>`;
+    return;
+  }
+
+  customSearchResults.innerHTML = pool.map(({ category, count }) => `
+    <button class="custom-result" type="button" data-add-category="${escapeHtml(category.id)}" ${customSelectedCategoryIds.length >= BOARD_SIZE ? "disabled" : ""}>
+      <span class="custom-result-visual">${renderCategoryVisual(category)}</span>
+      <span class="custom-result-meta">
+        <strong>${escapeHtml(category.title || category.name || category.id)}</strong>
+        <small>${escapeHtml(category.kicker || "Critère")} · ${count} joueurs</small>
+      </span>
+    </button>
+  `).join("");
+}
+
+function addCustomCategory(id) {
+  if (!id || customSelectedCategoryIds.includes(id)) return;
+  if (customSelectedCategoryIds.length >= BOARD_SIZE) {
+    alert(`La grille est déjà complète : ${BOARD_SIZE} cases.`);
+    return;
+  }
+
+  customSelectedCategoryIds.push(id);
+  renderCustomBuilder();
+}
+
+function removeCustomCategory(id) {
+  customSelectedCategoryIds = customSelectedCategoryIds.filter((item) => item !== id);
+  renderCustomBuilder();
+}
+
+function autoCompleteCustomGrid() {
+  const selected = new Set(customSelectedCategoryIds);
+  const playerPool = getPlayersForPreset(selectedPreset);
+  const candidates = shuffle(
+    getCategoriesForPreset(selectedPreset).filter((category) => !selected.has(category.id) && getCategoryMatchCount(category, playerPool) > 0)
+  );
+
+  for (const category of candidates) {
+    if (customSelectedCategoryIds.length >= BOARD_SIZE) break;
+    selected.add(category.id);
+    customSelectedCategoryIds.push(category.id);
+  }
+
+  renderCustomBuilder();
+}
+
+function getCategoryMatchCount(category, playerPool = ACTIVE_PLAYERS) {
+  if (!category?.id) return 0;
+  const cacheKey = `${selectedPreset}:${category.id}:${playerPool.length}`;
+  if (categoryMatchCache.has(cacheKey)) return categoryMatchCache.get(cacheKey);
+
+  const count = playerPool.reduce((total, player) => {
+    return total + (canPlayerFillCategory(player, category) ? 1 : 0);
+  }, 0);
+
+  categoryMatchCache.set(cacheKey, count);
+  return count;
+}
+
+function normalizeSearch(text) {
+  return String(text || "")
+    .normalize("NFD")
+    .replace(/[\\u0300-\\u036f]/g, "")
+    .toLowerCase()
+    .trim();
 }
 
 function buildDeck(grid, playablePlayers, maxDeckSize, preset = selectedPreset) {
