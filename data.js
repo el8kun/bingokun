@@ -4670,17 +4670,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_11",
     "visualType": "combo",
-    "image": "./assets/icons/flags/cat_11.svg",
+    "image": "./assets/icons/imported/11.webp",
     "shortLabel": "ARG+ATM",
     "visuals": [
       {
         "visualType": "flag",
-        "image": "./assets/icons/flags/cat_11.svg",
+        "image": "./assets/icons/imported/11.webp",
         "shortLabel": "ARG"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_86.svg",
+        "image": "./assets/icons/imported/86.webp",
         "shortLabel": "ATM"
       }
     ]
@@ -4701,17 +4701,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_11",
     "visualType": "combo",
-    "image": "./assets/icons/flags/cat_11.svg",
+    "image": "./assets/icons/imported/11.webp",
     "shortLabel": "ARG+CHE",
     "visuals": [
       {
         "visualType": "flag",
-        "image": "./assets/icons/flags/cat_11.svg",
+        "image": "./assets/icons/imported/11.webp",
         "shortLabel": "ARG"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_179.svg",
+        "image": "./assets/icons/imported/179.webp",
         "shortLabel": "CHE"
       }
     ]
@@ -4732,17 +4732,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_11",
     "visualType": "combo",
-    "image": "./assets/icons/flags/cat_11.svg",
+    "image": "./assets/icons/imported/11.webp",
     "shortLabel": "ARG+MUN",
     "visuals": [
       {
         "visualType": "flag",
-        "image": "./assets/icons/flags/cat_11.svg",
+        "image": "./assets/icons/imported/11.webp",
         "shortLabel": "ARG"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_204.svg",
+        "image": "./assets/icons/imported/204.webp",
         "shortLabel": "MUN"
       }
     ]
@@ -4763,17 +4763,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_11",
     "visualType": "combo",
-    "image": "./assets/icons/flags/cat_11.svg",
+    "image": "./assets/icons/imported/11.webp",
     "shortLabel": "ARG+RMA",
     "visuals": [
       {
         "visualType": "flag",
-        "image": "./assets/icons/flags/cat_11.svg",
+        "image": "./assets/icons/imported/11.webp",
         "shortLabel": "ARG"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_160.svg",
+        "image": "./assets/icons/imported/160.webp",
         "shortLabel": "RMA"
       }
     ]
@@ -4794,17 +4794,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_84",
     "visualType": "combo",
-    "image": "./assets/icons/clubs/cat_84.svg",
+    "image": "./assets/icons/imported/84.webp",
     "shortLabel": "ARS+INT",
     "visuals": [
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_84.svg",
+        "image": "./assets/icons/imported/84.webp",
         "shortLabel": "ARS"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_99.svg",
+        "image": "./assets/icons/imported/99.webp",
         "shortLabel": "INT"
       }
     ]
@@ -4825,17 +4825,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_84",
     "visualType": "combo",
-    "image": "./assets/icons/clubs/cat_84.svg",
+    "image": "./assets/icons/imported/84.webp",
     "shortLabel": "ARS+JUV",
     "visuals": [
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_84.svg",
+        "image": "./assets/icons/imported/84.webp",
         "shortLabel": "ARS"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_167.svg",
+        "image": "./assets/icons/imported/167.webp",
         "shortLabel": "JUV"
       }
     ]
@@ -4856,17 +4856,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_84",
     "visualType": "combo",
-    "image": "./assets/icons/clubs/cat_84.svg",
+    "image": "./assets/icons/imported/84.webp",
     "shortLabel": "ARS+LIV",
     "visuals": [
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_84.svg",
+        "image": "./assets/icons/imported/84.webp",
         "shortLabel": "ARS"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_93.svg",
+        "image": "./assets/icons/imported/93.webp",
         "shortLabel": "LIV"
       }
     ]
@@ -4887,17 +4887,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_84",
     "visualType": "combo",
-    "image": "./assets/icons/clubs/cat_84.svg",
+    "image": "./assets/icons/imported/84.webp",
     "shortLabel": "ARS+MCI",
     "visuals": [
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_84.svg",
+        "image": "./assets/icons/imported/84.webp",
         "shortLabel": "ARS"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_133.svg",
+        "image": "./assets/icons/imported/133.webp",
         "shortLabel": "MCI"
       }
     ]
@@ -4918,17 +4918,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_84",
     "visualType": "combo",
-    "image": "./assets/icons/clubs/cat_84.svg",
+    "image": "./assets/icons/imported/84.webp",
     "shortLabel": "ARS+MIL",
     "visuals": [
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_84.svg",
+        "image": "./assets/icons/imported/84.webp",
         "shortLabel": "ARS"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_83.svg",
+        "image": "./assets/icons/imported/83.webp",
         "shortLabel": "MIL"
       }
     ]
@@ -4949,17 +4949,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_84",
     "visualType": "combo",
-    "image": "./assets/icons/clubs/cat_84.svg",
+    "image": "./assets/icons/imported/84.webp",
     "shortLabel": "ARS+MUN",
     "visuals": [
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_84.svg",
+        "image": "./assets/icons/imported/84.webp",
         "shortLabel": "ARS"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_204.svg",
+        "image": "./assets/icons/imported/204.webp",
         "shortLabel": "MUN"
       }
     ]
@@ -4980,17 +4980,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_84",
     "visualType": "combo",
-    "image": "./assets/icons/clubs/cat_84.svg",
+    "image": "./assets/icons/imported/84.webp",
     "shortLabel": "ARS+RMA",
     "visuals": [
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_84.svg",
+        "image": "./assets/icons/imported/84.webp",
         "shortLabel": "ARS"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_160.svg",
+        "image": "./assets/icons/imported/160.webp",
         "shortLabel": "RMA"
       }
     ]
@@ -5011,17 +5011,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_86",
     "visualType": "combo",
-    "image": "./assets/icons/clubs/cat_86.svg",
+    "image": "./assets/icons/imported/86.webp",
     "shortLabel": "ATM+INT",
     "visuals": [
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_86.svg",
+        "image": "./assets/icons/imported/86.webp",
         "shortLabel": "ATM"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_99.svg",
+        "image": "./assets/icons/imported/99.webp",
         "shortLabel": "INT"
       }
     ]
@@ -5042,17 +5042,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_86",
     "visualType": "combo",
-    "image": "./assets/icons/clubs/cat_86.svg",
+    "image": "./assets/icons/imported/86.webp",
     "shortLabel": "ATM+LIV",
     "visuals": [
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_86.svg",
+        "image": "./assets/icons/imported/86.webp",
         "shortLabel": "ATM"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_93.svg",
+        "image": "./assets/icons/imported/93.webp",
         "shortLabel": "LIV"
       }
     ]
@@ -5073,17 +5073,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_86",
     "visualType": "combo",
-    "image": "./assets/icons/clubs/cat_86.svg",
+    "image": "./assets/icons/imported/86.webp",
     "shortLabel": "ATM+MCI",
     "visuals": [
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_86.svg",
+        "image": "./assets/icons/imported/86.webp",
         "shortLabel": "ATM"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_133.svg",
+        "image": "./assets/icons/imported/133.webp",
         "shortLabel": "MCI"
       }
     ]
@@ -5104,17 +5104,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_86",
     "visualType": "combo",
-    "image": "./assets/icons/clubs/cat_86.svg",
+    "image": "./assets/icons/imported/86.webp",
     "shortLabel": "ATM+MIL",
     "visuals": [
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_86.svg",
+        "image": "./assets/icons/imported/86.webp",
         "shortLabel": "ATM"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_83.svg",
+        "image": "./assets/icons/imported/83.webp",
         "shortLabel": "MIL"
       }
     ]
@@ -5135,17 +5135,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_86",
     "visualType": "combo",
-    "image": "./assets/icons/clubs/cat_86.svg",
+    "image": "./assets/icons/imported/86.webp",
     "shortLabel": "ATM+PSG",
     "visuals": [
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_86.svg",
+        "image": "./assets/icons/imported/86.webp",
         "shortLabel": "ATM"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_172.svg",
+        "image": "./assets/icons/imported/172.webp",
         "shortLabel": "PSG"
       }
     ]
@@ -5166,17 +5166,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_112",
     "visualType": "combo",
-    "image": "./assets/icons/clubs/cat_112.svg",
+    "image": "./assets/icons/imported/112.webp",
     "shortLabel": "BAR+ARS",
     "visuals": [
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_112.svg",
+        "image": "./assets/icons/imported/112.webp",
         "shortLabel": "BAR"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_84.svg",
+        "image": "./assets/icons/imported/84.webp",
         "shortLabel": "ARS"
       }
     ]
@@ -5197,17 +5197,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_112",
     "visualType": "combo",
-    "image": "./assets/icons/clubs/cat_112.svg",
+    "image": "./assets/icons/imported/112.webp",
     "shortLabel": "BAR+CHE",
     "visuals": [
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_112.svg",
+        "image": "./assets/icons/imported/112.webp",
         "shortLabel": "BAR"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_179.svg",
+        "image": "./assets/icons/imported/179.webp",
         "shortLabel": "CHE"
       }
     ]
@@ -5228,17 +5228,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_112",
     "visualType": "combo",
-    "image": "./assets/icons/clubs/cat_112.svg",
+    "image": "./assets/icons/imported/112.webp",
     "shortLabel": "BAR+LIV",
     "visuals": [
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_112.svg",
+        "image": "./assets/icons/imported/112.webp",
         "shortLabel": "BAR"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_93.svg",
+        "image": "./assets/icons/imported/93.webp",
         "shortLabel": "LIV"
       }
     ]
@@ -5259,17 +5259,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_112",
     "visualType": "combo",
-    "image": "./assets/icons/clubs/cat_112.svg",
+    "image": "./assets/icons/imported/112.webp",
     "shortLabel": "BAR+MCI",
     "visuals": [
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_112.svg",
+        "image": "./assets/icons/imported/112.webp",
         "shortLabel": "BAR"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_133.svg",
+        "image": "./assets/icons/imported/133.webp",
         "shortLabel": "MCI"
       }
     ]
@@ -5290,17 +5290,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_112",
     "visualType": "combo",
-    "image": "./assets/icons/clubs/cat_112.svg",
+    "image": "./assets/icons/imported/112.webp",
     "shortLabel": "BAR+MIL",
     "visuals": [
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_112.svg",
+        "image": "./assets/icons/imported/112.webp",
         "shortLabel": "BAR"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_83.svg",
+        "image": "./assets/icons/imported/83.webp",
         "shortLabel": "MIL"
       }
     ]
@@ -5321,17 +5321,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_112",
     "visualType": "combo",
-    "image": "./assets/icons/clubs/cat_112.svg",
+    "image": "./assets/icons/imported/112.webp",
     "shortLabel": "BAR+MUN",
     "visuals": [
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_112.svg",
+        "image": "./assets/icons/imported/112.webp",
         "shortLabel": "BAR"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_204.svg",
+        "image": "./assets/icons/imported/204.webp",
         "shortLabel": "MUN"
       }
     ]
@@ -5352,17 +5352,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_13",
     "visualType": "combo",
-    "image": "./assets/icons/flags/cat_13.svg",
+    "image": "./assets/icons/imported/13.webp",
     "shortLabel": "BEL+ATM",
     "visuals": [
       {
         "visualType": "flag",
-        "image": "./assets/icons/flags/cat_13.svg",
+        "image": "./assets/icons/imported/13.webp",
         "shortLabel": "BEL"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_86.svg",
+        "image": "./assets/icons/imported/86.webp",
         "shortLabel": "ATM"
       }
     ]
@@ -5383,17 +5383,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_13",
     "visualType": "combo",
-    "image": "./assets/icons/flags/cat_13.svg",
+    "image": "./assets/icons/imported/13.webp",
     "shortLabel": "BEL+CHE",
     "visuals": [
       {
         "visualType": "flag",
-        "image": "./assets/icons/flags/cat_13.svg",
+        "image": "./assets/icons/imported/13.webp",
         "shortLabel": "BEL"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_179.svg",
+        "image": "./assets/icons/imported/179.webp",
         "shortLabel": "CHE"
       }
     ]
@@ -5414,17 +5414,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_13",
     "visualType": "combo",
-    "image": "./assets/icons/flags/cat_13.svg",
+    "image": "./assets/icons/imported/13.webp",
     "shortLabel": "BEL+MCI",
     "visuals": [
       {
         "visualType": "flag",
-        "image": "./assets/icons/flags/cat_13.svg",
+        "image": "./assets/icons/imported/13.webp",
         "shortLabel": "BEL"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_133.svg",
+        "image": "./assets/icons/imported/133.webp",
         "shortLabel": "MCI"
       }
     ]
@@ -5445,17 +5445,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_13",
     "visualType": "combo",
-    "image": "./assets/icons/flags/cat_13.svg",
+    "image": "./assets/icons/imported/13.webp",
     "shortLabel": "BEL+RMA",
     "visuals": [
       {
         "visualType": "flag",
-        "image": "./assets/icons/flags/cat_13.svg",
+        "image": "./assets/icons/imported/13.webp",
         "shortLabel": "BEL"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_160.svg",
+        "image": "./assets/icons/imported/160.webp",
         "shortLabel": "RMA"
       }
     ]
@@ -5476,17 +5476,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_6",
     "visualType": "combo",
-    "image": "./assets/icons/flags/cat_6.svg",
+    "image": "./assets/icons/imported/6.webp",
     "shortLabel": "BRA+ARS",
     "visuals": [
       {
         "visualType": "flag",
-        "image": "./assets/icons/flags/cat_6.svg",
+        "image": "./assets/icons/imported/6.webp",
         "shortLabel": "BRA"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_84.svg",
+        "image": "./assets/icons/imported/84.webp",
         "shortLabel": "ARS"
       }
     ]
@@ -5507,17 +5507,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_6",
     "visualType": "combo",
-    "image": "./assets/icons/flags/cat_6.svg",
+    "image": "./assets/icons/imported/6.webp",
     "shortLabel": "BRA+ATM",
     "visuals": [
       {
         "visualType": "flag",
-        "image": "./assets/icons/flags/cat_6.svg",
+        "image": "./assets/icons/imported/6.webp",
         "shortLabel": "BRA"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_86.svg",
+        "image": "./assets/icons/imported/86.webp",
         "shortLabel": "ATM"
       }
     ]
@@ -5538,17 +5538,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_6",
     "visualType": "combo",
-    "image": "./assets/icons/flags/cat_6.svg",
+    "image": "./assets/icons/imported/6.webp",
     "shortLabel": "BRA+BAR",
     "visuals": [
       {
         "visualType": "flag",
-        "image": "./assets/icons/flags/cat_6.svg",
+        "image": "./assets/icons/imported/6.webp",
         "shortLabel": "BRA"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_112.svg",
+        "image": "./assets/icons/imported/112.webp",
         "shortLabel": "BAR"
       }
     ]
@@ -5569,17 +5569,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_6",
     "visualType": "combo",
-    "image": "./assets/icons/flags/cat_6.svg",
+    "image": "./assets/icons/imported/6.webp",
     "shortLabel": "BRA+CHE",
     "visuals": [
       {
         "visualType": "flag",
-        "image": "./assets/icons/flags/cat_6.svg",
+        "image": "./assets/icons/imported/6.webp",
         "shortLabel": "BRA"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_179.svg",
+        "image": "./assets/icons/imported/179.webp",
         "shortLabel": "CHE"
       }
     ]
@@ -5600,17 +5600,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_6",
     "visualType": "combo",
-    "image": "./assets/icons/flags/cat_6.svg",
+    "image": "./assets/icons/imported/6.webp",
     "shortLabel": "BRA+INT",
     "visuals": [
       {
         "visualType": "flag",
-        "image": "./assets/icons/flags/cat_6.svg",
+        "image": "./assets/icons/imported/6.webp",
         "shortLabel": "BRA"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_99.svg",
+        "image": "./assets/icons/imported/99.webp",
         "shortLabel": "INT"
       }
     ]
@@ -5631,17 +5631,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_6",
     "visualType": "combo",
-    "image": "./assets/icons/flags/cat_6.svg",
+    "image": "./assets/icons/imported/6.webp",
     "shortLabel": "BRA+JUV",
     "visuals": [
       {
         "visualType": "flag",
-        "image": "./assets/icons/flags/cat_6.svg",
+        "image": "./assets/icons/imported/6.webp",
         "shortLabel": "BRA"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_167.svg",
+        "image": "./assets/icons/imported/167.webp",
         "shortLabel": "JUV"
       }
     ]
@@ -5662,17 +5662,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_6",
     "visualType": "combo",
-    "image": "./assets/icons/flags/cat_6.svg",
+    "image": "./assets/icons/imported/6.webp",
     "shortLabel": "BRA+LIV",
     "visuals": [
       {
         "visualType": "flag",
-        "image": "./assets/icons/flags/cat_6.svg",
+        "image": "./assets/icons/imported/6.webp",
         "shortLabel": "BRA"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_93.svg",
+        "image": "./assets/icons/imported/93.webp",
         "shortLabel": "LIV"
       }
     ]
@@ -5693,17 +5693,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_6",
     "visualType": "combo",
-    "image": "./assets/icons/flags/cat_6.svg",
+    "image": "./assets/icons/imported/6.webp",
     "shortLabel": "BRA+MCI",
     "visuals": [
       {
         "visualType": "flag",
-        "image": "./assets/icons/flags/cat_6.svg",
+        "image": "./assets/icons/imported/6.webp",
         "shortLabel": "BRA"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_133.svg",
+        "image": "./assets/icons/imported/133.webp",
         "shortLabel": "MCI"
       }
     ]
@@ -5724,17 +5724,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_6",
     "visualType": "combo",
-    "image": "./assets/icons/flags/cat_6.svg",
+    "image": "./assets/icons/imported/6.webp",
     "shortLabel": "BRA+MUN",
     "visuals": [
       {
         "visualType": "flag",
-        "image": "./assets/icons/flags/cat_6.svg",
+        "image": "./assets/icons/imported/6.webp",
         "shortLabel": "BRA"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_204.svg",
+        "image": "./assets/icons/imported/204.webp",
         "shortLabel": "MUN"
       }
     ]
@@ -5755,17 +5755,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_6",
     "visualType": "combo",
-    "image": "./assets/icons/flags/cat_6.svg",
+    "image": "./assets/icons/imported/6.webp",
     "shortLabel": "BRA+PSG",
     "visuals": [
       {
         "visualType": "flag",
-        "image": "./assets/icons/flags/cat_6.svg",
+        "image": "./assets/icons/imported/6.webp",
         "shortLabel": "BRA"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_172.svg",
+        "image": "./assets/icons/imported/172.webp",
         "shortLabel": "PSG"
       }
     ]
@@ -5786,17 +5786,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_6",
     "visualType": "combo",
-    "image": "./assets/icons/flags/cat_6.svg",
+    "image": "./assets/icons/imported/6.webp",
     "shortLabel": "BRA+RMA",
     "visuals": [
       {
         "visualType": "flag",
-        "image": "./assets/icons/flags/cat_6.svg",
+        "image": "./assets/icons/imported/6.webp",
         "shortLabel": "BRA"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_160.svg",
+        "image": "./assets/icons/imported/160.webp",
         "shortLabel": "RMA"
       }
     ]
@@ -5817,17 +5817,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_179",
     "visualType": "combo",
-    "image": "./assets/icons/clubs/cat_179.svg",
+    "image": "./assets/icons/imported/179.webp",
     "shortLabel": "CHE+ARS",
     "visuals": [
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_179.svg",
+        "image": "./assets/icons/imported/179.webp",
         "shortLabel": "CHE"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_84.svg",
+        "image": "./assets/icons/imported/84.webp",
         "shortLabel": "ARS"
       }
     ]
@@ -5848,17 +5848,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_179",
     "visualType": "combo",
-    "image": "./assets/icons/clubs/cat_179.svg",
+    "image": "./assets/icons/imported/179.webp",
     "shortLabel": "CHE+INT",
     "visuals": [
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_179.svg",
+        "image": "./assets/icons/imported/179.webp",
         "shortLabel": "CHE"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_99.svg",
+        "image": "./assets/icons/imported/99.webp",
         "shortLabel": "INT"
       }
     ]
@@ -5879,17 +5879,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_179",
     "visualType": "combo",
-    "image": "./assets/icons/clubs/cat_179.svg",
+    "image": "./assets/icons/imported/179.webp",
     "shortLabel": "CHE+LIV",
     "visuals": [
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_179.svg",
+        "image": "./assets/icons/imported/179.webp",
         "shortLabel": "CHE"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_93.svg",
+        "image": "./assets/icons/imported/93.webp",
         "shortLabel": "LIV"
       }
     ]
@@ -5910,17 +5910,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_179",
     "visualType": "combo",
-    "image": "./assets/icons/clubs/cat_179.svg",
+    "image": "./assets/icons/imported/179.webp",
     "shortLabel": "CHE+MIL",
     "visuals": [
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_179.svg",
+        "image": "./assets/icons/imported/179.webp",
         "shortLabel": "CHE"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_83.svg",
+        "image": "./assets/icons/imported/83.webp",
         "shortLabel": "MIL"
       }
     ]
@@ -5941,17 +5941,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_179",
     "visualType": "combo",
-    "image": "./assets/icons/clubs/cat_179.svg",
+    "image": "./assets/icons/imported/179.webp",
     "shortLabel": "CHE+RMA",
     "visuals": [
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_179.svg",
+        "image": "./assets/icons/imported/179.webp",
         "shortLabel": "CHE"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_160.svg",
+        "image": "./assets/icons/imported/160.webp",
         "shortLabel": "RMA"
       }
     ]
@@ -5972,17 +5972,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_15",
     "visualType": "combo",
-    "image": "./assets/icons/flags/cat_15.svg",
+    "image": "./assets/icons/imported/15.webp",
     "shortLabel": "CRO+INT",
     "visuals": [
       {
         "visualType": "flag",
-        "image": "./assets/icons/flags/cat_15.svg",
+        "image": "./assets/icons/imported/15.webp",
         "shortLabel": "CRO"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_99.svg",
+        "image": "./assets/icons/imported/99.webp",
         "shortLabel": "INT"
       }
     ]
@@ -6003,17 +6003,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_15",
     "visualType": "combo",
-    "image": "./assets/icons/flags/cat_15.svg",
+    "image": "./assets/icons/imported/15.webp",
     "shortLabel": "CRO+MCI",
     "visuals": [
       {
         "visualType": "flag",
-        "image": "./assets/icons/flags/cat_15.svg",
+        "image": "./assets/icons/imported/15.webp",
         "shortLabel": "CRO"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_133.svg",
+        "image": "./assets/icons/imported/133.webp",
         "shortLabel": "MCI"
       }
     ]
@@ -6034,17 +6034,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_15",
     "visualType": "combo",
-    "image": "./assets/icons/flags/cat_15.svg",
+    "image": "./assets/icons/imported/15.webp",
     "shortLabel": "CRO+RMA",
     "visuals": [
       {
         "visualType": "flag",
-        "image": "./assets/icons/flags/cat_15.svg",
+        "image": "./assets/icons/imported/15.webp",
         "shortLabel": "CRO"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_160.svg",
+        "image": "./assets/icons/imported/160.webp",
         "shortLabel": "RMA"
       }
     ]
@@ -6065,17 +6065,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_1",
     "visualType": "combo",
-    "image": "./assets/icons/flags/cat_1.svg",
+    "image": "./assets/icons/imported/1.webp",
     "shortLabel": "ENG+ATM",
     "visuals": [
       {
         "visualType": "flag",
-        "image": "./assets/icons/flags/cat_1.svg",
+        "image": "./assets/icons/imported/1.webp",
         "shortLabel": "ENG"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_86.svg",
+        "image": "./assets/icons/imported/86.webp",
         "shortLabel": "ATM"
       }
     ]
@@ -6096,17 +6096,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_1",
     "visualType": "combo",
-    "image": "./assets/icons/flags/cat_1.svg",
+    "image": "./assets/icons/imported/1.webp",
     "shortLabel": "ENG+MIL",
     "visuals": [
       {
         "visualType": "flag",
-        "image": "./assets/icons/flags/cat_1.svg",
+        "image": "./assets/icons/imported/1.webp",
         "shortLabel": "ENG"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_83.svg",
+        "image": "./assets/icons/imported/83.webp",
         "shortLabel": "MIL"
       }
     ]
@@ -6127,17 +6127,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_1",
     "visualType": "combo",
-    "image": "./assets/icons/flags/cat_1.svg",
+    "image": "./assets/icons/imported/1.webp",
     "shortLabel": "ENG+RMA",
     "visuals": [
       {
         "visualType": "flag",
-        "image": "./assets/icons/flags/cat_1.svg",
+        "image": "./assets/icons/imported/1.webp",
         "shortLabel": "ENG"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_160.svg",
+        "image": "./assets/icons/imported/160.webp",
         "shortLabel": "RMA"
       }
     ]
@@ -6158,17 +6158,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_2",
     "visualType": "combo",
-    "image": "./assets/icons/flags/cat_2.svg",
+    "image": "./assets/icons/imported/2.webp",
     "shortLabel": "ESP+ARS",
     "visuals": [
       {
         "visualType": "flag",
-        "image": "./assets/icons/flags/cat_2.svg",
+        "image": "./assets/icons/imported/2.webp",
         "shortLabel": "ESP"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_84.svg",
+        "image": "./assets/icons/imported/84.webp",
         "shortLabel": "ARS"
       }
     ]
@@ -6189,17 +6189,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_2",
     "visualType": "combo",
-    "image": "./assets/icons/flags/cat_2.svg",
+    "image": "./assets/icons/imported/2.webp",
     "shortLabel": "ESP+CHE",
     "visuals": [
       {
         "visualType": "flag",
-        "image": "./assets/icons/flags/cat_2.svg",
+        "image": "./assets/icons/imported/2.webp",
         "shortLabel": "ESP"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_179.svg",
+        "image": "./assets/icons/imported/179.webp",
         "shortLabel": "CHE"
       }
     ]
@@ -6220,17 +6220,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_2",
     "visualType": "combo",
-    "image": "./assets/icons/flags/cat_2.svg",
+    "image": "./assets/icons/imported/2.webp",
     "shortLabel": "ESP+LIV",
     "visuals": [
       {
         "visualType": "flag",
-        "image": "./assets/icons/flags/cat_2.svg",
+        "image": "./assets/icons/imported/2.webp",
         "shortLabel": "ESP"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_93.svg",
+        "image": "./assets/icons/imported/93.webp",
         "shortLabel": "LIV"
       }
     ]
@@ -6251,17 +6251,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_2",
     "visualType": "combo",
-    "image": "./assets/icons/flags/cat_2.svg",
+    "image": "./assets/icons/imported/2.webp",
     "shortLabel": "ESP+MCI",
     "visuals": [
       {
         "visualType": "flag",
-        "image": "./assets/icons/flags/cat_2.svg",
+        "image": "./assets/icons/imported/2.webp",
         "shortLabel": "ESP"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_133.svg",
+        "image": "./assets/icons/imported/133.webp",
         "shortLabel": "MCI"
       }
     ]
@@ -6282,17 +6282,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_2",
     "visualType": "combo",
-    "image": "./assets/icons/flags/cat_2.svg",
+    "image": "./assets/icons/imported/2.webp",
     "shortLabel": "ESP+MIL",
     "visuals": [
       {
         "visualType": "flag",
-        "image": "./assets/icons/flags/cat_2.svg",
+        "image": "./assets/icons/imported/2.webp",
         "shortLabel": "ESP"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_83.svg",
+        "image": "./assets/icons/imported/83.webp",
         "shortLabel": "MIL"
       }
     ]
@@ -6313,17 +6313,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_2",
     "visualType": "combo",
-    "image": "./assets/icons/flags/cat_2.svg",
+    "image": "./assets/icons/imported/2.webp",
     "shortLabel": "ESP+MUN",
     "visuals": [
       {
         "visualType": "flag",
-        "image": "./assets/icons/flags/cat_2.svg",
+        "image": "./assets/icons/imported/2.webp",
         "shortLabel": "ESP"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_204.svg",
+        "image": "./assets/icons/imported/204.webp",
         "shortLabel": "MUN"
       }
     ]
@@ -6344,17 +6344,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_3",
     "visualType": "combo",
-    "image": "./assets/icons/flags/cat_3.svg",
+    "image": "./assets/icons/imported/3.webp",
     "shortLabel": "FRA+ARS",
     "visuals": [
       {
         "visualType": "flag",
-        "image": "./assets/icons/flags/cat_3.svg",
+        "image": "./assets/icons/imported/3.webp",
         "shortLabel": "FRA"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_84.svg",
+        "image": "./assets/icons/imported/84.webp",
         "shortLabel": "ARS"
       }
     ]
@@ -6375,17 +6375,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_3",
     "visualType": "combo",
-    "image": "./assets/icons/flags/cat_3.svg",
+    "image": "./assets/icons/imported/3.webp",
     "shortLabel": "FRA+BAR",
     "visuals": [
       {
         "visualType": "flag",
-        "image": "./assets/icons/flags/cat_3.svg",
+        "image": "./assets/icons/imported/3.webp",
         "shortLabel": "FRA"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_112.svg",
+        "image": "./assets/icons/imported/112.webp",
         "shortLabel": "BAR"
       }
     ]
@@ -6406,17 +6406,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_3",
     "visualType": "combo",
-    "image": "./assets/icons/flags/cat_3.svg",
+    "image": "./assets/icons/imported/3.webp",
     "shortLabel": "FRA+INT",
     "visuals": [
       {
         "visualType": "flag",
-        "image": "./assets/icons/flags/cat_3.svg",
+        "image": "./assets/icons/imported/3.webp",
         "shortLabel": "FRA"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_99.svg",
+        "image": "./assets/icons/imported/99.webp",
         "shortLabel": "INT"
       }
     ]
@@ -6437,17 +6437,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_3",
     "visualType": "combo",
-    "image": "./assets/icons/flags/cat_3.svg",
+    "image": "./assets/icons/imported/3.webp",
     "shortLabel": "FRA+MIL",
     "visuals": [
       {
         "visualType": "flag",
-        "image": "./assets/icons/flags/cat_3.svg",
+        "image": "./assets/icons/imported/3.webp",
         "shortLabel": "FRA"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_83.svg",
+        "image": "./assets/icons/imported/83.webp",
         "shortLabel": "MIL"
       }
     ]
@@ -6468,17 +6468,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_3",
     "visualType": "combo",
-    "image": "./assets/icons/flags/cat_3.svg",
+    "image": "./assets/icons/imported/3.webp",
     "shortLabel": "FRA+MUN",
     "visuals": [
       {
         "visualType": "flag",
-        "image": "./assets/icons/flags/cat_3.svg",
+        "image": "./assets/icons/imported/3.webp",
         "shortLabel": "FRA"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_204.svg",
+        "image": "./assets/icons/imported/204.webp",
         "shortLabel": "MUN"
       }
     ]
@@ -6499,17 +6499,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_10",
     "visualType": "combo",
-    "image": "./assets/icons/flags/cat_10.svg",
+    "image": "./assets/icons/imported/10.webp",
     "shortLabel": "GER+ARS",
     "visuals": [
       {
         "visualType": "flag",
-        "image": "./assets/icons/flags/cat_10.svg",
+        "image": "./assets/icons/imported/10.webp",
         "shortLabel": "GER"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_84.svg",
+        "image": "./assets/icons/imported/84.webp",
         "shortLabel": "ARS"
       }
     ]
@@ -6530,17 +6530,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_10",
     "visualType": "combo",
-    "image": "./assets/icons/flags/cat_10.svg",
+    "image": "./assets/icons/imported/10.webp",
     "shortLabel": "GER+CHE",
     "visuals": [
       {
         "visualType": "flag",
-        "image": "./assets/icons/flags/cat_10.svg",
+        "image": "./assets/icons/imported/10.webp",
         "shortLabel": "GER"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_179.svg",
+        "image": "./assets/icons/imported/179.webp",
         "shortLabel": "CHE"
       }
     ]
@@ -6561,17 +6561,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_10",
     "visualType": "combo",
-    "image": "./assets/icons/flags/cat_10.svg",
+    "image": "./assets/icons/imported/10.webp",
     "shortLabel": "GER+INT",
     "visuals": [
       {
         "visualType": "flag",
-        "image": "./assets/icons/flags/cat_10.svg",
+        "image": "./assets/icons/imported/10.webp",
         "shortLabel": "GER"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_99.svg",
+        "image": "./assets/icons/imported/99.webp",
         "shortLabel": "INT"
       }
     ]
@@ -6592,17 +6592,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_10",
     "visualType": "combo",
-    "image": "./assets/icons/flags/cat_10.svg",
+    "image": "./assets/icons/imported/10.webp",
     "shortLabel": "GER+LIV",
     "visuals": [
       {
         "visualType": "flag",
-        "image": "./assets/icons/flags/cat_10.svg",
+        "image": "./assets/icons/imported/10.webp",
         "shortLabel": "GER"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_93.svg",
+        "image": "./assets/icons/imported/93.webp",
         "shortLabel": "LIV"
       }
     ]
@@ -6623,17 +6623,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_10",
     "visualType": "combo",
-    "image": "./assets/icons/flags/cat_10.svg",
+    "image": "./assets/icons/imported/10.webp",
     "shortLabel": "GER+MCI",
     "visuals": [
       {
         "visualType": "flag",
-        "image": "./assets/icons/flags/cat_10.svg",
+        "image": "./assets/icons/imported/10.webp",
         "shortLabel": "GER"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_133.svg",
+        "image": "./assets/icons/imported/133.webp",
         "shortLabel": "MCI"
       }
     ]
@@ -6654,17 +6654,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_99",
     "visualType": "combo",
-    "image": "./assets/icons/clubs/cat_99.svg",
+    "image": "./assets/icons/imported/99.webp",
     "shortLabel": "INT+ARS",
     "visuals": [
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_99.svg",
+        "image": "./assets/icons/imported/99.webp",
         "shortLabel": "INT"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_84.svg",
+        "image": "./assets/icons/imported/84.webp",
         "shortLabel": "ARS"
       }
     ]
@@ -6685,17 +6685,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_99",
     "visualType": "combo",
-    "image": "./assets/icons/clubs/cat_99.svg",
+    "image": "./assets/icons/imported/99.webp",
     "shortLabel": "INT+ATM",
     "visuals": [
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_99.svg",
+        "image": "./assets/icons/imported/99.webp",
         "shortLabel": "INT"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_86.svg",
+        "image": "./assets/icons/imported/86.webp",
         "shortLabel": "ATM"
       }
     ]
@@ -6716,17 +6716,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_99",
     "visualType": "combo",
-    "image": "./assets/icons/clubs/cat_99.svg",
+    "image": "./assets/icons/imported/99.webp",
     "shortLabel": "INT+BAR",
     "visuals": [
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_99.svg",
+        "image": "./assets/icons/imported/99.webp",
         "shortLabel": "INT"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_112.svg",
+        "image": "./assets/icons/imported/112.webp",
         "shortLabel": "BAR"
       }
     ]
@@ -6747,17 +6747,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_99",
     "visualType": "combo",
-    "image": "./assets/icons/clubs/cat_99.svg",
+    "image": "./assets/icons/imported/99.webp",
     "shortLabel": "INT+JUV",
     "visuals": [
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_99.svg",
+        "image": "./assets/icons/imported/99.webp",
         "shortLabel": "INT"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_167.svg",
+        "image": "./assets/icons/imported/167.webp",
         "shortLabel": "JUV"
       }
     ]
@@ -6778,17 +6778,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_99",
     "visualType": "combo",
-    "image": "./assets/icons/clubs/cat_99.svg",
+    "image": "./assets/icons/imported/99.webp",
     "shortLabel": "INT+MIL",
     "visuals": [
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_99.svg",
+        "image": "./assets/icons/imported/99.webp",
         "shortLabel": "INT"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_83.svg",
+        "image": "./assets/icons/imported/83.webp",
         "shortLabel": "MIL"
       }
     ]
@@ -6809,17 +6809,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_12",
     "visualType": "combo",
-    "image": "./assets/icons/flags/cat_12.svg",
+    "image": "./assets/icons/imported/12.webp",
     "shortLabel": "ITA+CHE",
     "visuals": [
       {
         "visualType": "flag",
-        "image": "./assets/icons/flags/cat_12.svg",
+        "image": "./assets/icons/imported/12.webp",
         "shortLabel": "ITA"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_179.svg",
+        "image": "./assets/icons/imported/179.webp",
         "shortLabel": "CHE"
       }
     ]
@@ -6840,17 +6840,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_12",
     "visualType": "combo",
-    "image": "./assets/icons/flags/cat_12.svg",
+    "image": "./assets/icons/imported/12.webp",
     "shortLabel": "ITA+MCI",
     "visuals": [
       {
         "visualType": "flag",
-        "image": "./assets/icons/flags/cat_12.svg",
+        "image": "./assets/icons/imported/12.webp",
         "shortLabel": "ITA"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_133.svg",
+        "image": "./assets/icons/imported/133.webp",
         "shortLabel": "MCI"
       }
     ]
@@ -6871,17 +6871,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_12",
     "visualType": "combo",
-    "image": "./assets/icons/flags/cat_12.svg",
+    "image": "./assets/icons/imported/12.webp",
     "shortLabel": "ITA+PSG",
     "visuals": [
       {
         "visualType": "flag",
-        "image": "./assets/icons/flags/cat_12.svg",
+        "image": "./assets/icons/imported/12.webp",
         "shortLabel": "ITA"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_172.svg",
+        "image": "./assets/icons/imported/172.webp",
         "shortLabel": "PSG"
       }
     ]
@@ -6902,17 +6902,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_167",
     "visualType": "combo",
-    "image": "./assets/icons/clubs/cat_167.svg",
+    "image": "./assets/icons/imported/167.webp",
     "shortLabel": "JUV+ARS",
     "visuals": [
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_167.svg",
+        "image": "./assets/icons/imported/167.webp",
         "shortLabel": "JUV"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_84.svg",
+        "image": "./assets/icons/imported/84.webp",
         "shortLabel": "ARS"
       }
     ]
@@ -6933,17 +6933,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_167",
     "visualType": "combo",
-    "image": "./assets/icons/clubs/cat_167.svg",
+    "image": "./assets/icons/imported/167.webp",
     "shortLabel": "JUV+ATM",
     "visuals": [
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_167.svg",
+        "image": "./assets/icons/imported/167.webp",
         "shortLabel": "JUV"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_86.svg",
+        "image": "./assets/icons/imported/86.webp",
         "shortLabel": "ATM"
       }
     ]
@@ -6964,17 +6964,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_167",
     "visualType": "combo",
-    "image": "./assets/icons/clubs/cat_167.svg",
+    "image": "./assets/icons/imported/167.webp",
     "shortLabel": "JUV+BAR",
     "visuals": [
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_167.svg",
+        "image": "./assets/icons/imported/167.webp",
         "shortLabel": "JUV"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_112.svg",
+        "image": "./assets/icons/imported/112.webp",
         "shortLabel": "BAR"
       }
     ]
@@ -6995,17 +6995,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_167",
     "visualType": "combo",
-    "image": "./assets/icons/clubs/cat_167.svg",
+    "image": "./assets/icons/imported/167.webp",
     "shortLabel": "JUV+INT",
     "visuals": [
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_167.svg",
+        "image": "./assets/icons/imported/167.webp",
         "shortLabel": "JUV"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_99.svg",
+        "image": "./assets/icons/imported/99.webp",
         "shortLabel": "INT"
       }
     ]
@@ -7026,17 +7026,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_167",
     "visualType": "combo",
-    "image": "./assets/icons/clubs/cat_167.svg",
+    "image": "./assets/icons/imported/167.webp",
     "shortLabel": "JUV+MIL",
     "visuals": [
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_167.svg",
+        "image": "./assets/icons/imported/167.webp",
         "shortLabel": "JUV"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_83.svg",
+        "image": "./assets/icons/imported/83.webp",
         "shortLabel": "MIL"
       }
     ]
@@ -7057,17 +7057,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_167",
     "visualType": "combo",
-    "image": "./assets/icons/clubs/cat_167.svg",
+    "image": "./assets/icons/imported/167.webp",
     "shortLabel": "JUV+PSG",
     "visuals": [
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_167.svg",
+        "image": "./assets/icons/imported/167.webp",
         "shortLabel": "JUV"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_172.svg",
+        "image": "./assets/icons/imported/172.webp",
         "shortLabel": "PSG"
       }
     ]
@@ -7088,17 +7088,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_167",
     "visualType": "combo",
-    "image": "./assets/icons/clubs/cat_167.svg",
+    "image": "./assets/icons/imported/167.webp",
     "shortLabel": "JUV+RMA",
     "visuals": [
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_167.svg",
+        "image": "./assets/icons/imported/167.webp",
         "shortLabel": "JUV"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_160.svg",
+        "image": "./assets/icons/imported/160.webp",
         "shortLabel": "RMA"
       }
     ]
@@ -7119,17 +7119,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_93",
     "visualType": "combo",
-    "image": "./assets/icons/clubs/cat_93.svg",
+    "image": "./assets/icons/imported/93.webp",
     "shortLabel": "LIV+ATM",
     "visuals": [
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_93.svg",
+        "image": "./assets/icons/imported/93.webp",
         "shortLabel": "LIV"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_86.svg",
+        "image": "./assets/icons/imported/86.webp",
         "shortLabel": "ATM"
       }
     ]
@@ -7150,17 +7150,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_93",
     "visualType": "combo",
-    "image": "./assets/icons/clubs/cat_93.svg",
+    "image": "./assets/icons/imported/93.webp",
     "shortLabel": "LIV+BAR",
     "visuals": [
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_93.svg",
+        "image": "./assets/icons/imported/93.webp",
         "shortLabel": "LIV"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_112.svg",
+        "image": "./assets/icons/imported/112.webp",
         "shortLabel": "BAR"
       }
     ]
@@ -7181,17 +7181,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_93",
     "visualType": "combo",
-    "image": "./assets/icons/clubs/cat_93.svg",
+    "image": "./assets/icons/imported/93.webp",
     "shortLabel": "LIV+INT",
     "visuals": [
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_93.svg",
+        "image": "./assets/icons/imported/93.webp",
         "shortLabel": "LIV"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_99.svg",
+        "image": "./assets/icons/imported/99.webp",
         "shortLabel": "INT"
       }
     ]
@@ -7212,17 +7212,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_93",
     "visualType": "combo",
-    "image": "./assets/icons/clubs/cat_93.svg",
+    "image": "./assets/icons/imported/93.webp",
     "shortLabel": "LIV+JUV",
     "visuals": [
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_93.svg",
+        "image": "./assets/icons/imported/93.webp",
         "shortLabel": "LIV"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_167.svg",
+        "image": "./assets/icons/imported/167.webp",
         "shortLabel": "JUV"
       }
     ]
@@ -7243,17 +7243,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_93",
     "visualType": "combo",
-    "image": "./assets/icons/clubs/cat_93.svg",
+    "image": "./assets/icons/imported/93.webp",
     "shortLabel": "LIV+MCI",
     "visuals": [
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_93.svg",
+        "image": "./assets/icons/imported/93.webp",
         "shortLabel": "LIV"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_133.svg",
+        "image": "./assets/icons/imported/133.webp",
         "shortLabel": "MCI"
       }
     ]
@@ -7274,17 +7274,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_93",
     "visualType": "combo",
-    "image": "./assets/icons/clubs/cat_93.svg",
+    "image": "./assets/icons/imported/93.webp",
     "shortLabel": "LIV+MIL",
     "visuals": [
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_93.svg",
+        "image": "./assets/icons/imported/93.webp",
         "shortLabel": "LIV"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_83.svg",
+        "image": "./assets/icons/imported/83.webp",
         "shortLabel": "MIL"
       }
     ]
@@ -7305,17 +7305,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_93",
     "visualType": "combo",
-    "image": "./assets/icons/clubs/cat_93.svg",
+    "image": "./assets/icons/imported/93.webp",
     "shortLabel": "LIV+PSG",
     "visuals": [
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_93.svg",
+        "image": "./assets/icons/imported/93.webp",
         "shortLabel": "LIV"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_172.svg",
+        "image": "./assets/icons/imported/172.webp",
         "shortLabel": "PSG"
       }
     ]
@@ -7336,17 +7336,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_93",
     "visualType": "combo",
-    "image": "./assets/icons/clubs/cat_93.svg",
+    "image": "./assets/icons/imported/93.webp",
     "shortLabel": "LIV+RMA",
     "visuals": [
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_93.svg",
+        "image": "./assets/icons/imported/93.webp",
         "shortLabel": "LIV"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_160.svg",
+        "image": "./assets/icons/imported/160.webp",
         "shortLabel": "RMA"
       }
     ]
@@ -7367,17 +7367,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_133",
     "visualType": "combo",
-    "image": "./assets/icons/clubs/cat_133.svg",
+    "image": "./assets/icons/imported/133.webp",
     "shortLabel": "MCI+ARS",
     "visuals": [
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_133.svg",
+        "image": "./assets/icons/imported/133.webp",
         "shortLabel": "MCI"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_84.svg",
+        "image": "./assets/icons/imported/84.webp",
         "shortLabel": "ARS"
       }
     ]
@@ -7398,17 +7398,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_133",
     "visualType": "combo",
-    "image": "./assets/icons/clubs/cat_133.svg",
+    "image": "./assets/icons/imported/133.webp",
     "shortLabel": "MCI+ATM",
     "visuals": [
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_133.svg",
+        "image": "./assets/icons/imported/133.webp",
         "shortLabel": "MCI"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_86.svg",
+        "image": "./assets/icons/imported/86.webp",
         "shortLabel": "ATM"
       }
     ]
@@ -7429,17 +7429,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_133",
     "visualType": "combo",
-    "image": "./assets/icons/clubs/cat_133.svg",
+    "image": "./assets/icons/imported/133.webp",
     "shortLabel": "MCI+INT",
     "visuals": [
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_133.svg",
+        "image": "./assets/icons/imported/133.webp",
         "shortLabel": "MCI"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_99.svg",
+        "image": "./assets/icons/imported/99.webp",
         "shortLabel": "INT"
       }
     ]
@@ -7460,17 +7460,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_133",
     "visualType": "combo",
-    "image": "./assets/icons/clubs/cat_133.svg",
+    "image": "./assets/icons/imported/133.webp",
     "shortLabel": "MCI+JUV",
     "visuals": [
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_133.svg",
+        "image": "./assets/icons/imported/133.webp",
         "shortLabel": "MCI"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_167.svg",
+        "image": "./assets/icons/imported/167.webp",
         "shortLabel": "JUV"
       }
     ]
@@ -7491,17 +7491,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_133",
     "visualType": "combo",
-    "image": "./assets/icons/clubs/cat_133.svg",
+    "image": "./assets/icons/imported/133.webp",
     "shortLabel": "MCI+LIV",
     "visuals": [
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_133.svg",
+        "image": "./assets/icons/imported/133.webp",
         "shortLabel": "MCI"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_93.svg",
+        "image": "./assets/icons/imported/93.webp",
         "shortLabel": "LIV"
       }
     ]
@@ -7522,17 +7522,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_133",
     "visualType": "combo",
-    "image": "./assets/icons/clubs/cat_133.svg",
+    "image": "./assets/icons/imported/133.webp",
     "shortLabel": "MCI+MIL",
     "visuals": [
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_133.svg",
+        "image": "./assets/icons/imported/133.webp",
         "shortLabel": "MCI"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_83.svg",
+        "image": "./assets/icons/imported/83.webp",
         "shortLabel": "MIL"
       }
     ]
@@ -7553,17 +7553,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_133",
     "visualType": "combo",
-    "image": "./assets/icons/clubs/cat_133.svg",
+    "image": "./assets/icons/imported/133.webp",
     "shortLabel": "MCI+PSG",
     "visuals": [
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_133.svg",
+        "image": "./assets/icons/imported/133.webp",
         "shortLabel": "MCI"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_172.svg",
+        "image": "./assets/icons/imported/172.webp",
         "shortLabel": "PSG"
       }
     ]
@@ -7584,17 +7584,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_133",
     "visualType": "combo",
-    "image": "./assets/icons/clubs/cat_133.svg",
+    "image": "./assets/icons/imported/133.webp",
     "shortLabel": "MCI+RMA",
     "visuals": [
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_133.svg",
+        "image": "./assets/icons/imported/133.webp",
         "shortLabel": "MCI"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_160.svg",
+        "image": "./assets/icons/imported/160.webp",
         "shortLabel": "RMA"
       }
     ]
@@ -7615,17 +7615,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_83",
     "visualType": "combo",
-    "image": "./assets/icons/clubs/cat_83.svg",
+    "image": "./assets/icons/imported/83.webp",
     "shortLabel": "MIL+ARS",
     "visuals": [
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_83.svg",
+        "image": "./assets/icons/imported/83.webp",
         "shortLabel": "MIL"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_84.svg",
+        "image": "./assets/icons/imported/84.webp",
         "shortLabel": "ARS"
       }
     ]
@@ -7646,17 +7646,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_83",
     "visualType": "combo",
-    "image": "./assets/icons/clubs/cat_83.svg",
+    "image": "./assets/icons/imported/83.webp",
     "shortLabel": "MIL+BAR",
     "visuals": [
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_83.svg",
+        "image": "./assets/icons/imported/83.webp",
         "shortLabel": "MIL"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_112.svg",
+        "image": "./assets/icons/imported/112.webp",
         "shortLabel": "BAR"
       }
     ]
@@ -7677,17 +7677,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_83",
     "visualType": "combo",
-    "image": "./assets/icons/clubs/cat_83.svg",
+    "image": "./assets/icons/imported/83.webp",
     "shortLabel": "MIL+CHE",
     "visuals": [
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_83.svg",
+        "image": "./assets/icons/imported/83.webp",
         "shortLabel": "MIL"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_179.svg",
+        "image": "./assets/icons/imported/179.webp",
         "shortLabel": "CHE"
       }
     ]
@@ -7708,17 +7708,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_83",
     "visualType": "combo",
-    "image": "./assets/icons/clubs/cat_83.svg",
+    "image": "./assets/icons/imported/83.webp",
     "shortLabel": "MIL+INT",
     "visuals": [
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_83.svg",
+        "image": "./assets/icons/imported/83.webp",
         "shortLabel": "MIL"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_99.svg",
+        "image": "./assets/icons/imported/99.webp",
         "shortLabel": "INT"
       }
     ]
@@ -7739,17 +7739,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_83",
     "visualType": "combo",
-    "image": "./assets/icons/clubs/cat_83.svg",
+    "image": "./assets/icons/imported/83.webp",
     "shortLabel": "MIL+LIV",
     "visuals": [
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_83.svg",
+        "image": "./assets/icons/imported/83.webp",
         "shortLabel": "MIL"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_93.svg",
+        "image": "./assets/icons/imported/93.webp",
         "shortLabel": "LIV"
       }
     ]
@@ -7770,17 +7770,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_83",
     "visualType": "combo",
-    "image": "./assets/icons/clubs/cat_83.svg",
+    "image": "./assets/icons/imported/83.webp",
     "shortLabel": "MIL+MCI",
     "visuals": [
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_83.svg",
+        "image": "./assets/icons/imported/83.webp",
         "shortLabel": "MIL"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_133.svg",
+        "image": "./assets/icons/imported/133.webp",
         "shortLabel": "MCI"
       }
     ]
@@ -7801,17 +7801,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_83",
     "visualType": "combo",
-    "image": "./assets/icons/clubs/cat_83.svg",
+    "image": "./assets/icons/imported/83.webp",
     "shortLabel": "MIL+MUN",
     "visuals": [
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_83.svg",
+        "image": "./assets/icons/imported/83.webp",
         "shortLabel": "MIL"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_204.svg",
+        "image": "./assets/icons/imported/204.webp",
         "shortLabel": "MUN"
       }
     ]
@@ -7832,17 +7832,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_83",
     "visualType": "combo",
-    "image": "./assets/icons/clubs/cat_83.svg",
+    "image": "./assets/icons/imported/83.webp",
     "shortLabel": "MIL+PSG",
     "visuals": [
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_83.svg",
+        "image": "./assets/icons/imported/83.webp",
         "shortLabel": "MIL"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_172.svg",
+        "image": "./assets/icons/imported/172.webp",
         "shortLabel": "PSG"
       }
     ]
@@ -7863,17 +7863,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_204",
     "visualType": "combo",
-    "image": "./assets/icons/clubs/cat_204.svg",
+    "image": "./assets/icons/imported/204.webp",
     "shortLabel": "MUN+ARS",
     "visuals": [
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_204.svg",
+        "image": "./assets/icons/imported/204.webp",
         "shortLabel": "MUN"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_84.svg",
+        "image": "./assets/icons/imported/84.webp",
         "shortLabel": "ARS"
       }
     ]
@@ -7894,17 +7894,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_204",
     "visualType": "combo",
-    "image": "./assets/icons/clubs/cat_204.svg",
+    "image": "./assets/icons/imported/204.webp",
     "shortLabel": "MUN+ATM",
     "visuals": [
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_204.svg",
+        "image": "./assets/icons/imported/204.webp",
         "shortLabel": "MUN"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_86.svg",
+        "image": "./assets/icons/imported/86.webp",
         "shortLabel": "ATM"
       }
     ]
@@ -7925,17 +7925,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_204",
     "visualType": "combo",
-    "image": "./assets/icons/clubs/cat_204.svg",
+    "image": "./assets/icons/imported/204.webp",
     "shortLabel": "MUN+PSG",
     "visuals": [
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_204.svg",
+        "image": "./assets/icons/imported/204.webp",
         "shortLabel": "MUN"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_172.svg",
+        "image": "./assets/icons/imported/172.webp",
         "shortLabel": "PSG"
       }
     ]
@@ -7956,17 +7956,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_204",
     "visualType": "combo",
-    "image": "./assets/icons/clubs/cat_204.svg",
+    "image": "./assets/icons/imported/204.webp",
     "shortLabel": "MUN+RMA",
     "visuals": [
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_204.svg",
+        "image": "./assets/icons/imported/204.webp",
         "shortLabel": "MUN"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_160.svg",
+        "image": "./assets/icons/imported/160.webp",
         "shortLabel": "RMA"
       }
     ]
@@ -7987,17 +7987,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_8",
     "visualType": "combo",
-    "image": "./assets/icons/flags/cat_8.svg",
+    "image": "./assets/icons/imported/8.webp",
     "shortLabel": "NLD+ARS",
     "visuals": [
       {
         "visualType": "flag",
-        "image": "./assets/icons/flags/cat_8.svg",
+        "image": "./assets/icons/imported/8.webp",
         "shortLabel": "NLD"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_84.svg",
+        "image": "./assets/icons/imported/84.webp",
         "shortLabel": "ARS"
       }
     ]
@@ -8018,17 +8018,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_8",
     "visualType": "combo",
-    "image": "./assets/icons/flags/cat_8.svg",
+    "image": "./assets/icons/imported/8.webp",
     "shortLabel": "NLD+BAR",
     "visuals": [
       {
         "visualType": "flag",
-        "image": "./assets/icons/flags/cat_8.svg",
+        "image": "./assets/icons/imported/8.webp",
         "shortLabel": "NLD"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_112.svg",
+        "image": "./assets/icons/imported/112.webp",
         "shortLabel": "BAR"
       }
     ]
@@ -8049,17 +8049,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_8",
     "visualType": "combo",
-    "image": "./assets/icons/flags/cat_8.svg",
+    "image": "./assets/icons/imported/8.webp",
     "shortLabel": "NLD+CHE",
     "visuals": [
       {
         "visualType": "flag",
-        "image": "./assets/icons/flags/cat_8.svg",
+        "image": "./assets/icons/imported/8.webp",
         "shortLabel": "NLD"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_179.svg",
+        "image": "./assets/icons/imported/179.webp",
         "shortLabel": "CHE"
       }
     ]
@@ -8080,17 +8080,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_8",
     "visualType": "combo",
-    "image": "./assets/icons/flags/cat_8.svg",
+    "image": "./assets/icons/imported/8.webp",
     "shortLabel": "NLD+JUV",
     "visuals": [
       {
         "visualType": "flag",
-        "image": "./assets/icons/flags/cat_8.svg",
+        "image": "./assets/icons/imported/8.webp",
         "shortLabel": "NLD"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_167.svg",
+        "image": "./assets/icons/imported/167.webp",
         "shortLabel": "JUV"
       }
     ]
@@ -8111,17 +8111,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_8",
     "visualType": "combo",
-    "image": "./assets/icons/flags/cat_8.svg",
+    "image": "./assets/icons/imported/8.webp",
     "shortLabel": "NLD+MIL",
     "visuals": [
       {
         "visualType": "flag",
-        "image": "./assets/icons/flags/cat_8.svg",
+        "image": "./assets/icons/imported/8.webp",
         "shortLabel": "NLD"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_83.svg",
+        "image": "./assets/icons/imported/83.webp",
         "shortLabel": "MIL"
       }
     ]
@@ -8142,17 +8142,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_8",
     "visualType": "combo",
-    "image": "./assets/icons/flags/cat_8.svg",
+    "image": "./assets/icons/imported/8.webp",
     "shortLabel": "NLD+MUN",
     "visuals": [
       {
         "visualType": "flag",
-        "image": "./assets/icons/flags/cat_8.svg",
+        "image": "./assets/icons/imported/8.webp",
         "shortLabel": "NLD"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_204.svg",
+        "image": "./assets/icons/imported/204.webp",
         "shortLabel": "MUN"
       }
     ]
@@ -8173,17 +8173,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_5",
     "visualType": "combo",
-    "image": "./assets/icons/flags/cat_5.svg",
+    "image": "./assets/icons/imported/5.webp",
     "shortLabel": "POR+ATM",
     "visuals": [
       {
         "visualType": "flag",
-        "image": "./assets/icons/flags/cat_5.svg",
+        "image": "./assets/icons/imported/5.webp",
         "shortLabel": "POR"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_86.svg",
+        "image": "./assets/icons/imported/86.webp",
         "shortLabel": "ATM"
       }
     ]
@@ -8204,17 +8204,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_5",
     "visualType": "combo",
-    "image": "./assets/icons/flags/cat_5.svg",
+    "image": "./assets/icons/imported/5.webp",
     "shortLabel": "POR+INT",
     "visuals": [
       {
         "visualType": "flag",
-        "image": "./assets/icons/flags/cat_5.svg",
+        "image": "./assets/icons/imported/5.webp",
         "shortLabel": "POR"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_99.svg",
+        "image": "./assets/icons/imported/99.webp",
         "shortLabel": "INT"
       }
     ]
@@ -8235,17 +8235,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_5",
     "visualType": "combo",
-    "image": "./assets/icons/flags/cat_5.svg",
+    "image": "./assets/icons/imported/5.webp",
     "shortLabel": "POR+JUV",
     "visuals": [
       {
         "visualType": "flag",
-        "image": "./assets/icons/flags/cat_5.svg",
+        "image": "./assets/icons/imported/5.webp",
         "shortLabel": "POR"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_167.svg",
+        "image": "./assets/icons/imported/167.webp",
         "shortLabel": "JUV"
       }
     ]
@@ -8266,17 +8266,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_5",
     "visualType": "combo",
-    "image": "./assets/icons/flags/cat_5.svg",
+    "image": "./assets/icons/imported/5.webp",
     "shortLabel": "POR+LIV",
     "visuals": [
       {
         "visualType": "flag",
-        "image": "./assets/icons/flags/cat_5.svg",
+        "image": "./assets/icons/imported/5.webp",
         "shortLabel": "POR"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_93.svg",
+        "image": "./assets/icons/imported/93.webp",
         "shortLabel": "LIV"
       }
     ]
@@ -8297,17 +8297,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_5",
     "visualType": "combo",
-    "image": "./assets/icons/flags/cat_5.svg",
+    "image": "./assets/icons/imported/5.webp",
     "shortLabel": "POR+MCI",
     "visuals": [
       {
         "visualType": "flag",
-        "image": "./assets/icons/flags/cat_5.svg",
+        "image": "./assets/icons/imported/5.webp",
         "shortLabel": "POR"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_133.svg",
+        "image": "./assets/icons/imported/133.webp",
         "shortLabel": "MCI"
       }
     ]
@@ -8328,17 +8328,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_5",
     "visualType": "combo",
-    "image": "./assets/icons/flags/cat_5.svg",
+    "image": "./assets/icons/imported/5.webp",
     "shortLabel": "POR+MIL",
     "visuals": [
       {
         "visualType": "flag",
-        "image": "./assets/icons/flags/cat_5.svg",
+        "image": "./assets/icons/imported/5.webp",
         "shortLabel": "POR"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_83.svg",
+        "image": "./assets/icons/imported/83.webp",
         "shortLabel": "MIL"
       }
     ]
@@ -8359,17 +8359,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_5",
     "visualType": "combo",
-    "image": "./assets/icons/flags/cat_5.svg",
+    "image": "./assets/icons/imported/5.webp",
     "shortLabel": "POR+MUN",
     "visuals": [
       {
         "visualType": "flag",
-        "image": "./assets/icons/flags/cat_5.svg",
+        "image": "./assets/icons/imported/5.webp",
         "shortLabel": "POR"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_204.svg",
+        "image": "./assets/icons/imported/204.webp",
         "shortLabel": "MUN"
       }
     ]
@@ -8390,17 +8390,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_5",
     "visualType": "combo",
-    "image": "./assets/icons/flags/cat_5.svg",
+    "image": "./assets/icons/imported/5.webp",
     "shortLabel": "POR+PSG",
     "visuals": [
       {
         "visualType": "flag",
-        "image": "./assets/icons/flags/cat_5.svg",
+        "image": "./assets/icons/imported/5.webp",
         "shortLabel": "POR"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_172.svg",
+        "image": "./assets/icons/imported/172.webp",
         "shortLabel": "PSG"
       }
     ]
@@ -8421,17 +8421,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_5",
     "visualType": "combo",
-    "image": "./assets/icons/flags/cat_5.svg",
+    "image": "./assets/icons/imported/5.webp",
     "shortLabel": "POR+RMA",
     "visuals": [
       {
         "visualType": "flag",
-        "image": "./assets/icons/flags/cat_5.svg",
+        "image": "./assets/icons/imported/5.webp",
         "shortLabel": "POR"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_160.svg",
+        "image": "./assets/icons/imported/160.webp",
         "shortLabel": "RMA"
       }
     ]
@@ -8452,17 +8452,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_172",
     "visualType": "combo",
-    "image": "./assets/icons/clubs/cat_172.svg",
+    "image": "./assets/icons/imported/172.webp",
     "shortLabel": "PSG+ARS",
     "visuals": [
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_172.svg",
+        "image": "./assets/icons/imported/172.webp",
         "shortLabel": "PSG"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_84.svg",
+        "image": "./assets/icons/imported/84.webp",
         "shortLabel": "ARS"
       }
     ]
@@ -8483,17 +8483,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_172",
     "visualType": "combo",
-    "image": "./assets/icons/clubs/cat_172.svg",
+    "image": "./assets/icons/imported/172.webp",
     "shortLabel": "PSG+BAR",
     "visuals": [
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_172.svg",
+        "image": "./assets/icons/imported/172.webp",
         "shortLabel": "PSG"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_112.svg",
+        "image": "./assets/icons/imported/112.webp",
         "shortLabel": "BAR"
       }
     ]
@@ -8514,17 +8514,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_172",
     "visualType": "combo",
-    "image": "./assets/icons/clubs/cat_172.svg",
+    "image": "./assets/icons/imported/172.webp",
     "shortLabel": "PSG+INT",
     "visuals": [
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_172.svg",
+        "image": "./assets/icons/imported/172.webp",
         "shortLabel": "PSG"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_99.svg",
+        "image": "./assets/icons/imported/99.webp",
         "shortLabel": "INT"
       }
     ]
@@ -8545,17 +8545,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_172",
     "visualType": "combo",
-    "image": "./assets/icons/clubs/cat_172.svg",
+    "image": "./assets/icons/imported/172.webp",
     "shortLabel": "PSG+JUV",
     "visuals": [
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_172.svg",
+        "image": "./assets/icons/imported/172.webp",
         "shortLabel": "PSG"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_167.svg",
+        "image": "./assets/icons/imported/167.webp",
         "shortLabel": "JUV"
       }
     ]
@@ -8576,17 +8576,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_172",
     "visualType": "combo",
-    "image": "./assets/icons/clubs/cat_172.svg",
+    "image": "./assets/icons/imported/172.webp",
     "shortLabel": "PSG+LIV",
     "visuals": [
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_172.svg",
+        "image": "./assets/icons/imported/172.webp",
         "shortLabel": "PSG"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_93.svg",
+        "image": "./assets/icons/imported/93.webp",
         "shortLabel": "LIV"
       }
     ]
@@ -8607,17 +8607,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_172",
     "visualType": "combo",
-    "image": "./assets/icons/clubs/cat_172.svg",
+    "image": "./assets/icons/imported/172.webp",
     "shortLabel": "PSG+MUN",
     "visuals": [
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_172.svg",
+        "image": "./assets/icons/imported/172.webp",
         "shortLabel": "PSG"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_204.svg",
+        "image": "./assets/icons/imported/204.webp",
         "shortLabel": "MUN"
       }
     ]
@@ -8638,17 +8638,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_160",
     "visualType": "combo",
-    "image": "./assets/icons/clubs/cat_160.svg",
+    "image": "./assets/icons/imported/160.webp",
     "shortLabel": "RMA+ARS",
     "visuals": [
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_160.svg",
+        "image": "./assets/icons/imported/160.webp",
         "shortLabel": "RMA"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_84.svg",
+        "image": "./assets/icons/imported/84.webp",
         "shortLabel": "ARS"
       }
     ]
@@ -8669,17 +8669,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_160",
     "visualType": "combo",
-    "image": "./assets/icons/clubs/cat_160.svg",
+    "image": "./assets/icons/imported/160.webp",
     "shortLabel": "RMA+CHE",
     "visuals": [
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_160.svg",
+        "image": "./assets/icons/imported/160.webp",
         "shortLabel": "RMA"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_179.svg",
+        "image": "./assets/icons/imported/179.webp",
         "shortLabel": "CHE"
       }
     ]
@@ -8700,17 +8700,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_160",
     "visualType": "combo",
-    "image": "./assets/icons/clubs/cat_160.svg",
+    "image": "./assets/icons/imported/160.webp",
     "shortLabel": "RMA+LIV",
     "visuals": [
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_160.svg",
+        "image": "./assets/icons/imported/160.webp",
         "shortLabel": "RMA"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_93.svg",
+        "image": "./assets/icons/imported/93.webp",
         "shortLabel": "LIV"
       }
     ]
@@ -8731,17 +8731,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_160",
     "visualType": "combo",
-    "image": "./assets/icons/clubs/cat_160.svg",
+    "image": "./assets/icons/imported/160.webp",
     "shortLabel": "RMA+MCI",
     "visuals": [
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_160.svg",
+        "image": "./assets/icons/imported/160.webp",
         "shortLabel": "RMA"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_133.svg",
+        "image": "./assets/icons/imported/133.webp",
         "shortLabel": "MCI"
       }
     ]
@@ -8762,17 +8762,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_160",
     "visualType": "combo",
-    "image": "./assets/icons/clubs/cat_160.svg",
+    "image": "./assets/icons/imported/160.webp",
     "shortLabel": "RMA+MIL",
     "visuals": [
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_160.svg",
+        "image": "./assets/icons/imported/160.webp",
         "shortLabel": "RMA"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_83.svg",
+        "image": "./assets/icons/imported/83.webp",
         "shortLabel": "MIL"
       }
     ]
@@ -8793,17 +8793,17 @@ export const CATEGORIES = [
     "match": "all",
     "logo": "cat_160",
     "visualType": "combo",
-    "image": "./assets/icons/clubs/cat_160.svg",
+    "image": "./assets/icons/imported/160.webp",
     "shortLabel": "RMA+MUN",
     "visuals": [
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_160.svg",
+        "image": "./assets/icons/imported/160.webp",
         "shortLabel": "RMA"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_204.svg",
+        "image": "./assets/icons/imported/204.webp",
         "shortLabel": "MUN"
       }
     ]
@@ -8825,17 +8825,17 @@ export const CATEGORIES = [
     "logo": "cat_403",
     "helperText": "players from countries in CONMEBOL, which includes Brazil, Argentina, Chile, and others — not just based on geographic location.",
     "visualType": "combo",
-    "image": "./assets/icons/flags/cat_403.svg",
+    "image": "./assets/icons/imported/403.webp",
     "shortLabel": "SOU+BAR",
     "visuals": [
       {
         "visualType": "flag",
-        "image": "./assets/icons/flags/cat_403.svg",
+        "image": "./assets/icons/imported/403.webp",
         "shortLabel": "SOU"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_112.svg",
+        "image": "./assets/icons/imported/112.webp",
         "shortLabel": "BAR"
       }
     ]
@@ -8857,17 +8857,17 @@ export const CATEGORIES = [
     "logo": "cat_403",
     "helperText": "players from countries in CONMEBOL, which includes Brazil, Argentina, Chile, and others — not just based on geographic location.",
     "visualType": "combo",
-    "image": "./assets/icons/flags/cat_403.svg",
+    "image": "./assets/icons/imported/403.webp",
     "shortLabel": "SOU+CHE",
     "visuals": [
       {
         "visualType": "flag",
-        "image": "./assets/icons/flags/cat_403.svg",
+        "image": "./assets/icons/imported/403.webp",
         "shortLabel": "SOU"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_179.svg",
+        "image": "./assets/icons/imported/179.webp",
         "shortLabel": "CHE"
       }
     ]
@@ -8889,17 +8889,17 @@ export const CATEGORIES = [
     "logo": "cat_403",
     "helperText": "players from countries in CONMEBOL, which includes Brazil, Argentina, Chile, and others — not just based on geographic location.",
     "visualType": "combo",
-    "image": "./assets/icons/flags/cat_403.svg",
+    "image": "./assets/icons/imported/403.webp",
     "shortLabel": "SOU+MCI",
     "visuals": [
       {
         "visualType": "flag",
-        "image": "./assets/icons/flags/cat_403.svg",
+        "image": "./assets/icons/imported/403.webp",
         "shortLabel": "SOU"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_133.svg",
+        "image": "./assets/icons/imported/133.webp",
         "shortLabel": "MCI"
       }
     ]
@@ -8921,17 +8921,17 @@ export const CATEGORIES = [
     "logo": "cat_403",
     "helperText": "players from countries in CONMEBOL, which includes Brazil, Argentina, Chile, and others — not just based on geographic location.",
     "visualType": "combo",
-    "image": "./assets/icons/flags/cat_403.svg",
+    "image": "./assets/icons/imported/403.webp",
     "shortLabel": "SOU+MUN",
     "visuals": [
       {
         "visualType": "flag",
-        "image": "./assets/icons/flags/cat_403.svg",
+        "image": "./assets/icons/imported/403.webp",
         "shortLabel": "SOU"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_204.svg",
+        "image": "./assets/icons/imported/204.webp",
         "shortLabel": "MUN"
       }
     ]
@@ -8953,17 +8953,17 @@ export const CATEGORIES = [
     "logo": "cat_403",
     "helperText": "players from countries in CONMEBOL, which includes Brazil, Argentina, Chile, and others — not just based on geographic location.",
     "visualType": "combo",
-    "image": "./assets/icons/flags/cat_403.svg",
+    "image": "./assets/icons/imported/403.webp",
     "shortLabel": "SOU+RMA",
     "visuals": [
       {
         "visualType": "flag",
-        "image": "./assets/icons/flags/cat_403.svg",
+        "image": "./assets/icons/imported/403.webp",
         "shortLabel": "SOU"
       },
       {
         "visualType": "club",
-        "image": "./assets/icons/clubs/cat_160.svg",
+        "image": "./assets/icons/imported/160.webp",
         "shortLabel": "RMA"
       }
     ]
