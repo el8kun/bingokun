@@ -94,7 +94,9 @@ const MAX_DECK_PLAYERS = 75;
 const MIN_PLAYABLE_PLAYERS = 65;
 const MIN_PLAYERS_PER_STANDARD_CELL = 3;
 const MIN_PLAYERS_PER_COMBO_CELL = 2;
-const MAX_COMBO_CELLS = 6;
+const EXACT_COMBO_CELLS = 5;
+const SIMPLE_CELL_POINTS = 1;
+const COMBO_CELL_POINTS = 3;
 
 const $ = (id) => document.getElementById(id);
 
@@ -494,10 +496,10 @@ async function createRoom() {
 
   const setup = generateGameSetup(requestedGrid, selectedPreset);
 
-  if (!setup.perfectSolvable || setup.deck.length !== MAX_DECK_PLAYERS || setup.playableCount < MIN_PLAYABLE_PLAYERS) {
+  if (!setup.perfectSolvable || setup.deck.length !== MAX_DECK_PLAYERS || setup.playableCount < MIN_PLAYABLE_PLAYERS || setup.comboCount !== EXACT_COMBO_CELLS) {
     alert(
       "Impossible de générer une grille équilibrée avec ces paramètres.\n\n" +
-      `Objectif : ${MAX_DECK_PLAYERS} joueurs, minimum ${MIN_PLAYABLE_PLAYERS} utiles, minimum 3 solutions par case simple, 2 par combo, maximum ${MAX_COMBO_CELLS} combos.\n\n` +
+      `Objectif : ${MAX_DECK_PLAYERS} joueurs, minimum ${MIN_PLAYABLE_PLAYERS} utiles, minimum 3 solutions par case simple, 2 par combo, exactement ${EXACT_COMBO_CELLS} combos.\n\n` +
       "Essaie un autre type de partie, ou enlève quelques catégories custom trop rares."
     );
     return;
@@ -517,12 +519,16 @@ async function createRoom() {
     perfectSolvable: true,
     perfectAssignment: setup.perfectAssignment || [],
     comboCount: setup.comboCount || countComboCells(grid),
+    scoringMode: "strategic-combos-v1",
+    scoreMax: getMaxBoardScore(grid),
+    comboPoints: COMBO_CELL_POINTS,
+    simplePoints: SIMPLE_CELL_POINTS,
     generationRules: {
       deckSize: MAX_DECK_PLAYERS,
       minPlayablePlayers: MIN_PLAYABLE_PLAYERS,
       minPlayersPerStandardCell: MIN_PLAYERS_PER_STANDARD_CELL,
       minPlayersPerComboCell: MIN_PLAYERS_PER_COMBO_CELL,
-      maxComboCells: MAX_COMBO_CELLS
+      exactComboCells: EXACT_COMBO_CELLS
     },
     gridMode: requestedGrid.length ? "custom" : "random",
     preset: selectedPreset,
@@ -697,6 +703,9 @@ function getSortedParticipants(players = participantsData) {
       return (a.joinedAt?.seconds || 0) - (b.joinedAt?.seconds || 0);
     }
     if (a.finished !== b.finished) return a.finished ? -1 : 1;
+    const scoreA = calculateBoardScore(a.board || {}, roomData?.grid || []);
+    const scoreB = calculateBoardScore(b.board || {}, roomData?.grid || []);
+    if (scoreB !== scoreA) return scoreB - scoreA;
     if ((b.filledCount || 0) !== (a.filledCount || 0)) return (b.filledCount || 0) - (a.filledCount || 0);
     if (((b.bingos || []).length) !== ((a.bingos || []).length)) return ((b.bingos || []).length) - ((a.bingos || []).length);
     return String(a.name || "").localeCompare(String(b.name || ""));
@@ -714,8 +723,9 @@ function renderLeaderboard(players = participantsData) {
 
   leaderboardEl.innerHTML = sorted.map((player, index) => {
     const rank = index + 1;
-    const score = player.finished ? (player.finalScore || 0) : (player.filledCount || 0);
-    const progress = Math.max(0, Math.min(100, Math.round((score / BOARD_SIZE) * 100)));
+    const score = player.finished ? (player.finalScore || 0) : calculateBoardScore(player.board || {}, roomData?.grid || []);
+    const scoreMax = player.scoreMax || getMaxBoardScore(roomData?.grid || []) || 30;
+    const progress = Math.max(0, Math.min(100, Math.round((score / scoreMax) * 100)));
     const bingos = (player.bingos || []).length;
     const medal = rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : `#${rank}`;
     const statusText = player.finished ? "TERMINÉ" : "EN JEU";
@@ -732,7 +742,7 @@ function renderLeaderboard(players = participantsData) {
               <span class="leaderboard-status">${statusText}</span>
             </div>
             <div class="leaderboard-subline">
-              <span>${score}/${BOARD_SIZE}</span>
+              <span>${score}/${scoreMax} pts</span>
               <span>${bingos} bingo${bingos > 1 ? "s" : ""}</span>
             </div>
             <div class="leaderboard-progress"><span style="width:${progress}%"></span></div>
@@ -760,7 +770,9 @@ function renderGame() {
   const finished = Boolean(myData.finished);
   const board = myData.board || {};
   const filledCount = myData.filledCount || 0;
-  const validCount = countValidMoves(board);
+  const currentScore = calculateBoardScore(board, roomData.grid);
+  const scoreMax = getMaxBoardScore(roomData.grid);
+  const validCount = countValidCells(board);
   const invalidCount = countInvalidMoves(board);
   const liveBingos = calculateBingos(board).length;
   const myRank = getParticipantRank(uid);
@@ -795,18 +807,20 @@ function renderGame() {
   if (finished) {
     const finalScore = myData.finalScore || 0;
     const finalBingos = (myData.bingos || []).length;
-    const accuracy = Math.round((finalScore / BOARD_SIZE) * 100);
+    const finalScoreMax = myData.scoreMax || scoreMax || 30;
+    const finalValidCells = Number(myData.validCells ?? validCount);
+    const accuracy = Math.round((finalScore / finalScoreMax) * 100);
     scoreDisplayEl.textContent = finalScore;
-    if (compactScoreDisplayEl) compactScoreDisplayEl.textContent = `${finalScore}/${BOARD_SIZE}`;
-    scoreSublineEl.textContent = "score final";
+    if (compactScoreDisplayEl) compactScoreDisplayEl.textContent = `${finalScore}/${finalScoreMax}`;
+    scoreSublineEl.textContent = "points";
     hiddenResultBox.classList.add("hidden");
     finalResultBox.classList.remove("hidden");
-    myResultEl.textContent = `${finalScore} / ${BOARD_SIZE}`;
+    myResultEl.textContent = `${finalScore} / ${finalScoreMax}`;
     myBingosEl.textContent = `${finalBingos}`;
-    if (myWrongEl) myWrongEl.textContent = `${BOARD_SIZE - finalScore}`;
+    if (myWrongEl) myWrongEl.textContent = `${invalidCount}`;
     if (myFinalRankEl) myFinalRankEl.textContent = myRank ? `#${myRank}` : "#-";
     if (myAccuracyEl) myAccuracyEl.textContent = `${accuracy}%`;
-    updateFinishOverlay(finalScore, finalBingos, BOARD_SIZE - finalScore, accuracy, myRank, participantsData.length);
+    updateFinishOverlay(finalScore, finalBingos, invalidCount, accuracy, myRank, participantsData.length, finalScoreMax, finalValidCells);
     if (historyReopenHint) historyReopenHint.classList.remove("hidden");
     ensureResultSaved(board, finalScore, myData.bingos || []);
     if (!hasShownFinishOverlay) {
@@ -814,9 +828,9 @@ function renderGame() {
       hasShownFinishOverlay = true;
     }
   } else {
-    scoreDisplayEl.textContent = filledCount;
-    if (compactScoreDisplayEl) compactScoreDisplayEl.textContent = `${filledCount}/${BOARD_SIZE}`;
-    scoreSublineEl.textContent = "cases";
+    scoreDisplayEl.textContent = currentScore;
+    if (compactScoreDisplayEl) compactScoreDisplayEl.textContent = `${currentScore}/${scoreMax}`;
+    scoreSublineEl.textContent = "points";
     hiddenResultBox.classList.remove("hidden");
     finalResultBox.classList.add("hidden");
     hideFinishOverlay();
@@ -852,6 +866,7 @@ function renderBoard(currentPlayer) {
         ${visualHtml}
         <div class="cell-kicker">${escapeHtml(category.kicker || "Critère")}</div>
         <div class="cell-title">${escapeHtml(category.title || category.name || category.id)}</div>
+        <div class="cell-points">${getCategoryPoints(category)} pt${getCategoryPoints(category) > 1 ? "s" : ""}</div>
         <div class="cell-footer">
           ${move ? `<div class="placed-player">${escapeHtml(getDisplaySurname(move.playerName))}</div>` : ""}
           ${reveal && move ? `<div class="result-chip ${move.isValid ? "good" : "bad"}">${move.isValid ? "VALIDÉ" : "FAUX"}</div>` : ""}
@@ -941,9 +956,11 @@ async function placeCurrentPlayer(cellIndex) {
   };
 
   if (filledCount >= BOARD_SIZE) {
-    const validCount = Object.values(newBoard).filter((move) => move.isValid).length;
+    const finalScore = calculateBoardScore(newBoard, roomData.grid);
     updatePayload.finished = true;
-    updatePayload.finalScore = validCount;
+    updatePayload.finalScore = finalScore;
+    updatePayload.validCells = countValidCells(newBoard);
+    updatePayload.scoreMax = getMaxBoardScore(roomData.grid);
     updatePayload.bingos = calculateBingos(newBoard);
     updatePayload.resultSaved = false;
     setMessage("Grille complète ! Le verdict est révélé.", "good");
@@ -954,9 +971,11 @@ async function placeCurrentPlayer(cellIndex) {
     updatePayload.currentStartedAt = serverTimestamp();
 
     if (nextIndex >= deckLength) {
-      const validCount = countValidMoves(newBoard);
+      const finalScore = calculateBoardScore(newBoard, roomData.grid);
       updatePayload.finished = true;
-      updatePayload.finalScore = validCount;
+      updatePayload.finalScore = finalScore;
+      updatePayload.validCells = countValidCells(newBoard);
+      updatePayload.scoreMax = getMaxBoardScore(roomData.grid);
       updatePayload.bingos = calculateBingos(newBoard);
       updatePayload.finishReason = "deck_finished";
       updatePayload.resultSaved = false;
@@ -975,11 +994,13 @@ async function finishParticipant(reason = "deck_finished") {
   if (!roomData || !currentRoomCode || !myData || myData.finished) return;
 
   const board = myData.board || {};
-  const finalScore = countValidMoves(board);
+  const finalScore = calculateBoardScore(board, roomData.grid);
 
   const updatePayload = {
     finished: true,
     finalScore,
+    validCells: countValidCells(board),
+    scoreMax: getMaxBoardScore(roomData.grid),
     bingos: calculateBingos(board),
     finishReason: reason,
     resultSaved: false,
@@ -1012,7 +1033,7 @@ async function advanceMyPlayer(manual = false) {
 
     if (currentIndex >= deckLength) {
       const board = liveParticipant.board || {};
-      const finalScore = countValidMoves(board);
+      const finalScore = calculateBoardScore(board, roomData.grid);
       transaction.update(participantRef, {
         finished: true,
         finalScore,
@@ -1032,7 +1053,7 @@ async function advanceMyPlayer(manual = false) {
 
     if (nextIndex >= deckLength) {
       const board = liveParticipant.board || {};
-      const finalScore = countValidMoves(board);
+      const finalScore = calculateBoardScore(board, roomData.grid);
       updatePayload.finished = true;
       updatePayload.finalScore = finalScore;
       updatePayload.bingos = calculateBingos(board);
@@ -1062,9 +1083,11 @@ async function ensureResultSaved(board, finalScore, bingos) {
   savingResult = true;
   const resultId = `${currentRoomCode}_${uid}`;
   const bingoCount = Array.isArray(bingos) ? bingos.length : 0;
-  const wrongAnswers = BOARD_SIZE - Number(finalScore || 0);
-  const accuracy = Math.round((Number(finalScore || 0) / BOARD_SIZE) * 100);
-  const points = calculateRankingPoints(Number(finalScore || 0), bingoCount);
+  const scoreMax = myData.scoreMax || getMaxBoardScore(roomData.grid) || 30;
+  const validCells = Number(myData.validCells ?? countValidCells(board));
+  const wrongAnswers = countInvalidMoves(board);
+  const accuracy = Math.round((Number(finalScore || 0) / scoreMax) * 100);
+  const points = calculateRankingPoints(Number(finalScore || 0), bingoCount, scoreMax);
   const now = new Date();
   const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
   const playerName = myData.name || getPlayerName() || "Joueur";
@@ -1083,6 +1106,11 @@ async function ensureResultSaved(board, finalScore, bingos) {
       wrongAnswers,
       accuracy,
       points,
+      scoreMax,
+      validCells,
+      scoringMode: "strategic-combos-v1",
+      comboPoints: COMBO_CELL_POINTS,
+      simplePoints: SIMPLE_CELL_POINTS,
       filledCount: Object.keys(board || {}).length,
       monthKey,
       year: now.getFullYear(),
@@ -1106,10 +1134,10 @@ async function ensureResultSaved(board, finalScore, bingos) {
   }
 }
 
-function calculateRankingPoints(score, bingoCount) {
+function calculateRankingPoints(score, bingoCount, scoreMax = 30) {
   const safeScore = Number(score || 0);
   const safeBingos = Number(bingoCount || 0);
-  const perfectBonus = safeScore >= BOARD_SIZE ? 10 : 0;
+  const perfectBonus = safeScore >= Number(scoreMax || 30) ? 10 : 0;
   const bingoBonus = safeBingos >= 5 ? 5 : 0;
   return safeScore + (safeBingos * 3) + perfectBonus + bingoBonus;
 }
@@ -1124,26 +1152,26 @@ function normalizePlayerKey(name) {
     .replace(/^-+|-+$/g, "") || "joueur";
 }
 
-function updateFinishOverlay(finalScore, bingoCount, wrongCount, accuracy, rank, totalPlayers) {
+function updateFinishOverlay(finalScore, bingoCount, wrongCount, accuracy, rank, totalPlayers, scoreMax = 30, validCells = 0) {
   if (!finishTitleEl) return;
 
   let title = 'Bien joué !';
   let subtitle = 'Ta grille est complète.';
 
-  if (finalScore >= 23) {
+  if (finalScore >= 25) {
     title = 'Masterclass !';
     subtitle = 'Énorme performance sur cette grille.';
-  } else if (finalScore >= 18) {
+  } else if (finalScore >= 20) {
     title = 'Très solide !';
     subtitle = 'Belle partie, ta grille tient bien la route.';
-  } else if (finalScore <= 10) {
+  } else if (finalScore <= 12) {
     title = 'À retenter !';
     subtitle = 'Tu peux faire mieux sur la prochaine room.';
   }
 
   finishTitleEl.textContent = title;
   finishSubtitleEl.textContent = subtitle;
-  finishScoreEl.textContent = `${finalScore} / ${BOARD_SIZE}`;
+  finishScoreEl.textContent = `${finalScore} / ${scoreMax}`;
   finishBingosEl.textContent = String(bingoCount);
   finishWrongEl.textContent = String(wrongCount);
   finishAccuracyEl.textContent = `${accuracy}%`;
@@ -1462,6 +1490,30 @@ function getMinPlayersForCategory(category) {
   return isComboCategory(category) ? MIN_PLAYERS_PER_COMBO_CELL : MIN_PLAYERS_PER_STANDARD_CELL;
 }
 
+function getCategoryPoints(category) {
+  return isComboCategory(category) ? COMBO_CELL_POINTS : SIMPLE_CELL_POINTS;
+}
+
+function getMaxBoardScore(grid = roomData?.grid || []) {
+  return (Array.isArray(grid) ? grid : []).reduce((total, category) => total + getCategoryPoints(category), 0);
+}
+
+function getMovePoints(cellIndex, move, grid = roomData?.grid || []) {
+  if (!move?.isValid) return 0;
+  const category = grid[Number(cellIndex)];
+  return getCategoryPoints(category);
+}
+
+function calculateBoardScore(board = {}, grid = roomData?.grid || []) {
+  return Object.entries(board || {}).reduce((total, [cellIndex, move]) => {
+    return total + getMovePoints(cellIndex, move, grid);
+  }, 0);
+}
+
+function countValidCells(board = {}) {
+  return Object.values(board || {}).filter((move) => move?.isValid).length;
+}
+
 function countDeckMatchesForCategory(deck, category) {
   return deck.reduce((total, player) => {
     return total + (canPlayerFillCategory(player, category) ? 1 : 0);
@@ -1570,7 +1622,7 @@ function generateGameSetup(requestedGrid = [], preset = selectedPreset) {
 
   const fixedComboCount = countComboCells(fixedGrid);
 
-  if (fixedComboCount > MAX_COMBO_CELLS) {
+  if (fixedComboCount > EXACT_COMBO_CELLS) {
     return {
       grid: fixedGrid,
       deck: [],
@@ -1580,7 +1632,7 @@ function generateGameSetup(requestedGrid = [], preset = selectedPreset) {
       perfectSolvable: false,
       perfectAssignment: [],
       comboCount: fixedComboCount,
-      error: `Trop de combos dans la grille custom : ${fixedComboCount}/${MAX_COMBO_CELLS}`
+      error: `Trop de combos dans la grille custom : ${fixedComboCount}/${EXACT_COMBO_CELLS}`
     };
   }
 
@@ -1595,7 +1647,7 @@ function generateGameSetup(requestedGrid = [], preset = selectedPreset) {
     if (!grid || grid.length !== BOARD_SIZE) continue;
 
     const comboCount = countComboCells(grid);
-    if (comboCount > MAX_COMBO_CELLS) continue;
+    if (comboCount > EXACT_COMBO_CELLS) continue;
 
     const playerPool = getPlayersForPreset(preset, grid);
     const playablePlayers = playerPool.filter((player) => canPlayerFillAnyCell(player, grid));
@@ -1653,7 +1705,7 @@ function generateGameSetup(requestedGrid = [], preset = selectedPreset) {
       deckPlayableCount >= requiredPlayable &&
       deckCoversEveryCell &&
       perfectSolvable &&
-      comboCount <= MAX_COMBO_CELLS
+      comboCount === EXACT_COMBO_CELLS
     ) {
       return {
         grid,
@@ -1682,28 +1734,19 @@ function generateGameSetup(requestedGrid = [], preset = selectedPreset) {
 }
 
 function buildBalancedRandomGrid(categoryPool, playerPool) {
-  const shuffled = shuffle(categoryPool.filter((category) => getCategoryMatchCount(category, playerPool) > 0));
+  const eligible = categoryPool.filter((category) => getCategoryMatchCount(category, playerPool) >= getMinPlayersForCategory(category));
+  const shuffled = shuffle(eligible);
   const combos = shuffled.filter(isComboCategory);
   const nonCombos = shuffled.filter((category) => !isComboCategory(category));
 
-  const comboTarget = Math.min(MAX_COMBO_CELLS, Math.max(3, Math.floor(Math.random() * (MAX_COMBO_CELLS + 1))));
-  const selectedCombos = combos.slice(0, comboTarget);
-  const grid = [...selectedCombos];
-
-  for (const category of nonCombos) {
-    if (grid.length >= BOARD_SIZE) break;
-    grid.push(category);
+  if (combos.length < EXACT_COMBO_CELLS || nonCombos.length < BOARD_SIZE - EXACT_COMBO_CELLS) {
+    return [];
   }
 
-  // Si un mode manque de catégories non-combo, on complète sans dépasser le max combo si possible.
-  for (const category of shuffled) {
-    if (grid.length >= BOARD_SIZE) break;
-    if (grid.some((item) => item.id === category.id)) continue;
-    if (isComboCategory(category) && countComboCells(grid) >= MAX_COMBO_CELLS) continue;
-    grid.push(category);
-  }
+  const selectedCombos = combos.slice(0, EXACT_COMBO_CELLS);
+  const selectedNonCombos = nonCombos.slice(0, BOARD_SIZE - EXACT_COMBO_CELLS);
 
-  return shuffle(grid).slice(0, BOARD_SIZE);
+  return shuffle([...selectedCombos, ...selectedNonCombos]).slice(0, BOARD_SIZE);
 }
 
 function normalizeRequestedGrid(requestedGrid = []) {
@@ -1727,12 +1770,18 @@ function completeGridFromFixedCategories(fixedGrid, categoryPool = ACTIVE_CATEGO
   const candidates = shuffle(
     categoryPool.filter((category) => {
       if (selectedIds.has(category.id)) return false;
-      return getCategoryMatchCount(category, playerPool) > 0;
+      return getCategoryMatchCount(category, playerPool) >= getMinPlayersForCategory(category);
     })
   );
 
-  const nonCombos = candidates.filter((category) => !isComboCategory(category));
   const combos = candidates.filter(isComboCategory);
+  const nonCombos = candidates.filter((category) => !isComboCategory(category));
+
+  for (const category of combos) {
+    if (countComboCells(grid) >= EXACT_COMBO_CELLS) break;
+    selectedIds.add(category.id);
+    grid.push(category);
+  }
 
   for (const category of nonCombos) {
     if (grid.length >= BOARD_SIZE) break;
@@ -1740,13 +1789,7 @@ function completeGridFromFixedCategories(fixedGrid, categoryPool = ACTIVE_CATEGO
     grid.push(category);
   }
 
-  for (const category of combos) {
-    if (grid.length >= BOARD_SIZE) break;
-    if (countComboCells(grid) >= MAX_COMBO_CELLS) break;
-    selectedIds.add(category.id);
-    grid.push(category);
-  }
-
+  // Si le custom avait trop de combos, on refuse en amont. Ici on garde exactement 20 cases.
   return grid.slice(0, BOARD_SIZE);
 }
 

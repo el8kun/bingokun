@@ -3552,3 +3552,24 @@ body.overlay-open {
   text-transform: uppercase;
   white-space: nowrap;
 }
+
+
+/* Bingo Kun v47 — scoring stratégique */
+.cell-points {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 6px auto 0;
+  padding: 3px 8px;
+  border-radius: 999px;
+  color: #07110c;
+  background: linear-gradient(135deg, var(--gold, #ffbd21), var(--cyan, #27f2c3));
+  font-size: .68rem;
+  font-weight: 1000;
+  line-height: 1;
+}
+
+.cell-visual-combo + .cell-kicker + .cell-title + .cell-points,
+.cell:has(.cell-visual-combo) .cell-points {
+  background: linear-gradient(135deg, var(--gold, #ffbd21), #ff7b00);
+}

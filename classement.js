@@ -120,8 +120,8 @@ function aggregateResults(results) {
     const row = map.get(key);
     const score = Number(result.score ?? result.finalScore ?? 0);
     const bingos = Number(result.bingos ?? 0);
-    const points = Number(result.points ?? calculateRankingPoints(score, bingos));
-    const accuracy = Number(result.accuracy ?? Math.round((score / 20) * 100));
+    const points = Number(result.points ?? calculateRankingPoints(score, bingos, result.scoreMax || 30));
+    const accuracy = Number(result.accuracy ?? Math.round((score / Number(result.scoreMax || 30)) * 100));
 
     row.playerName = result.playerName || row.playerName;
     row.games += 1;
@@ -130,7 +130,7 @@ function aggregateResults(results) {
     row.totalBingos += bingos;
     row.bestScore = Math.max(row.bestScore, score);
     row.bestPoints = Math.max(row.bestPoints, points);
-    row.perfects += score >= 20 ? 1 : 0;
+    row.perfects += score >= Number(result.scoreMax || 30) ? 1 : 0;
     row.totalAccuracy += accuracy;
 
     const playedAt = getMillis(result.finishedAt || result.createdAt);
@@ -153,9 +153,9 @@ function renderStats(results, rows) {
   const avg = results.length
     ? results.reduce((sum, result) => sum + Number(result.score ?? result.finalScore ?? 0), 0) / results.length
     : 0;
-  statBestScore.textContent = `${best}/20`;
+  statBestScore.textContent = `${best}/30`;
   statBingos.textContent = bingos;
-  if (statAvgScore) statAvgScore.textContent = `${avg.toFixed(1)}/20`;
+  if (statAvgScore) statAvgScore.textContent = `${avg.toFixed(1)}/30`;
 }
 
 function renderRanking(rows) {
@@ -176,10 +176,10 @@ function renderRanking(rows) {
         <div class="ranking-player-block">
           <div class="ranking-player-name">${escapeHtml(row.playerName)}</div>
           <div class="ranking-player-subline">
-            ${row.games} partie${row.games > 1 ? "s" : ""} · moyenne ${avgScore.toFixed(1)}/20 · précision ${avgAccuracy}%
+            ${row.games} partie${row.games > 1 ? "s" : ""} · moyenne ${avgScore.toFixed(1)}/30 · précision ${avgAccuracy}%
           </div>
           <div class="ranking-mini-stats">
-            <span>Best ${row.bestScore}/20</span>
+            <span>Best ${row.bestScore}/30</span>
             <span>${row.totalBingos} bingo${row.totalBingos > 1 ? "s" : ""}</span>
             <span>${row.perfects} perfect</span>
           </div>
@@ -202,7 +202,7 @@ function renderRecent(results) {
   recentResults.innerHTML = results.map((result) => {
     const score = Number(result.score ?? result.finalScore ?? 0);
     const bingos = Number(result.bingos || 0);
-    const points = Number(result.points ?? calculateRankingPoints(score, bingos));
+    const points = Number(result.points ?? calculateRankingPoints(score, bingos, result.scoreMax || 30));
 
     return `
       <div class="recent-result">
@@ -211,7 +211,7 @@ function renderRecent(results) {
           <span>${formatDate(result.finishedAt || result.createdAt)} · room ${escapeHtml(result.roomCode || "----")} · ${escapeHtml(result.presetLabel || "mode libre")}</span>
         </div>
         <div class="recent-score">
-          <strong>${score}/20</strong>
+          <strong>${score}/30</strong>
           <span>${bingos} bingo${bingos > 1 ? "s" : ""} · ${points} pts</span>
         </div>
       </div>
@@ -219,8 +219,8 @@ function renderRecent(results) {
   }).join("");
 }
 
-function calculateRankingPoints(score, bingoCount) {
-  const perfectBonus = Number(score || 0) >= 20 ? 10 : 0;
+function calculateRankingPoints(score, bingoCount, scoreMax = 30) {
+  const perfectBonus = Number(score || 0) >= Number(scoreMax || 30) ? 10 : 0;
   const bingoBonus = Number(bingoCount || 0) >= 5 ? 5 : 0;
   return Number(score || 0) + (Number(bingoCount || 0) * 3) + perfectBonus + bingoBonus;
 }
