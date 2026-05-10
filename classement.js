@@ -21,6 +21,7 @@ const statPlayers = $("statPlayers");
 const statGames = $("statGames");
 const statBestScore = $("statBestScore");
 const statBingos = $("statBingos");
+const statAvgScore = $("statAvgScore");
 
 let allResults = [];
 let mode = "monthly";
@@ -112,7 +113,7 @@ function aggregateResults(results) {
         bestPoints: 0,
         perfects: 0,
         totalAccuracy: 0,
-        lastPlayedAt: null
+        lastPlayedAt: null,
       });
     }
 
@@ -149,8 +150,12 @@ function renderStats(results, rows) {
   statGames.textContent = results.length;
   const best = results.reduce((max, result) => Math.max(max, Number(result.score ?? result.finalScore ?? 0)), 0);
   const bingos = results.reduce((sum, result) => sum + Number(result.bingos || 0), 0);
+  const avg = results.length
+    ? results.reduce((sum, result) => sum + Number(result.score ?? result.finalScore ?? 0), 0) / results.length
+    : 0;
   statBestScore.textContent = `${best}/20`;
   statBingos.textContent = bingos;
+  if (statAvgScore) statAvgScore.textContent = `${avg.toFixed(1)}/20`;
 }
 
 function renderRanking(rows) {
@@ -203,7 +208,7 @@ function renderRecent(results) {
       <div class="recent-result">
         <div>
           <strong>${escapeHtml(result.playerName || "Joueur")}</strong>
-          <span>${formatDate(result.finishedAt || result.createdAt)} · room ${escapeHtml(result.roomCode || "----")}</span>
+          <span>${formatDate(result.finishedAt || result.createdAt)} · room ${escapeHtml(result.roomCode || "----")} · ${escapeHtml(result.presetLabel || "mode libre")}</span>
         </div>
         <div class="recent-score">
           <strong>${score}/20</strong>

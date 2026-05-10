@@ -3439,3 +3439,83 @@ body.overlay-open {
     max-width: 155px;
   }
 }
+
+/* --- Bingo Kun v35 : live, chrono, dashboard --- */
+.live-room-btn {
+  width: 100%;
+  margin-bottom: 12px;
+  border: 1px solid rgba(39,242,195,.24);
+}
+
+.admin-dashboard-card {
+  border-color: rgba(39,242,195,.18);
+  background: linear-gradient(180deg, rgba(39,242,195,.08), rgba(255,255,255,.045));
+}
+
+.admin-live-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.admin-live-grid div {
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 13px;
+  padding: 9px;
+  background: rgba(0,0,0,.16);
+}
+
+.admin-live-grid span {
+  display: block;
+  color: var(--muted);
+  font-size: .68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.admin-live-grid strong {
+  display: block;
+  color: var(--cyan);
+  font-size: 1rem;
+  font-weight: 1000;
+  margin-top: 3px;
+}
+
+.admin-live-list {
+  display: grid;
+  gap: 7px;
+  max-height: 210px;
+  overflow: auto;
+}
+
+.admin-live-row {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  gap: 6px 8px;
+  align-items: center;
+  padding: 8px;
+  border-radius: 12px;
+  background: rgba(255,255,255,.055);
+}
+
+.admin-live-row span {
+  color: var(--gold);
+  font-weight: 1000;
+}
+
+.admin-live-row strong {
+  color: var(--text);
+  font-size: .82rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-live-row em {
+  grid-column: 2;
+  color: var(--muted);
+  font-style: normal;
+  font-size: .68rem;
+  font-weight: 800;
+}

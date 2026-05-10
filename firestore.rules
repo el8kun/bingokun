@@ -41,6 +41,16 @@ service cloud.firestore {
       }
     }
 
+    match /liveRoom/{docId} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+
+    match /roomHistory/{roomCode} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+
     match /results/{resultId} {
       allow read: if true;
 

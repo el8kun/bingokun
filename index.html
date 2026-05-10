@@ -71,15 +71,18 @@
 
         <label for="presetMode">Type de partie</label>
         <select id="presetMode" class="setup-select">
+          <option value="kun-challenge">Kun Challenge — mode live équilibré</option>
           <option value="global-normal">Global normal — connu et équilibré</option>
           <option value="global-easy">Global facile — stars + grands clubs</option>
           <option value="global-hard">Global difficile — plus large</option>
           <option value="ligue1">Ligue 1 — joueurs passés en L1</option>
           <option value="premierleague">Premier League — joueurs passés en PL</option>
+          <option value="theme-ldc">Thème du jour — Ligue des Champions</option>
+          <option value="theme-2000s">Thème du jour — Années 2000</option>
+          <option value="theme-brazil">Thème du jour — Brésil</option>
         </select>
-        <p id="presetHelp" class="hint preset-help">Global normal limite les joueurs trop obscurs.</p>
-
-        <label for="gridMode">Mode de grille</label>
+        <p id="presetHelp" class="hint preset-help">Kun Challenge est le mode conseillé pour les lives.</p>
+<label for="gridMode">Mode de grille</label>
         <select id="gridMode" class="setup-select">
           <option value="random">Grille aléatoire</option>
           <option value="custom">Bingo custom</option>
@@ -109,6 +112,8 @@
         <button id="createRoomBtn" class="primary-btn" type="button">Créer une room</button>
 
         <div class="separator"><span>ou</span></div>
+
+        <button id="joinLiveRoomBtn" class="secondary-btn live-room-btn hidden" type="button">Rejoindre la room du live</button>
 
         <div class="join-row">
           <input id="joinCode" maxlength="6" placeholder="Code room" />
@@ -149,7 +154,11 @@
           </div>
           <div>
             <span>Minimum</span>
-            <strong id="waitingPlayableInfo">60 jouables</strong>
+            <strong id="waitingPlayableInfo">70 jouables</strong>
+          </div>
+          <div>
+            <span>Mode</span>
+            <strong id="waitingModeInfo">Kun Challenge</strong>
           </div>
         </div>
       </div>
@@ -266,6 +275,17 @@
         <div class="side-card history-card">
           <p class="side-title">Tes joueurs passés</p>
           <div id="playedPlayersList" class="played-players-list"></div>
+        </div>
+
+        <div id="adminDashboardCard" class="side-card admin-dashboard-card hidden">
+          <p class="side-title">Dashboard streamer</p>
+          <div class="admin-live-grid">
+            <div><span>Connectés</span><strong id="adminLivePlayers">0</strong></div>
+            <div><span>Ont fini</span><strong id="adminFinishedPlayers">0</strong></div>
+            <div><span>Score max</span><strong id="adminBestScore">0/20</strong></div>
+            <div><span>Proches bingo</span><strong id="adminNearBingo">0</strong></div>
+          </div>
+          <div id="adminLiveList" class="admin-live-list"></div>
         </div>
 
         <div class="side-card leaderboard-card">
