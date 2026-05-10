@@ -91,7 +91,7 @@ const BOARD_COLS = 4;
 const BOARD_SIZE = BOARD_ROWS * BOARD_COLS;
 const AUTO_SECONDS = 15;
 const MAX_DECK_PLAYERS = 75;
-const MIN_PLAYABLE_PLAYERS = 70;
+const MIN_PLAYABLE_PLAYERS = 65;
 const MIN_PLAYERS_PER_CELL = 3;
 const MAX_COMBO_CELLS = 6;
 
@@ -335,11 +335,22 @@ onAuthStateChanged(auth, async (user) => {
   }
 });
 
-createRoomBtn?.addEventListener("click", () => {
-  createRoom().catch((error) => {
+createRoomBtn?.addEventListener("click", async () => {
+  try {
+    if (createRoomBtn) {
+      createRoomBtn.disabled = true;
+      createRoomBtn.textContent = "Création en cours...";
+    }
+    await createRoom();
+  } catch (error) {
     console.error("Erreur création room :", error);
     alert("Erreur création room : " + (error?.message || error));
-  });
+  } finally {
+    if (createRoomBtn) {
+      createRoomBtn.disabled = false;
+      createRoomBtn.textContent = "Créer une room";
+    }
+  }
 });
 adminLoginBtn?.addEventListener("click", signInAdmin);
 adminLogoutBtn?.addEventListener("click", signOutAdmin);
@@ -1497,7 +1508,7 @@ function generateGameSetup(requestedGrid = [], preset = selectedPreset) {
   }
 
   let bestSetup = null;
-  const attempts = fixedGrid.length ? 2000 : 6000;
+  const attempts = fixedGrid.length ? 120 : 450;
 
   for (let attempt = 0; attempt < attempts; attempt++) {
     const grid = fixedGrid.length
@@ -1598,7 +1609,7 @@ function buildBalancedRandomGrid(categoryPool, playerPool) {
   const combos = shuffled.filter(isComboCategory);
   const nonCombos = shuffled.filter((category) => !isComboCategory(category));
 
-  const comboTarget = Math.min(MAX_COMBO_CELLS, Math.max(4, Math.floor(Math.random() * (MAX_COMBO_CELLS + 1))));
+  const comboTarget = Math.min(MAX_COMBO_CELLS, Math.max(3, Math.floor(Math.random() * (MAX_COMBO_CELLS + 1))));
   const selectedCombos = combos.slice(0, comboTarget);
   const grid = [...selectedCombos];
 
