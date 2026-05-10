@@ -112,6 +112,7 @@ const adminAuthStatus = $("adminAuthStatus");
 const adminHeaderLink = $("adminHeaderLink");
 const creatorLockedNotice = $("creatorLockedNotice");
 const createRoomBtn = $("createRoomBtn");
+const siteDebugStatus = $("siteDebugStatus");
 const gridModeSelect = $("gridMode");
 const customBuilder = $("customBuilder");
 const customCountEl = $("customCount");
@@ -178,8 +179,17 @@ let customSearchTimer = null;
 let categoryMatchCache = new Map();
 let savingResult = false;
 
+window.__BINGO_KUN_VERSION = "v23-fix-click";
 const savedName = localStorage.getItem("bingo-kun-name");
 if (savedName) playerNameInput.value = savedName;
+
+function setDebugStatus(message, variant = "") {
+  if (!siteDebugStatus) return;
+  siteDebugStatus.textContent = message;
+  siteDebugStatus.className = `site-debug-status ${variant}`.trim();
+}
+
+setDebugStatus("Version v23 chargée — bouton prêt");
 
 onAuthStateChanged(auth, async (user) => {
   uid = user?.uid || null;
@@ -204,13 +214,22 @@ if (!auth.currentUser) {
   });
 }
 
-createRoomBtn?.addEventListener("click", () => {
+document.addEventListener("click", (event) => {
+  const button = event.target.closest("#createRoomBtn");
+  if (!button) return;
+
+  event.preventDefault();
+  event.stopPropagation();
+
+  setDebugStatus("Clic détecté — création en cours…");
+
   createRoom().catch((error) => {
     console.error("Erreur création room :", error);
     if (createRoomBtn) createRoomBtn.textContent = "Créer une room";
+    setDebugStatus("Erreur création room : " + (error?.message || error), "bad");
     alert("Erreur création room : " + (error?.message || error));
   });
-});
+}, true);
 adminLoginBtn?.addEventListener("click", signInAdmin);
 adminLogoutBtn?.addEventListener("click", signOutAdmin);
 $("joinRoomBtn").addEventListener("click", () => joinRoom(joinCodeInput.value.trim().toUpperCase()));
@@ -323,15 +342,23 @@ async function signOutAdmin() {
 
 
 async function createRoom() {
+  setDebugStatus("Création room demandée…");
   const name = getPlayerName();
-  if (!name) return;
-  if (!uid) return alert("Connexion Firebase en cours, réessaie dans 2 secondes.");
+  if (!name) {
+    setDebugStatus("Ajoute ton pseudo avant de créer une room.", "bad");
+    return;
+  }
+  if (!uid) {
+    setDebugStatus("Connexion Firebase en cours… réessaie dans 2 secondes.", "bad");
+    return alert("Connexion Firebase en cours, réessaie dans 2 secondes.");
+  }
 
   isAdminUser = await checkIsAdmin(uid);
   updateAdminUi(auth.currentUser);
 
   if (!isAdminUser) {
     const currentUid = uid || "UID introuvable";
+    setDebugStatus("Compte non reconnu admin — UID : " + currentUid, "bad");
     alert(
       "Création bloquée : ce compte n'est pas reconnu admin.\n\n" +
       "UID actuel : " + currentUid + "\n\n" +
@@ -377,12 +404,19 @@ async function createRoom() {
 
   await joinRoom(code, true);
   if (createRoomBtn) createRoomBtn.textContent = "Créer une room";
+  setDebugStatus("Room créée : " + code, "good");
 }
 
 async function joinRoom(code, alreadyJoined = false) {
   const name = getPlayerName();
-  if (!name) return;
-  if (!uid) return alert("Connexion Firebase en cours, réessaie dans 2 secondes.");
+  if (!name) {
+    setDebugStatus("Ajoute ton pseudo avant de créer une room.", "bad");
+    return;
+  }
+  if (!uid) {
+    setDebugStatus("Connexion Firebase en cours… réessaie dans 2 secondes.", "bad");
+    return alert("Connexion Firebase en cours, réessaie dans 2 secondes.");
+  }
 
   if (!/^[A-Z0-9]{4,6}$/.test(code)) {
     alert("Entre un code room valide.");

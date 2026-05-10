@@ -3353,3 +3353,43 @@ body.overlay-open {
   filter: none !important;
   cursor: pointer !important;
 }
+
+/* --- Bingo Kun v23 : fix clic créer room + debug visuel --- */
+#createRoomBtn {
+  position: relative !important;
+  z-index: 99999 !important;
+  pointer-events: auto !important;
+}
+
+.setup-card,
+.setup-screen,
+.page-shell {
+  position: relative;
+}
+
+.creator-locked-notice {
+  pointer-events: none;
+}
+
+.site-debug-status {
+  margin: 8px 0 10px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  font-size: .76rem;
+  font-weight: 900;
+  color: var(--cyan);
+  background: rgba(39,242,195,.08);
+  border: 1px solid rgba(39,242,195,.12);
+}
+
+.site-debug-status.bad {
+  color: #ff9aa7;
+  background: rgba(255,77,93,.10);
+  border-color: rgba(255,77,93,.16);
+}
+
+.site-debug-status.good {
+  color: #baff3d;
+  background: rgba(186,255,61,.10);
+  border-color: rgba(186,255,61,.18);
+}
