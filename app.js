@@ -86,8 +86,8 @@ async function loadDatabaseOverrides(force = false) {
   databaseOverridesLoaded = true;
 }
 
-const BOARD_ROWS = 5;
-const BOARD_COLS = 4;
+const BOARD_ROWS = 4;
+const BOARD_COLS = 5;
 const BOARD_SIZE = BOARD_ROWS * BOARD_COLS;
 const AUTO_SECONDS = 15;
 const MAX_DECK_PLAYERS = 75;

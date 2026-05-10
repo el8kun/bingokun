@@ -261,7 +261,7 @@ input:focus {
 }
 
 .setup-hero::after {
-  content: "5x5";
+  content: "4x5";
   position: absolute;
   right: -32px;
   top: 22px;
@@ -3572,4 +3572,211 @@ body.overlay-open {
 .cell-visual-combo + .cell-kicker + .cell-title + .cell-points,
 .cell:has(.cell-visual-combo) .cell-points {
   background: linear-gradient(135deg, var(--gold, #ffbd21), #ff7b00);
+}
+
+
+/* =========================================================
+   Bingo Kun v48 — format live 4x5
+   Objectif : moins de hauteur, plus adapté au live 16:9
+   ========================================================= */
+
+.page-shell {
+  width: min(1500px, calc(100% - 26px));
+  padding: 68px 0 28px;
+}
+
+.game-screen {
+  grid-template-columns: minmax(0, 1fr) 290px;
+  gap: 18px;
+}
+
+.game-center {
+  width: min(930px, 100%);
+}
+
+.status-row {
+  grid-template-columns: 1fr 112px;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.current-player-card {
+  min-height: 104px;
+  grid-template-columns: 78px 1fr auto;
+  gap: 14px;
+  padding: 14px 16px;
+}
+
+.round-timer {
+  width: 70px;
+  height: 70px;
+}
+
+.round-timer span {
+  font-size: 1.8rem;
+}
+
+.current-player-info p {
+  font-size: .72rem;
+}
+
+.current-player-info h2 {
+  font-size: clamp(1.4rem, 2.4vw, 2.05rem);
+  margin-bottom: 6px;
+}
+
+.current-player-subline {
+  font-size: .78rem;
+}
+
+.score-card {
+  min-height: 104px;
+}
+
+.score-card strong {
+  font-size: 3rem;
+}
+
+.score-card small {
+  font-size: .78rem;
+}
+
+.board-panel {
+  padding: 12px;
+}
+
+.board-grid {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.cell {
+  min-height: 104px;
+  padding: 10px 8px;
+  border-radius: 16px;
+}
+
+.cell-visual {
+  min-height: 28px;
+  margin-bottom: 5px;
+}
+
+.cell-image {
+  width: 34px;
+  height: 34px;
+}
+
+.cell-visual-images.is-combo .cell-image {
+  width: 28px;
+  height: 28px;
+}
+
+.cell-kicker {
+  font-size: .46rem;
+  letter-spacing: .12em;
+  margin-bottom: 5px;
+}
+
+.cell-title {
+  font-size: .92rem;
+  line-height: 1.05;
+}
+
+.cell-points {
+  margin-top: 5px;
+  padding: 3px 8px;
+  font-size: .62rem;
+}
+
+.side-card {
+  border-radius: 20px;
+  padding: 15px;
+}
+
+.side-title {
+  margin-bottom: 10px;
+  font-size: .76rem;
+}
+
+.side-stat {
+  padding: 10px 0;
+  font-size: .9rem;
+}
+
+.locked-box,
+.final-box div,
+.message,
+.played-player,
+.leaderboard-item {
+  font-size: .84rem;
+}
+
+.leave-btn {
+  padding: 13px 16px;
+}
+
+@media (max-width: 1180px) {
+  .game-screen {
+    grid-template-columns: 1fr;
+  }
+
+  .game-center {
+    width: min(980px, 100%);
+  }
+
+  .right-panel {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .leave-btn {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 900px) {
+  .board-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .page-shell {
+    width: min(100%, calc(100% - 18px));
+    padding-top: 62px;
+  }
+
+  .status-row {
+    grid-template-columns: 1fr;
+  }
+
+  .current-player-card {
+    grid-template-columns: 68px 1fr;
+  }
+
+  .current-player-actions {
+    grid-column: 1 / -1;
+    justify-self: stretch;
+  }
+
+  .skip-btn {
+    width: 100%;
+  }
+
+  .board-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .right-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .cell {
+    min-height: 96px;
+  }
+
+  .cell-title {
+    font-size: .82rem;
+  }
 }
