@@ -5,7 +5,10 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/fireba
 import {
   getAuth,
   signInAnonymously,
-  onAuthStateChanged
+  onAuthStateChanged,
+  GoogleAuthProvider,
+  signInWithPopup,
+  signOut
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 import {
   getFirestore,
@@ -103,6 +106,12 @@ const startGameBtn = $("startGameBtn");
 const waitingHostHint = $("waitingHostHint");
 const playerNameInput = $("playerName");
 const joinCodeInput = $("joinCode");
+const adminLoginBtn = $("adminLoginBtn");
+const adminLogoutBtn = $("adminLogoutBtn");
+const adminAuthStatus = $("adminAuthStatus");
+const adminHeaderLink = $("adminHeaderLink");
+const creatorLockedNotice = $("creatorLockedNotice");
+const createRoomBtn = $("createRoomBtn");
 const gridModeSelect = $("gridMode");
 const customBuilder = $("customBuilder");
 const customCountEl = $("customCount");
@@ -151,6 +160,7 @@ const closeFinishOverlayBtn = $("closeFinishOverlayBtn");
 const copyFinishRoomBtn = $("copyFinishRoomBtn");
 
 let uid = null;
+let isAdminUser = false;
 let currentRoomCode = null;
 let roomData = null;
 let myData = null;
@@ -171,15 +181,32 @@ let savingResult = false;
 const savedName = localStorage.getItem("bingo-kun-name");
 if (savedName) playerNameInput.value = savedName;
 
-onAuthStateChanged(auth, (user) => {
+onAuthStateChanged(auth, async (user) => {
   uid = user?.uid || null;
+  isAdminUser = false;
+
+  if (user && !user.isAnonymous) {
+    isAdminUser = await checkIsAdmin(user.uid);
+  }
+
+  updateAdminUi(user);
+
+  if (!user) {
+    signInAnonymously(auth).catch((error) => {
+      alert("Erreur Firebase Auth : " + error.message);
+    });
+  }
 });
 
-signInAnonymously(auth).catch((error) => {
-  alert("Erreur Firebase Auth : " + error.message);
-});
+if (!auth.currentUser) {
+  signInAnonymously(auth).catch((error) => {
+    alert("Erreur Firebase Auth : " + error.message);
+  });
+}
 
-$("createRoomBtn").addEventListener("click", createRoom);
+createRoomBtn?.addEventListener("click", createRoom);
+adminLoginBtn?.addEventListener("click", signInAdmin);
+adminLogoutBtn?.addEventListener("click", signOutAdmin);
 $("joinRoomBtn").addEventListener("click", () => joinRoom(joinCodeInput.value.trim().toUpperCase()));
 $("copyRoomBtn").addEventListener("click", copyRoomInfo);
 $("copyWaitingRoomBtn").addEventListener("click", copyRoomInfo);
@@ -222,10 +249,74 @@ customSelectedGrid?.addEventListener("click", (event) => {
 
 renderCustomBuilder();
 
+
+async function checkIsAdmin(userId) {
+  if (!userId) return false;
+
+  try {
+    const snap = await getDoc(doc(db, "admins", userId));
+    return snap.exists();
+  } catch (error) {
+    console.warn("Vérification admin impossible :", error);
+    return false;
+  }
+}
+
+function updateAdminUi(user) {
+  const isGoogleUser = Boolean(user && !user.isAnonymous);
+
+  adminLoginBtn?.classList.toggle("hidden", isAdminUser);
+  adminLogoutBtn?.classList.toggle("hidden", !isGoogleUser);
+  adminHeaderLink?.classList.toggle("hidden", !isAdminUser);
+  creatorLockedNotice?.classList.toggle("hidden", isAdminUser);
+
+  if (createRoomBtn) {
+    createRoomBtn.disabled = !isAdminUser;
+    createRoomBtn.textContent = isAdminUser ? "Créer une room" : "Créer une room — admin uniquement";
+  }
+
+  if (adminAuthStatus) {
+    if (isAdminUser) {
+      adminAuthStatus.textContent = "Admin connecté";
+      adminAuthStatus.className = "admin-auth-status good";
+    } else if (isGoogleUser) {
+      adminAuthStatus.textContent = "Compte Google non autorisé";
+      adminAuthStatus.className = "admin-auth-status bad";
+    } else {
+      adminAuthStatus.textContent = "Mode joueur";
+      adminAuthStatus.className = "admin-auth-status";
+    }
+  }
+}
+
+async function signInAdmin() {
+  const provider = new GoogleAuthProvider();
+
+  try {
+    await signInWithPopup(auth, provider);
+  } catch (error) {
+    alert("Connexion Google impossible : " + error.message);
+  }
+}
+
+async function signOutAdmin() {
+  try {
+    await signOut(auth);
+    await signInAnonymously(auth);
+  } catch (error) {
+    alert("Déconnexion impossible : " + error.message);
+  }
+}
+
+
 async function createRoom() {
   const name = getPlayerName();
   if (!name) return;
   if (!uid) return alert("Connexion Firebase en cours, réessaie dans 2 secondes.");
+  if (!isAdminUser) {
+    alert("Seul le compte admin peut créer une room.");
+    return;
+  }
 
   await loadDatabaseOverrides(true);
 

@@ -24,6 +24,18 @@
   </header>
 
   <main class="admin-shell">
+    <section id="adminGate" class="admin-panel admin-gate">
+      <p class="mini-title">Accès protégé</p>
+      <h1>Connexion admin requise</h1>
+      <p>Connecte-toi avec le compte Google autorisé dans Firebase pour modifier la base.</p>
+      <div class="admin-actions">
+        <button id="adminGoogleLoginBtn" class="primary-btn" type="button">Connexion avec Google</button>
+        <a class="secondary-btn admin-link-btn" href="./index.html">Retour au bingo</a>
+      </div>
+      <p id="adminGateStatus" class="admin-status">En attente de connexion…</p>
+    </section>
+
+    <div id="adminContent" class="hidden">
     <section class="admin-panel admin-intro">
       <p class="mini-title">Base joueurs</p>
       <h1>Corrige les tags sans toucher au code.</h1>
@@ -81,6 +93,7 @@
         </div>
       </section>
     </section>
+    </div>
   </main>
 
   <script type="module" src="./admin.js"></script>

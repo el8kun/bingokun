@@ -2,7 +2,7 @@ import { firebaseConfig } from "./firebase-config.js";
 import { CATEGORIES, PLAYERS, TEAMS } from "./data.js";
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
 const firebaseApp = initializeApp(firebaseConfig);
@@ -23,6 +23,10 @@ const playerEditor = $("playerEditor");
 const emptyEditor = $("emptyEditor");
 const adminStatus = $("adminStatus");
 const adminNote = $("adminNote");
+const adminGate = $("adminGate");
+const adminContent = $("adminContent");
+const adminGoogleLoginBtn = $("adminGoogleLoginBtn");
+const adminGateStatus = $("adminGateStatus");
 
 let uid = null;
 let playerOverrides = {};
@@ -34,12 +38,57 @@ const categoriesByTag = buildCategoriesByTag();
 
 onAuthStateChanged(auth, async (user) => {
   uid = user?.uid || null;
-  if (uid) await loadOverrides();
+
+  if (!user || user.isAnonymous) {
+    showAdminGate("Connecte-toi avec Google pour accéder à la base admin.", "bad");
+    return;
+  }
+
+  const allowed = await checkIsAdmin(user.uid);
+  if (!allowed) {
+    showAdminGate("Ce compte Google n'est pas autorisé comme admin.", "bad");
+    return;
+  }
+
+  adminGate?.classList.add("hidden");
+  adminContent?.classList.remove("hidden");
+  await loadOverrides();
 });
 
-signInAnonymously(auth).catch((error) => {
-  setStatus("Erreur Firebase Auth : " + error.message, "bad");
+adminGoogleLoginBtn?.addEventListener("click", async () => {
+  try {
+    const provider = new GoogleAuthProvider();
+    await signInWithPopup(auth, provider);
+  } catch (error) {
+    showAdminGate("Connexion Google impossible : " + error.message, "bad");
+  }
 });
+
+
+async function checkIsAdmin(userId) {
+  if (!userId) return false;
+
+  try {
+    const snap = await getDoc(doc(db, "admins", userId));
+    return snap.exists();
+  } catch (error) {
+    console.warn("Vérification admin impossible :", error);
+    return false;
+  }
+}
+
+function showAdminGate(message, variant = "") {
+  adminGate?.classList.remove("hidden");
+  adminContent?.classList.add("hidden");
+
+  if (adminGateStatus) {
+    adminGateStatus.textContent = message;
+    adminGateStatus.className = `admin-status ${variant}`.trim();
+  }
+
+  setStatus(message, variant);
+}
+
 
 playerSearch.addEventListener("input", renderPlayersList);
 categorySearch.addEventListener("input", renderCategoriesList);

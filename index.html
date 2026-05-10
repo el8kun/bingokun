@@ -24,6 +24,11 @@
           Room <strong id="roomCodeDisplay">----</strong>
           <button id="copyRoomBtn" type="button">Copier</button>
         </div>
+        <div class="admin-auth-line">
+          <button id="adminLoginBtn" class="tiny-btn" type="button">Connexion admin</button>
+          <button id="adminLogoutBtn" class="tiny-btn hidden" type="button">Déconnexion</button>
+          <span id="adminAuthStatus">Mode joueur</span>
+        </div>
       </div>
     </div>
 
@@ -32,7 +37,7 @@
       <span>🔥</span>
       <div class="header-links">
         <a href="./classement.html">Classement</a>
-        <a href="./admin.html">Admin</a>
+        <a id="adminHeaderLink" class="hidden" href="./admin.html">Admin</a>
       </div>
     </div>
   </header>
@@ -57,6 +62,9 @@
 
       <div class="setup-card">
         <h2>Lancer une partie</h2>
+        <div id="creatorLockedNotice" class="creator-locked-notice">
+          Connecte-toi en admin pour créer une room. Les viewers peuvent uniquement rejoindre une room existante.
+        </div>
 
         <label for="playerName">Ton pseudo</label>
         <input id="playerName" maxlength="20" placeholder="Ex : Kun" autocomplete="nickname" />

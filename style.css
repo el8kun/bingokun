@@ -3289,3 +3289,56 @@ body.overlay-open {
     min-height: 58px;
   }
 }
+
+/* --- Bingo Kun v21 : sécurité admin Google --- */
+.admin-auth-line {
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+  color: var(--muted);
+  font-size: .72rem;
+}
+
+.admin-auth-status.good,
+#adminAuthStatus.good {
+  color: var(--cyan);
+  font-weight: 900;
+}
+
+.admin-auth-status.bad,
+#adminAuthStatus.bad {
+  color: #ff7a86;
+  font-weight: 900;
+}
+
+.creator-locked-notice {
+  margin: 10px 0 14px;
+  padding: 11px 12px;
+  border-radius: 15px;
+  color: #ffd7dc;
+  background: rgba(255,77,93,.12);
+  border: 1px solid rgba(255,77,93,.18);
+  font-size: .84rem;
+  line-height: 1.35;
+}
+
+.primary-btn:disabled,
+.secondary-btn:disabled {
+  cursor: not-allowed;
+  opacity: .48;
+  filter: grayscale(.2);
+}
+
+.admin-gate {
+  margin-bottom: 18px;
+}
+
+#adminContent {
+  display: contents;
+}
+
+#adminContent.hidden {
+  display: none !important;
+}
