@@ -135,6 +135,8 @@ const currentPlayerInitialsEl = $("currentPlayerInitials");
 const playerCounterBadgeEl = $("playerCounterBadge");
 const currentPlayerSublineEl = $("currentPlayerSubline");
 const playedPlayersListEl = $("playedPlayersList");
+const openFinishRecapBtn = $("openFinishRecapBtn");
+const historyReopenHint = $("historyReopenHint");
 const globalTimerTextEl = $("globalTimerText");
 const globalTimerBarEl = $("globalTimerBar");
 const circleTimerTextEl = $("circleTimerText");
@@ -370,6 +372,12 @@ startGameBtn.addEventListener("click", startGame);
 nextPlayerBtn.addEventListener("click", () => advanceMyPlayer(true));
 closeFinishOverlayBtn?.addEventListener("click", () => hideFinishOverlay());
 copyFinishRoomBtn?.addEventListener("click", copyRoomInfo);
+openFinishRecapBtn?.addEventListener("click", () => {
+  if (myData?.finished) {
+    renderFinishRecap();
+    showFinishOverlay();
+  }
+});
 
 gridModeSelect?.addEventListener("change", renderCustomBuilder);
 customCategorySearch?.addEventListener("input", () => {
@@ -797,6 +805,7 @@ function renderGame() {
     if (myFinalRankEl) myFinalRankEl.textContent = myRank ? `#${myRank}` : "#-";
     if (myAccuracyEl) myAccuracyEl.textContent = `${accuracy}%`;
     updateFinishOverlay(finalScore, finalBingos, BOARD_SIZE - finalScore, accuracy, myRank, participantsData.length);
+    if (historyReopenHint) historyReopenHint.classList.remove("hidden");
     ensureResultSaved(board, finalScore, myData.bingos || []);
     if (!hasShownFinishOverlay) {
       showFinishOverlay();
@@ -809,6 +818,7 @@ function renderGame() {
     hiddenResultBox.classList.remove("hidden");
     finalResultBox.classList.add("hidden");
     hideFinishOverlay();
+    if (historyReopenHint) historyReopenHint.classList.add("hidden");
   }
 
   renderBoard(currentPlayer);

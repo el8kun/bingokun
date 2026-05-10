@@ -3519,3 +3519,36 @@ body.overlay-open {
   font-size: .68rem;
   font-weight: 800;
 }
+
+
+/* Bingo Kun v45 — rouvrir le récap depuis “Tes joueurs passés” */
+.history-title-btn {
+  width: 100%;
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 0;
+  margin: 0 0 10px;
+  color: var(--text);
+  background: transparent;
+  border: 0;
+  text-align: left;
+  cursor: pointer;
+}
+
+.history-title-btn:hover {
+  color: var(--cyan);
+}
+
+.history-reopen-hint {
+  padding: 4px 8px;
+  border-radius: 999px;
+  color: #06100a;
+  background: linear-gradient(135deg, var(--cyan), var(--cyan2));
+  font-size: .62rem;
+  font-weight: 1000;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
