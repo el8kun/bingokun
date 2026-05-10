@@ -488,6 +488,8 @@ async function createRoom() {
     grid,
     deck,
     playableCount: setup.playableCount,
+    minPlayersPerCell: setup.minPlayersPerCell || 0,
+    weakCells: setup.weakCells || [],
     gridMode: requestedGrid.length ? "custom" : "random",
     preset: selectedPreset,
     playerBase: "players-with-categories",
@@ -1355,6 +1357,29 @@ function iconForCategory(id) {
   return icons[id] || "★";
 }
 
+
+function countDeckMatchesForCategory(deck, category) {
+  return deck.reduce((total, player) => {
+    return total + (canPlayerFillCategory(player, category) ? 1 : 0);
+  }, 0);
+}
+
+function getGridCoverageStats(grid, deck) {
+  const perCell = grid.map((category, index) => ({
+    index,
+    categoryId: category.id,
+    count: countDeckMatchesForCategory(deck, category)
+  }));
+
+  return {
+    perCell,
+    minMatches: perCell.length ? Math.min(...perCell.map((item) => item.count)) : 0,
+    allCellsHaveTwoPlayers: perCell.every((item) => item.count >= 2),
+    weakCells: perCell.filter((item) => item.count < 2)
+  };
+}
+
+
 function generateGameSetup(requestedGrid = [], preset = selectedPreset) {
   const playerPoolAll = getPlayersForPreset(preset);
   const maxDeckSize = Math.min(MAX_DECK_PLAYERS, playerPoolAll.length || ACTIVE_PLAYERS.length);
@@ -1380,16 +1405,29 @@ function generateGameSetup(requestedGrid = [], preset = selectedPreset) {
 
     const deck = buildDeck(grid, playablePlayers, maxDeckSize, preset);
     const deckPlayableCount = deck.filter((player) => canPlayerFillAnyCell(player, grid)).length;
-    const deckCoversEveryCell = grid.every((category) => deck.some((player) => canPlayerFillCategory(player, category)));
+    const coverageStats = getGridCoverageStats(grid, deck);
+    const deckCoversEveryCell = coverageStats.allCellsHaveTwoPlayers;
 
-    const score = deckPlayableCount * 100 + coveredCells;
+    const score = deckPlayableCount * 100 + coveredCells + (coverageStats.minMatches * 25);
 
     if (!bestSetup || score > bestSetup.score) {
-      bestSetup = { grid, deck, playableCount: deckPlayableCount, score };
+      bestSetup = {
+        grid,
+        deck,
+        playableCount: deckPlayableCount,
+        score,
+        coverageStats
+      };
     }
 
     if (deck.length <= MAX_DECK_PLAYERS && deckPlayableCount >= requiredPlayable && deckCoversEveryCell) {
-      return { grid, deck, playableCount: deckPlayableCount };
+      return {
+        grid,
+        deck,
+        playableCount: deckPlayableCount,
+        minPlayersPerCell: coverageStats.minMatches,
+        weakCells: coverageStats.weakCells
+      };
     }
   }
 
@@ -1397,7 +1435,9 @@ function generateGameSetup(requestedGrid = [], preset = selectedPreset) {
   return {
     grid: bestSetup.grid,
     deck: bestSetup.deck,
-    playableCount: bestSetup.playableCount
+    playableCount: bestSetup.playableCount,
+    minPlayersPerCell: bestSetup.coverageStats?.minMatches || 0,
+    weakCells: bestSetup.coverageStats?.weakCells || []
   };
 }
 
