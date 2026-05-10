@@ -261,6 +261,7 @@ function buildFreshParticipant(name, isHost = false) {
     finished: false,
     resultSaved: false,
     resultId: null,
+    finishReason: null,
     isHost,
     currentIndex: 0,
     currentStartedAt: null,
@@ -633,10 +634,22 @@ async function advanceMyPlayer(manual = false) {
 
     if (currentIndex >= deckLength) return false;
 
-    transaction.update(participantRef, {
-      currentIndex: Math.min(currentIndex + 1, deckLength),
+    const nextIndex = Math.min(currentIndex + 1, deckLength);
+    const updatePayload = {
+      currentIndex: nextIndex,
       currentStartedAt: serverTimestamp()
-    });
+    };
+
+    if (nextIndex >= deckLength) {
+      const board = liveParticipant.board || {};
+      const finalScore = countValidMoves(board);
+      updatePayload.finished = true;
+      updatePayload.finalScore = finalScore;
+      updatePayload.bingos = calculateBingos(board);
+      updatePayload.finishReason = "deck_finished";
+    }
+
+    transaction.update(participantRef, updatePayload);
 
     return true;
   });
