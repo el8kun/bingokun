@@ -204,7 +204,13 @@ if (!auth.currentUser) {
   });
 }
 
-createRoomBtn?.addEventListener("click", createRoom);
+createRoomBtn?.addEventListener("click", () => {
+  createRoom().catch((error) => {
+    console.error("Erreur création room :", error);
+    if (createRoomBtn) createRoomBtn.textContent = "Créer une room";
+    alert("Erreur création room : " + (error?.message || error));
+  });
+});
 adminLoginBtn?.addEventListener("click", signInAdmin);
 adminLogoutBtn?.addEventListener("click", signOutAdmin);
 $("joinRoomBtn").addEventListener("click", () => joinRoom(joinCodeInput.value.trim().toUpperCase()));
@@ -258,6 +264,10 @@ async function checkIsAdmin(userId) {
     return snap.exists();
   } catch (error) {
     console.warn("Vérification admin impossible :", error);
+    if (adminAuthStatus) {
+      adminAuthStatus.textContent = "Vérification admin impossible";
+      adminAuthStatus.className = "admin-auth-status bad";
+    }
     return false;
   }
 }
@@ -271,8 +281,11 @@ function updateAdminUi(user) {
   creatorLockedNotice?.classList.toggle("hidden", isAdminUser);
 
   if (createRoomBtn) {
-    createRoomBtn.disabled = !isAdminUser;
-    createRoomBtn.textContent = isAdminUser ? "Créer une room" : "Créer une room — admin uniquement";
+    createRoomBtn.disabled = false;
+    createRoomBtn.textContent = isAdminUser ? "Créer une room" : "Créer une room";
+    createRoomBtn.title = isAdminUser
+      ? "Créer une room"
+      : "Clique ici après connexion admin. Si ton UID n'est pas autorisé, un message t'indiquera quoi faire.";
   }
 
   if (adminAuthStatus) {
@@ -313,10 +326,21 @@ async function createRoom() {
   const name = getPlayerName();
   if (!name) return;
   if (!uid) return alert("Connexion Firebase en cours, réessaie dans 2 secondes.");
+
+  isAdminUser = await checkIsAdmin(uid);
+  updateAdminUi(auth.currentUser);
+
   if (!isAdminUser) {
-    alert("Seul le compte admin peut créer une room.");
+    const currentUid = uid || "UID introuvable";
+    alert(
+      "Création bloquée : ce compte n'est pas reconnu admin.\n\n" +
+      "UID actuel : " + currentUid + "\n\n" +
+      "Dans Firestore, il faut un document : admins/" + currentUid
+    );
     return;
   }
+
+  if (createRoomBtn) createRoomBtn.textContent = "Création en cours…";
 
   await loadDatabaseOverrides(true);
 
@@ -352,6 +376,7 @@ async function createRoom() {
   await setDoc(doc(db, "rooms", code, "participants", uid), buildFreshParticipant(name, true));
 
   await joinRoom(code, true);
+  if (createRoomBtn) createRoomBtn.textContent = "Créer une room";
 }
 
 async function joinRoom(code, alreadyJoined = false) {

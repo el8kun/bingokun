@@ -3342,3 +3342,14 @@ body.overlay-open {
 #adminContent.hidden {
   display: none !important;
 }
+
+/* --- Bingo Kun v22 : bouton créer toujours cliquable + debug admin --- */
+#createRoomBtn {
+  pointer-events: auto !important;
+}
+
+#createRoomBtn:disabled {
+  opacity: 1 !important;
+  filter: none !important;
+  cursor: pointer !important;
+}
