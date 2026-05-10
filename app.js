@@ -158,6 +158,9 @@ let participantsData = [];
 let unsubscribeRoom = null;
 let unsubscribeMe = null;
 let unsubscribePlayers = null;
+
+let selectedPreset = "global-normal";
+let selectedCustomCategories = [];
 let clockInterval = null;
 let playerAutoInterval = null;
 let hasShownFinishOverlay = false;
@@ -187,6 +190,27 @@ startGameBtn.addEventListener("click", startGame);
 nextPlayerBtn.addEventListener("click", () => advanceMyPlayer(true));
 closeFinishOverlayBtn?.addEventListener("click", () => hideFinishOverlay());
 copyFinishRoomBtn?.addEventListener("click", copyRoomInfo);
+
+presetChoiceBtns.forEach((button) => {
+  button.addEventListener("click", () => {
+    selectedPreset = button.dataset.preset || "global-normal";
+    presetChoiceBtns.forEach((item) => item.classList.toggle("active", item === button));
+    renderCategoryResults();
+  });
+});
+
+customGridToggle?.addEventListener("change", () => {
+  customBuilder?.classList.toggle("hidden", !customGridToggle.checked);
+  renderCategoryResults();
+  renderSelectedCategories();
+});
+
+categorySearchInput?.addEventListener("input", renderCategoryResults);
+autoFillCustomBtn?.addEventListener("click", () => {
+  selectedCustomCategories = autoCompleteCategories(selectedCustomCategories, selectedPreset);
+  renderSelectedCategories();
+  renderCategoryResults();
+});
 
 gridModeSelect?.addEventListener("change", renderCustomBuilder);
 customCategorySearch?.addEventListener("input", () => {
@@ -240,6 +264,8 @@ async function createRoom() {
     maxDeckPlayers: MAX_DECK_PLAYERS,
     minPlayablePlayers: MIN_PLAYABLE_PLAYERS,
     secondsPerPlayer: AUTO_SECONDS,
+    preset: selectedPreset,
+    gridMode,
     status: "waiting",
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
@@ -997,52 +1023,254 @@ function iconForCategory(id) {
   return icons[id] || "★";
 }
 
-function generateGameSetup(requestedGrid = []) {
-  const maxDeckSize = Math.min(MAX_DECK_PLAYERS, ACTIVE_PLAYERS.length);
+
+function getCategoryLabel(category) {
+  return `${category.kicker ? category.kicker + " " : ""}${category.title || category.name || category.id}`.trim();
+}
+
+function renderCategoryResults() {
+  if (!categoryResultsEl) return;
+
+  const query = String(categorySearchInput?.value || "").trim().toLowerCase();
+  const pool = filterCategoriesForPreset(selectedPreset);
+  const selectedIds = new Set(selectedCustomCategories.map(String));
+
+  const results = pool
+    .filter((category) => {
+      if (selectedIds.has(String(category.id))) return false;
+      if (!query) return true;
+      return getCategoryLabel(category).toLowerCase().includes(query)
+        || String(category.shortLabel || "").toLowerCase().includes(query);
+    })
+    .slice(0, 24);
+
+  categoryResultsEl.innerHTML = results.map((category) => `
+    <button class="category-result" type="button" data-category-id="${escapeHtml(category.id)}">
+      <strong>${escapeHtml(category.shortLabel || category.displayName || "CAT")}</strong>
+      <span>${escapeHtml(getCategoryLabel(category))}</span>
+    </button>
+  `).join("");
+
+  categoryResultsEl.querySelectorAll(".category-result").forEach((button) => {
+    button.addEventListener("click", () => {
+      if (selectedCustomCategories.length >= BOARD_SIZE) return;
+      selectedCustomCategories.push(button.dataset.categoryId);
+      renderSelectedCategories();
+      renderCategoryResults();
+    });
+  });
+}
+
+function renderSelectedCategories() {
+  if (!selectedCategoriesEl || !selectedCountEl) return;
+
+  selectedCountEl.textContent = `${selectedCustomCategories.length} / ${BOARD_SIZE}`;
+
+  selectedCategoriesEl.innerHTML = selectedCustomCategories.length
+    ? selectedCustomCategories.map((categoryId, index) => {
+        const category = CATEGORIES.find((item) => String(item.id) === String(categoryId));
+        return `
+          <div class="selected-category">
+            <span>${index + 1}</span>
+            <strong>${escapeHtml(category?.shortLabel || category?.displayName || "CAT")}</strong>
+            <em>${escapeHtml(category ? getCategoryLabel(category) : categoryId)}</em>
+            <button type="button" data-remove-index="${index}">×</button>
+          </div>
+        `;
+      }).join("")
+    : `<p class="empty-history">Aucune case choisie. Recherche une catégorie ou clique sur compléter auto.</p>`;
+
+  selectedCategoriesEl.querySelectorAll("[data-remove-index]").forEach((button) => {
+    button.addEventListener("click", () => {
+      selectedCustomCategories.splice(Number(button.dataset.removeIndex), 1);
+      renderSelectedCategories();
+      renderCategoryResults();
+    });
+  });
+}
+
+function autoCompleteCategories(currentCategories = [], preset = "global-normal") {
+  const selected = [...currentCategories].slice(0, BOARD_SIZE);
+  const selectedIds = new Set(selected.map(String));
+  const pool = shuffle(filterCategoriesForPreset(preset).filter((category) => !selectedIds.has(String(category.id))));
+
+  for (const category of pool) {
+    if (selected.length >= BOARD_SIZE) break;
+    selected.push(category.id);
+    selectedIds.add(String(category.id));
+  }
+
+  return selected;
+}
+
+
+const PRESET_CONFIGS = {
+  "global-easy": {
+    label: "Global facile",
+    playerMinScore: 5,
+    categoryTypes: [1, 2, 3, 6],
+    categoryWhitelist: [],
+    categoryBlacklist: [4, 5, 8],
+    requireAnyTags: [331, 332, 333, 334, 335, 354, 355, 356, 357, 425, 426, 427, 564]
+  },
+  "global-normal": {
+    label: "Global normal",
+    playerMinScore: 3,
+    categoryTypes: [1, 2, 3, 6, 8],
+    categoryWhitelist: [],
+    categoryBlacklist: [4, 5],
+    requireAnyTags: [83,84,86,93,99,112,129,133,160,167,172,176,179,204,215,262,331,332,333,334,335,354,355,356,357,425,426,427,547,550,564,607,608,609]
+  },
+  "global-hard": {
+    label: "Global difficile",
+    playerMinScore: 2,
+    categoryTypes: [1, 2, 3, 4, 5, 6, 8],
+    categoryWhitelist: [],
+    categoryBlacklist: [],
+    requireAnyTags: []
+  },
+  "hardcore": {
+    label: "Hardcore",
+    playerMinScore: 0,
+    categoryTypes: [1, 2, 3, 4, 5, 6, 8],
+    categoryWhitelist: [],
+    categoryBlacklist: [],
+    requireAnyTags: []
+  },
+  "ligue1": {
+    label: "Ligue 1",
+    playerMinScore: 1,
+    categoryTypes: [1, 2, 3, 6, 8],
+    categoryWhitelist: [172,129,215,117,159,219,3,6,5,13,18,400,403,354,355,356,425,426,547,550,611],
+    categoryBlacklist: [4, 5],
+    requireAnyTags: [172,129,215,117,159,219,606,611]
+  },
+  "premierleague": {
+    label: "Premier League",
+    playerMinScore: 1,
+    categoryTypes: [1, 2, 3, 6, 8],
+    categoryWhitelist: [84,92,93,114,133,149,179,191,204,207,1,3,5,6,13,400,403,331,332,333,354,355,356,425,426,547,550,607],
+    categoryBlacklist: [4, 5],
+    requireAnyTags: [84,92,93,114,133,149,179,191,204,207,607,331,332,333]
+  },
+  "trophies": {
+    label: "Trophées",
+    playerMinScore: 2,
+    categoryTypes: [6, 8],
+    categoryWhitelist: [331,332,333,334,335,336,337,338,339,354,355,356,357,358,425,426,427,547,550,555,563,564],
+    categoryBlacklist: [],
+    requireAnyTags: [331,332,333,334,335,354,355,356,357,425,426,427,564]
+  }
+};
+
+function getPlayerWeight(player) {
+  const tags = player.tags || [];
+  let score = 0;
+
+  const bigClubs = [83,84,86,93,99,112,129,133,160,167,172,176,179,204,215,262];
+  const bigTrophies = [331,332,333,334,335,354,355,356,357,425,426,427,564];
+  const bigLeagues = [607,608,609,610,611,598,599,600,601,602,603,604,606,620];
+
+  score += tags.filter((tag) => bigClubs.includes(Number(tag))).length * 2;
+  score += tags.filter((tag) => bigTrophies.includes(Number(tag))).length * 2;
+  score += tags.filter((tag) => bigLeagues.includes(Number(tag))).length;
+  if (player.position) score += 1;
+  if (tags.length >= 8) score += 2;
+  if (tags.length >= 12) score += 2;
+
+  return score;
+}
+
+function getPresetConfig(preset = "global-normal") {
+  return PRESET_CONFIGS[preset] || PRESET_CONFIGS["global-normal"];
+}
+
+function filterPlayersForPreset(preset, grid = []) {
+  const config = getPresetConfig(preset);
+  const required = config.requireAnyTags || [];
+
+  return PLAYERS.filter((player) => {
+    const tags = (player.tags || []).map(Number);
+    if (getPlayerWeight(player) < config.playerMinScore) return false;
+    if (required.length && !tags.some((tag) => required.includes(tag))) return false;
+    if (grid.length && !canPlayerFillAnyCell(player, grid)) return false;
+    return true;
+  });
+}
+
+function filterCategoriesForPreset(preset) {
+  const config = getPresetConfig(preset);
+  const allowedTypes = config.categoryTypes || [1, 2, 3, 4, 5, 6, 8];
+  const whitelist = config.categoryWhitelist || [];
+  const blacklist = config.categoryBlacklist || [];
+
+  return CATEGORIES.filter((category) => {
+    const sourceIds = (category.sourceIds || category.tags || []).map(Number);
+    const mainType = Number(category.type || category.visuals?.[0]?.visualType || 0);
+
+    if (blacklist.length && sourceIds.some((id) => blacklist.includes(id))) return false;
+    if (whitelist.length && !sourceIds.some((id) => whitelist.includes(id))) return false;
+    if (category.categoryType && !allowedTypes.includes(Number(category.categoryType))) return false;
+
+    const visuals = category.visuals || [];
+    if (visuals.length) {
+      const visualOk = visuals.some((visual) => {
+        const typeMap = { flag: 1, club: 2, league: 3, coach: 4, player: 5, trophy: 6, special: 8 };
+        return allowedTypes.includes(typeMap[visual.visualType] || 0);
+      });
+      if (!visualOk && !whitelist.length) return false;
+    }
+
+    return true;
+  });
+}
+
+function generateGameSetup(options = {}) {
+  const preset = options.preset || "global-normal";
+  const customCategories = Array.isArray(options.customCategories) ? options.customCategories : [];
+  const maxDeckSize = Math.min(MAX_DECK_PLAYERS, PLAYERS.length);
   const requiredPlayable = Math.min(MIN_PLAYABLE_PLAYERS, maxDeckSize);
 
-  const fixedGrid = normalizeRequestedGrid(requestedGrid);
+  let baseCategories = filterCategoriesForPreset(preset);
+  let gridSeed = customCategories
+    .map((categoryId) => CATEGORIES.find((category) => category.id === categoryId || String(category.id) === String(categoryId)))
+    .filter(Boolean)
+    .slice(0, BOARD_SIZE);
+
+  const missing = Math.max(0, BOARD_SIZE - gridSeed.length);
+  if (missing > 0) {
+    const already = new Set(gridSeed.map((category) => String(category.id)));
+    const candidates = shuffle(baseCategories.filter((category) => !already.has(String(category.id))));
+    gridSeed = [...gridSeed, ...candidates.slice(0, missing)];
+  }
+
   let bestSetup = null;
 
-  const attempts = fixedGrid.length ? 300 : 1200;
+  for (let attempt = 0; attempt < 800; attempt++) {
+    const grid = attempt === 0
+      ? gridSeed.slice(0, BOARD_SIZE)
+      : shuffle(baseCategories).slice(0, BOARD_SIZE);
 
-  for (let attempt = 0; attempt < attempts; attempt++) {
-    const grid = fixedGrid.length
-      ? completeGridFromFixedCategories(fixedGrid)
-      : shuffle(ACTIVE_CATEGORIES).slice(0, BOARD_SIZE);
-
-    const playablePlayers = ACTIVE_PLAYERS.filter((player) => canPlayerFillAnyCell(player, grid));
+    const playerPool = filterPlayersForPreset(preset, grid);
+    const playablePlayers = playerPool.filter((player) => canPlayerFillAnyCell(player, grid));
     const coveredCells = grid.filter((category) => playablePlayers.some((player) => canPlayerFillCategory(player, category))).length;
 
-    const deck = buildDeck(grid, playablePlayers, maxDeckSize);
+    const deck = buildDeck(grid, playablePlayers, maxDeckSize, preset);
     const deckPlayableCount = deck.filter((player) => canPlayerFillAnyCell(player, grid)).length;
     const deckCoversEveryCell = grid.every((category) => deck.some((player) => canPlayerFillCategory(player, category)));
 
     const score = deckPlayableCount * 100 + coveredCells;
 
     if (!bestSetup || score > bestSetup.score) {
-      bestSetup = {
-        grid,
-        deck,
-        playableCount: deckPlayableCount,
-        score
-      };
+      bestSetup = { grid, deck, playableCount: deckPlayableCount, score };
     }
 
-    if (
-      deck.length <= MAX_DECK_PLAYERS &&
-      deckPlayableCount >= requiredPlayable &&
-      deckCoversEveryCell
-    ) {
-      return {
-        grid,
-        deck,
-        playableCount: deckPlayableCount
-      };
+    if (deck.length <= MAX_DECK_PLAYERS && deckPlayableCount >= requiredPlayable && deckCoversEveryCell) {
+      return { grid, deck, playableCount: deckPlayableCount };
     }
   }
 
-  console.warn("Bingo Kun : impossible de garantir parfaitement 60 joueurs jouables avec cette grille. Meilleure configuration utilisée.", bestSetup);
+  console.warn("Bingo Kun : meilleure configuration utilisée pour le preset", preset, bestSetup);
   return {
     grid: bestSetup.grid,
     deck: bestSetup.deck,
@@ -1050,185 +1278,7 @@ function generateGameSetup(requestedGrid = []) {
   };
 }
 
-function normalizeRequestedGrid(requestedGrid = []) {
-  const selectedIds = new Set();
-  const selected = [];
-
-  requestedGrid.forEach((category) => {
-    if (!category?.id || selectedIds.has(category.id)) return;
-    const liveCategory = ACTIVE_CATEGORIES.find((item) => item.id === category.id) || category;
-    selectedIds.add(liveCategory.id);
-    selected.push(liveCategory);
-  });
-
-  return selected.slice(0, BOARD_SIZE);
-}
-
-function completeGridFromFixedCategories(fixedGrid) {
-  const selectedIds = new Set(fixedGrid.map((category) => category.id));
-  const grid = [...fixedGrid];
-
-  const candidates = shuffle(
-    ACTIVE_CATEGORIES.filter((category) => {
-      if (selectedIds.has(category.id)) return false;
-      return getCategoryMatchCount(category) > 0;
-    })
-  );
-
-  for (const category of candidates) {
-    if (grid.length >= BOARD_SIZE) break;
-    selectedIds.add(category.id);
-    grid.push(category);
-  }
-
-  return grid.slice(0, BOARD_SIZE);
-}
-
-function getRequestedCustomGrid() {
-  if (gridModeSelect?.value !== "custom") return [];
-
-  return customSelectedCategoryIds
-    .map((id) => ACTIVE_CATEGORIES.find((category) => category.id === id))
-    .filter(Boolean)
-    .slice(0, BOARD_SIZE);
-}
-
-function renderCustomBuilder() {
-  if (!customBuilder || !gridModeSelect) return;
-
-  const isCustom = gridModeSelect.value === "custom";
-  customBuilder.classList.toggle("hidden", !isCustom);
-
-  if (!isCustom) return;
-
-  customSelectedCategoryIds = customSelectedCategoryIds
-    .filter((id, index, array) => array.indexOf(id) === index)
-    .filter((id) => ACTIVE_CATEGORIES.some((category) => category.id === id))
-    .slice(0, BOARD_SIZE);
-
-  if (customCountEl) {
-    customCountEl.textContent = `${customSelectedCategoryIds.length} / ${BOARD_SIZE} cases`;
-  }
-
-  renderCustomSelectedGrid();
-  renderCustomSearchResults();
-}
-
-function renderCustomSelectedGrid() {
-  if (!customSelectedGrid) return;
-
-  if (!customSelectedCategoryIds.length) {
-    customSelectedGrid.innerHTML = `<div class="custom-empty">Aucune case choisie pour l'instant.</div>`;
-    return;
-  }
-
-  customSelectedGrid.innerHTML = customSelectedCategoryIds.map((id, index) => {
-    const category = ACTIVE_CATEGORIES.find((item) => item.id === id);
-    if (!category) return "";
-
-    return `
-      <button class="custom-chip" type="button" data-remove-category="${escapeHtml(id)}">
-        <span>${index + 1}</span>
-        <strong>${escapeHtml(category.title || category.name || category.id)}</strong>
-        <small>${escapeHtml(category.kicker || "Critère")}</small>
-      </button>
-    `;
-  }).join("");
-}
-
-function renderCustomSearchResults() {
-  if (!customSearchResults || gridModeSelect?.value !== "custom") return;
-
-  const query = normalizeSearch(customCategorySearch?.value || "");
-  const selected = new Set(customSelectedCategoryIds);
-
-  const pool = ACTIVE_CATEGORIES
-    .filter((category) => !selected.has(category.id))
-    .map((category) => ({
-      category,
-      count: getCategoryMatchCount(category),
-      haystack: normalizeSearch(`${category.title || ""} ${category.name || ""} ${category.kicker || ""} ${category.shortLabel || ""}`)
-    }))
-    .filter((item) => item.count > 0)
-    .filter((item) => !query || item.haystack.includes(query))
-    .sort((a, b) => {
-      if (query) {
-        const aStarts = a.haystack.startsWith(query) ? 1 : 0;
-        const bStarts = b.haystack.startsWith(query) ? 1 : 0;
-        if (aStarts !== bStarts) return bStarts - aStarts;
-      }
-      return b.count - a.count;
-    })
-    .slice(0, 24);
-
-  if (!pool.length) {
-    customSearchResults.innerHTML = `<div class="custom-empty">Aucune catégorie trouvée.</div>`;
-    return;
-  }
-
-  customSearchResults.innerHTML = pool.map(({ category, count }) => `
-    <button class="custom-result" type="button" data-add-category="${escapeHtml(category.id)}" ${customSelectedCategoryIds.length >= BOARD_SIZE ? "disabled" : ""}>
-      <span class="custom-result-visual">${renderCategoryVisual(category)}</span>
-      <span class="custom-result-meta">
-        <strong>${escapeHtml(category.title || category.name || category.id)}</strong>
-        <small>${escapeHtml(category.kicker || "Critère")} · ${count} joueurs</small>
-      </span>
-    </button>
-  `).join("");
-}
-
-function addCustomCategory(id) {
-  if (!id || customSelectedCategoryIds.includes(id)) return;
-  if (customSelectedCategoryIds.length >= BOARD_SIZE) {
-    alert(`La grille est déjà complète : ${BOARD_SIZE} cases.`);
-    return;
-  }
-
-  customSelectedCategoryIds.push(id);
-  renderCustomBuilder();
-}
-
-function removeCustomCategory(id) {
-  customSelectedCategoryIds = customSelectedCategoryIds.filter((item) => item !== id);
-  renderCustomBuilder();
-}
-
-function autoCompleteCustomGrid() {
-  const selected = new Set(customSelectedCategoryIds);
-  const candidates = shuffle(
-    ACTIVE_CATEGORIES.filter((category) => !selected.has(category.id) && getCategoryMatchCount(category) > 0)
-  );
-
-  for (const category of candidates) {
-    if (customSelectedCategoryIds.length >= BOARD_SIZE) break;
-    selected.add(category.id);
-    customSelectedCategoryIds.push(category.id);
-  }
-
-  renderCustomBuilder();
-}
-
-function getCategoryMatchCount(category) {
-  if (!category?.id) return 0;
-  if (categoryMatchCache.has(category.id)) return categoryMatchCache.get(category.id);
-
-  const count = ACTIVE_PLAYERS.reduce((total, player) => {
-    return total + (canPlayerFillCategory(player, category) ? 1 : 0);
-  }, 0);
-
-  categoryMatchCache.set(category.id, count);
-  return count;
-}
-
-function normalizeSearch(text) {
-  return String(text || "")
-    .normalize("NFD")
-    .replace(/[\\u0300-\\u036f]/g, "")
-    .toLowerCase()
-    .trim();
-}
-
-function buildDeck(grid, playablePlayers, maxDeckSize) {
+function buildDeck(grid, playablePlayers, maxDeckSize, preset = "global-normal") {
   const selected = new Map();
 
   grid.forEach((category) => {

@@ -61,6 +61,69 @@
         <label for="playerName">Ton pseudo</label>
         <input id="playerName" maxlength="20" placeholder="Ex : Kun" autocomplete="nickname" />
 
+        <div class="mode-panel">
+          <div class="mode-panel-head">
+            <div>
+              <label>Type de partie</label>
+              <p>Choisis un sujet ou une difficulté avant de créer la room.</p>
+            </div>
+          </div>
+
+          <div class="choice-grid">
+            <button class="preset-choice active" type="button" data-preset="global-normal">
+              <strong>Global normal</strong>
+              <span>Joueurs connus, sans trop d'obscurs</span>
+            </button>
+            <button class="preset-choice" type="button" data-preset="global-easy">
+              <strong>Global facile</strong>
+              <span>Stars + grands clubs</span>
+            </button>
+            <button class="preset-choice" type="button" data-preset="global-hard">
+              <strong>Global difficile</strong>
+              <span>Plus large, mais filtré</span>
+            </button>
+            <button class="preset-choice" type="button" data-preset="hardcore">
+              <strong>Hardcore</strong>
+              <span>Toute la BDD</span>
+            </button>
+            <button class="preset-choice" type="button" data-preset="ligue1">
+              <strong>Ligue 1</strong>
+              <span>Joueurs passés en L1</span>
+            </button>
+            <button class="preset-choice" type="button" data-preset="premierleague">
+              <strong>Premier League</strong>
+              <span>Joueurs passés en PL</span>
+            </button>
+            <button class="preset-choice" type="button" data-preset="trophies">
+              <strong>Trophées</strong>
+              <span>Grille orientée titres/récompenses</span>
+            </button>
+          </div>
+
+          <div class="custom-toggle-row">
+            <label class="switch-line">
+              <input id="customGridToggle" type="checkbox" />
+              <span>Mode custom : choisir mes catégories</span>
+            </label>
+          </div>
+
+          <div id="customBuilder" class="custom-builder hidden">
+            <div class="custom-builder-top">
+              <div>
+                <label for="categorySearch">Rechercher une catégorie</label>
+                <input id="categorySearch" placeholder="Ex : OM, PSG, France, Ballon d'Or..." />
+              </div>
+              <button id="autoFillCustomBtn" class="secondary-btn" type="button">Compléter auto</button>
+            </div>
+            <div id="categoryResults" class="category-results"></div>
+            <div class="selected-head">
+              <strong>Cases choisies</strong>
+              <span id="selectedCount">0 / 20</span>
+            </div>
+            <div id="selectedCategories" class="selected-categories"></div>
+          </div>
+        </div>
+
         <label for="gridMode">Mode de grille</label>
         <select id="gridMode" class="setup-select">
           <option value="random">Grille aléatoire</option>
