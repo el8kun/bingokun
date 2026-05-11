@@ -597,6 +597,7 @@ adminLoginForm?.addEventListener("submit", async (event) => {
       adminLoginMessage.textContent = error?.message || "Connexion impossible.";
       adminLoginMessage.className = "admin-login-message bad";
     }
+    console.error("Connexion admin impossible :", error);
   } finally {
     if (adminLoginSubmitBtn) {
       adminLoginSubmitBtn.disabled = false;
@@ -728,18 +729,41 @@ async function runPlayerAction(callback) {
 }
 
 
+function withTimeout(promise, ms = 8000, label = "Action trop longue") {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => {
+      setTimeout(() => reject(new Error(label)), ms);
+    })
+  ]);
+}
+
 async function checkIsAdmin(userId) {
   if (!supabase || !userId) return false;
 
   try {
-    const { data, error } = await supabase
-      .from("admins")
-      .select("uid,role")
-      .eq("uid", userId)
-      .maybeSingle();
+    // Priorité à la fonction SQL public.is_admin(), plus fiable avec RLS.
+    const rpcResult = await withTimeout(
+      supabase.rpc("is_admin"),
+      5000,
+      "Vérification admin trop longue"
+    );
 
-    if (error) throw error;
-    return Boolean(data?.uid);
+    if (!rpcResult.error && rpcResult.data === true) return true;
+
+    // Fallback si la fonction RPC n'existe pas encore.
+    const result = await withTimeout(
+      supabase
+        .from("admins")
+        .select("uid,role")
+        .eq("uid", userId)
+        .maybeSingle(),
+      5000,
+      "Lecture admins trop longue"
+    );
+
+    if (result.error) throw result.error;
+    return Boolean(result.data?.uid);
   } catch (error) {
     console.warn("Vérification admin Supabase impossible :", error);
     return false;
@@ -807,20 +831,34 @@ async function signInAdmin() {
 async function performAdminLogin(email, password) {
   if (!supabase) throw new Error("Supabase n'est pas configuré.");
 
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email: String(email || "").trim(),
-    password: String(password || "")
-  });
+  const loginResult = await withTimeout(
+    supabase.auth.signInWithPassword({
+      email: String(email || "").trim(),
+      password: String(password || "")
+    }),
+    9000,
+    "Connexion trop longue. Vérifie ton mot de passe ou recharge la page."
+  );
 
-  if (error) throw error;
+  if (loginResult.error) throw loginResult.error;
 
-  currentSupabaseUser = data?.user || null;
+  currentSupabaseUser = loginResult.data?.user || null;
   uid = currentSupabaseUser?.id || getOrCreateLocalUid();
-  isAdminUser = currentSupabaseUser ? await checkIsAdmin(currentSupabaseUser.id) : false;
+
+  if (!currentSupabaseUser) {
+    throw new Error("Connexion réussie mais aucun utilisateur reçu.");
+  }
+
+  if (adminLoginMessage) {
+    adminLoginMessage.textContent = "Connexion OK, vérification admin...";
+    adminLoginMessage.className = "admin-login-message";
+  }
+
+  isAdminUser = await checkIsAdmin(currentSupabaseUser.id);
   updateAdminUi(currentSupabaseUser);
 
   if (!isAdminUser) {
-    throw new Error("Connecté, mais ce compte n'est pas dans la table admins.");
+    throw new Error("Connecté, mais ce compte n'est pas autorisé admin. Vérifie la table admins et la policy SQL.");
   }
 
   hideAdminLoginModal();
