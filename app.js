@@ -1,5 +1,7 @@
 import { firebaseConfig } from "./firebase-config.js";
 import { CATEGORIES, PLAYERS, TEAMS } from "./data.js";
+import { supabaseConfig } from "./supabase-config.js";
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
 import {
@@ -20,6 +22,7 @@ import {
   updateDoc,
   serverTimestamp,
   collection,
+  getDocs,
   onSnapshot,
   runTransaction
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
@@ -27,6 +30,14 @@ import {
 const firebaseApp = initializeApp(firebaseConfig);
 const auth = getAuth(firebaseApp);
 const db = getFirestore(firebaseApp);
+
+const supabaseEnabled = Boolean(
+  supabaseConfig?.url &&
+  supabaseConfig?.anonKey &&
+  !String(supabaseConfig.url).includes("COLLE_") &&
+  !String(supabaseConfig.anonKey).includes("COLLE_")
+);
+const supabase = supabaseEnabled ? createClient(supabaseConfig.url, supabaseConfig.anonKey) : null;
 let authReady = setPersistence(auth, browserLocalPersistence).catch((error) => {
   console.warn("Persistence Firebase impossible :", error);
 });
@@ -50,6 +61,86 @@ function cloneCategories(source) {
   }));
 }
 
+
+function mapSupabasePlayer(row) {
+  return {
+    id: row.id,
+    name: row.name || row.id,
+    baseName: row.base_name || row.name || row.id,
+    position: row.position || "",
+    birthDate: row.birth_date || "",
+    tags: Array.isArray(row.tags) ? row.tags : [],
+    logos: Array.isArray(row.logos) ? row.logos : []
+  };
+}
+
+function mapSupabaseCategory(row) {
+  return {
+    id: row.id,
+    sourceIds: Array.isArray(row.source_ids) ? row.source_ids : [],
+    kicker: row.kicker || "Catégorie",
+    title: row.title || row.name || row.id,
+    name: row.name || row.title || row.id,
+    type: row.type,
+    tags: Array.isArray(row.tags) ? row.tags : [],
+    match: row.match_rule || "all",
+    logo: row.logo || row.id,
+    helperText: row.helper_text || "",
+    visualType: row.visual_type || "default",
+    image: row.image || "",
+    shortLabel: row.short_label || "",
+    visuals: Array.isArray(row.visuals) ? row.visuals : []
+  };
+}
+
+async function fetchAllSupabaseRows(table, select) {
+  if (!supabase) return [];
+
+  const pageSize = 1000;
+  let from = 0;
+  let rows = [];
+
+  while (true) {
+    const { data, error } = await supabase
+      .from(table)
+      .select(select)
+      .eq("enabled", true)
+      .range(from, from + pageSize - 1);
+
+    if (error) throw error;
+
+    rows = rows.concat(data || []);
+
+    if (!data || data.length < pageSize) break;
+    from += pageSize;
+  }
+
+  return rows;
+}
+
+async function loadSupabaseDatabase() {
+  if (!supabaseEnabled || !supabase) {
+    return false;
+  }
+
+  const [playerRows, categoryRows] = await Promise.all([
+    fetchAllSupabaseRows("players", "id,name,base_name,position,birth_date,tags,logos,enabled"),
+    fetchAllSupabaseRows("categories", "id,title,name,kicker,type,match_rule,tags,source_ids,logo,visual_type,image,short_label,helper_text,visuals,enabled")
+  ]);
+
+  if (!playerRows.length || !categoryRows.length) {
+    console.warn("Bingo Kun : Supabase vide, fallback data.js.");
+    return false;
+  }
+
+  ACTIVE_PLAYERS = playerRows.map(mapSupabasePlayer);
+  ACTIVE_CATEGORIES = categoryRows.map(mapSupabaseCategory);
+
+  console.info(`Bingo Kun : données chargées depuis Supabase (${ACTIVE_PLAYERS.length} joueurs, ${ACTIVE_CATEGORIES.length} catégories).`);
+  return true;
+}
+
+
 let ACTIVE_PLAYERS = clonePlayers(PLAYERS);
 let ACTIVE_CATEGORIES = cloneCategories(CATEGORIES);
 let databaseOverridesLoaded = false;
@@ -60,30 +151,50 @@ async function loadDatabaseOverrides(force = false) {
   ACTIVE_PLAYERS = clonePlayers(PLAYERS);
   ACTIVE_CATEGORIES = cloneCategories(CATEGORIES);
 
+  let loadedFromSupabase = false;
+
   try {
-    const snap = await getDoc(doc(db, "admin", "database"));
-    if (snap.exists()) {
-      const data = snap.data();
-      const playerOverrides = data.playerOverrides || {};
-
-      ACTIVE_PLAYERS = ACTIVE_PLAYERS.map((player) => {
-        const override = playerOverrides[player.id];
-        if (!override) return player;
-
-        return {
-          ...player,
-          name: override.name || player.name,
-          tags: Array.isArray(override.tags) ? [...new Set(override.tags)] : player.tags,
-          adminNote: override.note || ""
-        };
-      });
-    }
+    loadedFromSupabase = await loadSupabaseDatabase();
   } catch (error) {
-    console.warn("Bingo Kun : impossible de charger les corrections admin.", error);
+    console.warn("Bingo Kun : impossible de charger Supabase, fallback data.js.", error);
+    loadedFromSupabase = false;
+    ACTIVE_PLAYERS = clonePlayers(PLAYERS);
+    ACTIVE_CATEGORIES = cloneCategories(CATEGORIES);
+  }
+
+  // Anciennes corrections admin Firebase conservées en fallback, surtout si data.js est utilisé.
+  // Si Supabase est chargé, les corrections doivent idéalement être faites dans Supabase.
+  if (!loadedFromSupabase) {
+    try {
+      const snap = await getDoc(doc(db, "admin", "database"));
+      if (snap.exists()) {
+        const data = snap.data();
+        const playerOverrides = data.playerOverrides || {};
+
+        ACTIVE_PLAYERS = ACTIVE_PLAYERS.map((player) => {
+          const override = playerOverrides[player.id];
+          if (!override) return player;
+
+          return {
+            ...player,
+            name: override.name || player.name,
+            tags: Array.isArray(override.tags) ? [...new Set(override.tags)] : player.tags,
+            adminNote: override.note || ""
+          };
+        });
+      }
+    } catch (error) {
+      console.warn("Bingo Kun : impossible de charger les corrections admin.", error);
+    }
   }
 
   categoryMatchCache = new Map();
   databaseOverridesLoaded = true;
+
+  if (presetHelp) {
+    const source = loadedFromSupabase ? "Données : Supabase" : "Données : data.js secours";
+    presetHelp.textContent = `${presetHelp.textContent || ""} · ${source}`;
+  }
 }
 
 const BOARD_ROWS = 4;
@@ -209,6 +320,8 @@ let lastAutoAdvanceAt = 0;
 let localTimerKey = "";
 let localTimerStartedAtMs = 0;
 let lastPlayerActionAt = 0;
+let participantsLoadedForFinish = false;
+let participantsLoadingOnce = false;
 
 const savedName = localStorage.getItem("bingo-kun-name");
 if (savedName) playerNameInput.value = savedName;
@@ -343,6 +456,11 @@ onAuthStateChanged(auth, async (user) => {
 
   updateAdminUi(user);
 
+  loadDatabaseOverrides().then(() => {
+    updatePresetHelp();
+    renderCustomBuilder();
+  });
+
   // Important : ne pas reconnecter en anonyme au chargement avant que Firebase
   // ait restauré la session Google locale.
   if (!user) {
@@ -410,6 +528,7 @@ finishNewRoomBtn?.addEventListener("click", recreateRoomFromFinish);
 
 openFinishRecapBtn?.addEventListener("click", () => {
   if (myData?.finished) {
+    if (!participantsLoadedForFinish) loadParticipantsOnce("recap");
     renderFinishRecap();
     showRecapOverlay();
   }
@@ -417,6 +536,7 @@ openFinishRecapBtn?.addEventListener("click", () => {
 
 openFinishRankingBtn?.addEventListener("click", () => {
   if (myData?.finished) {
+    if (!participantsLoadedForFinish) loadParticipantsOnce("ranking");
     renderFinishRanking();
     showFinishOverlay();
   }
@@ -716,6 +836,8 @@ function showRoomShell(code) {
 
 function subscribeToRoom(code) {
   cleanupSubscriptions();
+  participantsLoadedForFinish = false;
+  participantsLoadingOnce = false;
 
   unsubscribeRoom = onSnapshot(doc(db, "rooms", code), (snapshot) => {
     if (!snapshot.exists()) {
@@ -724,24 +846,35 @@ function subscribeToRoom(code) {
     }
 
     roomData = snapshot.data();
+
+    // Anti-coût : dès que la partie démarre, on arrête d'écouter toute la collection participants.
+    // Sinon, chaque action d'un viewer réveille tous les autres et explose les lectures Firestore.
+    if (roomData.status === "playing" && unsubscribePlayers) {
+      unsubscribePlayers();
+      unsubscribePlayers = null;
+      setMessage("Mode économie Firebase : classement live allégé pendant la partie.", "good");
+    }
+
     renderViews();
   });
 
+  // Chaque joueur écoute seulement son propre document participant pendant la partie.
   unsubscribeMe = onSnapshot(doc(db, "rooms", code, "participants", uid), (snapshot) => {
     myData = snapshot.exists() ? snapshot.data() : null;
+    mergeMyParticipantData();
     renderViews();
   });
 
+  // Ce listener sert seulement au lobby / attente. Il est coupé au démarrage de la partie.
   unsubscribePlayers = onSnapshot(collection(db, "rooms", code, "participants"), (snapshot) => {
     participantsData = [];
     snapshot.forEach((item) => participantsData.push({ id: item.id, ...item.data() }));
 
-    // Important multi : pendant la partie, les autres joueurs mettent à jour leur participant
-    // en permanence. On ne doit PAS rerender toute la grille chez tout le monde à chaque update,
-    // sinon ça scintille et les clics deviennent difficiles.
     if (roomData?.status === "playing") {
+      unsubscribePlayers?.();
+      unsubscribePlayers = null;
+      mergeMyParticipantData();
       renderLeaderboard(participantsData);
-      if (typeof renderAdminDashboard === "function") renderAdminDashboard();
       return;
     }
 
@@ -750,12 +883,50 @@ function subscribeToRoom(code) {
   });
 }
 
+
+function mergeMyParticipantData() {
+  if (!uid || !myData) return;
+
+  const existingIndex = participantsData.findIndex((player) => player.id === uid);
+  const merged = { id: uid, ...myData };
+
+  if (existingIndex >= 0) {
+    participantsData[existingIndex] = merged;
+  } else {
+    participantsData.push(merged);
+  }
+}
+
+async function loadParticipantsOnce(reason = "") {
+  if (!currentRoomCode || participantsLoadingOnce) return;
+
+  participantsLoadingOnce = true;
+
+  try {
+    const snap = await getDocs(collection(db, "rooms", currentRoomCode, "participants"));
+    participantsData = [];
+    snap.forEach((item) => participantsData.push({ id: item.id, ...item.data() }));
+    mergeMyParticipantData();
+    participantsLoadedForFinish = true;
+
+    renderLeaderboard(participantsData);
+    if (myData?.finished) renderFinishRanking();
+  } catch (error) {
+    console.warn("Bingo Kun : impossible de charger les participants une fois.", error);
+    setMessage("Impossible de charger le classement complet pour l'instant.", "bad");
+  } finally {
+    participantsLoadingOnce = false;
+  }
+}
+
+
 function renderViews() {
   if (!roomData || !myData) return;
 
   clearStaleActionLock();
 
   if (roomData.status === "waiting") {
+    participantsLoadedForFinish = false;
     lastBoardRenderKey = "";
     resetLocalTimer();
     stopTimers();
@@ -830,8 +1001,11 @@ function getParticipantRank(participantId) {
 
 function renderLeaderboard(players = participantsData) {
   const sorted = getSortedParticipants(players);
+  const economyNotice = roomData?.status === "playing" && !participantsLoadedForFinish
+    ? `<div class="leaderboard-economy">Classement allégé pendant la partie pour limiter Firebase.</div>`
+    : "";
 
-  leaderboardEl.innerHTML = sorted.map((player, index) => {
+  leaderboardEl.innerHTML = economyNotice + sorted.map((player, index) => {
     const rank = index + 1;
     const isFinished = Boolean(player.finished);
     const score = isFinished ? (player.finalScore || 0) : Number(player.filledCount || Object.keys(player.board || {}).length || 0);
@@ -922,6 +1096,10 @@ function renderGame() {
   renderPlayedPlayers(currentIndex);
 
   if (finished) {
+    if (!participantsLoadedForFinish && !participantsLoadingOnce) {
+      loadParticipantsOnce("finish");
+    }
+
     const finalScore = myData.finalScore || 0;
     const finalBingos = (myData.bingos || []).length;
     const finalScoreMax = myData.scoreMax || scoreMax || 30;
@@ -2330,6 +2508,7 @@ function cleanupSubscriptions() {
   unsubscribeRoom = null;
   unsubscribeMe = null;
   unsubscribePlayers = null;
+  participantsLoadingOnce = false;
 }
 
 function generateRoomCode() {
