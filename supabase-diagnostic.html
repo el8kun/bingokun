@@ -69,6 +69,31 @@
     </section>
   </main>
 
+  <div id="diagnosticLoginOverlay" class="admin-login-overlay hidden">
+    <form id="diagnosticLoginForm" class="admin-login-modal">
+      <div class="finish-badge">ADMIN</div>
+      <h2>Connexion diagnostic</h2>
+      <p>Connecte-toi avec ton compte admin Supabase pour modifier les catégories.</p>
+
+      <label>
+        Email
+        <input id="diagnosticEmailInput" type="email" autocomplete="email" placeholder="ton@email.fr" required />
+      </label>
+
+      <label>
+        Mot de passe
+        <input id="diagnosticPasswordInput" type="password" autocomplete="current-password" placeholder="Mot de passe" required />
+      </label>
+
+      <p id="diagnosticLoginMessage" class="admin-login-message"></p>
+
+      <div class="finish-actions">
+        <button id="diagnosticLoginCancelBtn" class="secondary-btn" type="button">Annuler</button>
+        <button id="diagnosticLoginSubmitBtn" class="primary-btn" type="submit">Se connecter</button>
+      </div>
+    </form>
+  </div>
+
   <script type="module" src="./supabase-diagnostic.js"></script>
 </body>
 </html>

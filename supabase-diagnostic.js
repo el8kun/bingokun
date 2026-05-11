@@ -16,6 +16,13 @@ const reloadBtn = $("reloadDiagnosticBtn");
 const diagnosticLoginBtn = $("diagnosticLoginBtn");
 const diagnosticLogoutBtn = $("diagnosticLogoutBtn");
 const diagnosticAuthStatus = $("diagnosticAuthStatus");
+const diagnosticLoginOverlay = $("diagnosticLoginOverlay");
+const diagnosticLoginForm = $("diagnosticLoginForm");
+const diagnosticEmailInput = $("diagnosticEmailInput");
+const diagnosticPasswordInput = $("diagnosticPasswordInput");
+const diagnosticLoginCancelBtn = $("diagnosticLoginCancelBtn");
+const diagnosticLoginSubmitBtn = $("diagnosticLoginSubmitBtn");
+const diagnosticLoginMessage = $("diagnosticLoginMessage");
 
 let supabase = null;
 let players = [];
@@ -29,6 +36,39 @@ reloadBtn?.addEventListener("click", loadDiagnostic);
 categorySearch?.addEventListener("input", renderCategoriesDiagnostic);
 diagnosticLoginBtn?.addEventListener("click", signInDiagnosticAdmin);
 diagnosticLogoutBtn?.addEventListener("click", signOutDiagnosticAdmin);
+diagnosticLoginCancelBtn?.addEventListener("click", hideDiagnosticLoginModal);
+diagnosticLoginOverlay?.addEventListener("click", (event) => {
+  if (event.target === diagnosticLoginOverlay) hideDiagnosticLoginModal();
+});
+diagnosticLoginForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  if (diagnosticLoginMessage) {
+    diagnosticLoginMessage.textContent = "Connexion en cours...";
+    diagnosticLoginMessage.className = "admin-login-message";
+  }
+
+  if (diagnosticLoginSubmitBtn) {
+    diagnosticLoginSubmitBtn.disabled = true;
+    diagnosticLoginSubmitBtn.textContent = "Connexion...";
+  }
+
+  try {
+    await performDiagnosticLogin(diagnosticEmailInput?.value, diagnosticPasswordInput?.value);
+    if (diagnosticPasswordInput) diagnosticPasswordInput.value = "";
+  } catch (error) {
+    console.error("Connexion diagnostic impossible :", error);
+    if (diagnosticLoginMessage) {
+      diagnosticLoginMessage.textContent = error?.message || "Connexion impossible.";
+      diagnosticLoginMessage.className = "admin-login-message bad";
+    }
+  } finally {
+    if (diagnosticLoginSubmitBtn) {
+      diagnosticLoginSubmitBtn.disabled = false;
+      diagnosticLoginSubmitBtn.textContent = "Se connecter";
+    }
+  }
+});
 
 init();
 
@@ -53,6 +93,15 @@ async function init() {
 }
 
 
+function withTimeout(promise, ms = 8000, label = "Action trop longue") {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => {
+      setTimeout(() => reject(new Error(label)), ms);
+    })
+  ]);
+}
+
 async function refreshDiagnosticAuth() {
   const { data } = await supabase.auth.getSession();
   currentUser = data?.session?.user || null;
@@ -64,14 +113,26 @@ async function checkDiagnosticAdmin(userId) {
   if (!userId) return false;
 
   try {
-    const { data, error } = await supabase
-      .from("admins")
-      .select("uid")
-      .eq("uid", userId)
-      .maybeSingle();
+    const rpcResult = await withTimeout(
+      supabase.rpc("is_admin"),
+      5000,
+      "Vérification admin trop longue"
+    );
 
-    if (error) throw error;
-    return Boolean(data?.uid);
+    if (!rpcResult.error && rpcResult.data === true) return true;
+
+    const result = await withTimeout(
+      supabase
+        .from("admins")
+        .select("uid")
+        .eq("uid", userId)
+        .maybeSingle(),
+      5000,
+      "Lecture admins trop longue"
+    );
+
+    if (result.error) throw result.error;
+    return Boolean(result.data?.uid);
   } catch (error) {
     console.warn("Diagnostic admin check impossible :", error);
     return false;
@@ -96,24 +157,61 @@ function updateDiagnosticAuthUi() {
   }
 }
 
-async function signInDiagnosticAdmin() {
-  const email = prompt("Email admin Supabase :");
-  if (!email) return;
+function showDiagnosticLoginModal() {
+  if (!diagnosticLoginOverlay) return alert("Fenêtre de connexion introuvable. Recharge la page avec Ctrl + F5.");
 
-  const password = prompt("Mot de passe admin Supabase :");
-  if (!password) return;
-
-  const { error } = await supabase.auth.signInWithPassword({
-    email: email.trim(),
-    password
-  });
-
-  if (error) {
-    alert("Connexion impossible : " + error.message);
-    return;
+  if (diagnosticLoginMessage) {
+    diagnosticLoginMessage.textContent = "";
+    diagnosticLoginMessage.className = "admin-login-message";
   }
 
-  await refreshDiagnosticAuth();
+  diagnosticLoginOverlay.classList.remove("hidden");
+  document.body.classList.add("overlay-open");
+  setTimeout(() => diagnosticEmailInput?.focus(), 50);
+}
+
+function hideDiagnosticLoginModal() {
+  diagnosticLoginOverlay?.classList.add("hidden");
+  document.body.classList.remove("overlay-open");
+}
+
+async function signInDiagnosticAdmin() {
+  if (!supabase) return alert("Supabase n'est pas configuré.");
+  showDiagnosticLoginModal();
+}
+
+async function performDiagnosticLogin(email, password) {
+  const loginResult = await withTimeout(
+    supabase.auth.signInWithPassword({
+      email: String(email || "").trim(),
+      password: String(password || "")
+    }),
+    9000,
+    "Connexion trop longue. Vérifie ton mot de passe ou recharge la page."
+  );
+
+  if (loginResult.error) throw loginResult.error;
+
+  currentUser = loginResult.data?.user || null;
+
+  if (!currentUser) {
+    throw new Error("Connexion réussie mais aucun utilisateur reçu.");
+  }
+
+  if (diagnosticLoginMessage) {
+    diagnosticLoginMessage.textContent = "Connexion OK, vérification admin...";
+    diagnosticLoginMessage.className = "admin-login-message";
+  }
+
+  isAdmin = await checkDiagnosticAdmin(currentUser.id);
+  updateDiagnosticAuthUi();
+
+  if (!isAdmin) {
+    throw new Error("Connecté, mais ce compte n'est pas autorisé admin.");
+  }
+
+  hideDiagnosticLoginModal();
+  await loadDiagnostic();
 }
 
 async function signOutDiagnosticAdmin() {
