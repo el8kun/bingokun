@@ -1,12 +1,7 @@
-import { firebaseConfig } from "./firebase-config.js";
+import { supabaseConfig } from "./supabase-config.js";
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
-
-const firebaseApp = initializeApp(firebaseConfig);
-const auth = getAuth(firebaseApp);
-const db = getFirestore(firebaseApp);
+const supabase = createClient(supabaseConfig.url, supabaseConfig.anonKey);
 
 const $ = (id) => document.getElementById(id);
 
@@ -45,26 +40,43 @@ monthSelect.addEventListener("change", () => {
 
 refreshBtn.addEventListener("click", loadResults);
 
-onAuthStateChanged(auth, (user) => {
-  if (user) loadResults();
-});
-
-signInAnonymously(auth).catch((error) => {
-  rankingList.innerHTML = `<div class="empty-ranking">Erreur Firebase Auth : ${escapeHtml(error.message)}</div>`;
-});
+loadResults();
 
 async function loadResults() {
-  rankingList.innerHTML = `<div class="empty-ranking">Chargement du classement...</div>`;
+  rankingList.innerHTML = `<div class="empty-ranking">Chargement du classement Supabase...</div>`;
 
   try {
-    const snap = await getDocs(collection(db, "results"));
-    allResults = [];
-    snap.forEach((docSnap) => allResults.push({ id: docSnap.id, ...docSnap.data() }));
-    allResults.sort((a, b) => getMillis(b.finishedAt || b.createdAt) - getMillis(a.finishedAt || a.createdAt));
+    const { data, error } = await supabase
+      .from("results")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(5000);
+
+    if (error) throw error;
+
+    allResults = (data || []).map((row) => ({
+      id: row.id,
+      roomCode: row.room_code,
+      playerUid: row.player_uid,
+      playerName: row.player_name,
+      playerKey: row.player_key,
+      score: row.score,
+      finalScore: row.score,
+      scoreMax: row.score_max || 30,
+      bingos: row.bingos || 0,
+      wrongAnswers: row.wrong_answers || 0,
+      accuracy: row.accuracy || 0,
+      points: row.points || 0,
+      monthKey: row.month_key,
+      modeLabel: row.mode_label || "",
+      createdAt: row.created_at,
+      finishedAt: row.created_at
+    }));
+
     buildMonthSelect();
     render();
   } catch (error) {
-    rankingList.innerHTML = `<div class="empty-ranking">Impossible de charger les résultats : ${escapeHtml(error.message)}</div>`;
+    rankingList.innerHTML = `<div class="empty-ranking">Impossible de charger les résultats Supabase : ${escapeHtml(error.message)}</div>`;
   }
 }
 

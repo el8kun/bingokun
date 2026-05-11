@@ -141,6 +141,130 @@ async function loadSupabaseDatabase() {
 }
 
 
+
+function nowIso() {
+  return new Date().toISOString();
+}
+
+function roomRowToApp(row) {
+  if (!row) return null;
+
+  return {
+    code: row.code,
+    status: row.status || "waiting",
+    hostUid: row.host_uid || "",
+    preset: row.preset || "",
+    presetLabel: row.preset_label || "",
+    grid: Array.isArray(row.grid) ? row.grid : [],
+    deck: Array.isArray(row.deck) ? row.deck : [],
+    playableCount: row.playable_count || 0,
+    comboCount: row.combo_count || 0,
+    scoreMax: row.score_max || 30,
+    createdAt: row.created_at || null,
+    updatedAt: row.updated_at || null,
+    gameStartedAt: row.game_started_at || null
+  };
+}
+
+function participantRowToApp(row) {
+  if (!row) return null;
+
+  return {
+    id: row.uid,
+    rowId: row.id,
+    uid: row.uid,
+    name: row.name || "Joueur",
+    isHost: Boolean(row.is_host),
+    currentIndex: Number(row.current_index || 0),
+    board: row.board && typeof row.board === "object" ? row.board : {},
+    filledCount: Number(row.filled_count || 0),
+    finished: Boolean(row.finished),
+    finalScore: row.final_score ?? null,
+    validCells: row.valid_cells ?? null,
+    scoreMax: row.score_max || 30,
+    bingos: Array.isArray(row.bingos) ? row.bingos : [],
+    resultSaved: Boolean(row.result_saved),
+    finishReason: row.finish_reason || null,
+    joinedAt: row.joined_at || null,
+    updatedAt: row.updated_at || null
+  };
+}
+
+function participantPayloadToSupabase(payload = {}) {
+  const row = {};
+
+  if ("name" in payload) row.name = payload.name;
+  if ("isHost" in payload) row.is_host = Boolean(payload.isHost);
+  if ("currentIndex" in payload) row.current_index = Number(payload.currentIndex || 0);
+  if ("board" in payload) row.board = payload.board || {};
+  if ("filledCount" in payload) row.filled_count = Number(payload.filledCount || 0);
+  if ("finished" in payload) row.finished = Boolean(payload.finished);
+  if ("finalScore" in payload) row.final_score = payload.finalScore == null ? null : Number(payload.finalScore);
+  if ("validCells" in payload) row.valid_cells = payload.validCells == null ? null : Number(payload.validCells);
+  if ("scoreMax" in payload) row.score_max = Number(payload.scoreMax || 30);
+  if ("bingos" in payload) row.bingos = Array.isArray(payload.bingos) ? payload.bingos : [];
+  if ("resultSaved" in payload) row.result_saved = Boolean(payload.resultSaved);
+  if ("finishReason" in payload) row.finish_reason = payload.finishReason || null;
+
+  row.updated_at = nowIso();
+  return row;
+}
+
+async function supabaseGetRoom(code) {
+  const { data, error } = await supabase
+    .from("rooms")
+    .select("*")
+    .eq("code", code)
+    .maybeSingle();
+
+  if (error) throw error;
+  return roomRowToApp(data);
+}
+
+async function supabaseGetParticipant(code, userId) {
+  const { data, error } = await supabase
+    .from("participants")
+    .select("*")
+    .eq("room_code", code)
+    .eq("uid", userId)
+    .maybeSingle();
+
+  if (error) throw error;
+  return participantRowToApp(data);
+}
+
+async function supabaseLoadParticipants(code) {
+  const { data, error } = await supabase
+    .from("participants")
+    .select("*")
+    .eq("room_code", code)
+    .order("joined_at", { ascending: true });
+
+  if (error) throw error;
+  return (data || []).map(participantRowToApp);
+}
+
+async function supabaseUpdateParticipant(payload) {
+  if (!currentRoomCode || !uid) return;
+
+  const { error } = await supabase
+    .from("participants")
+    .update(participantPayloadToSupabase(payload))
+    .eq("room_code", currentRoomCode)
+    .eq("uid", uid);
+
+  if (error) throw error;
+}
+
+async function supabaseInsertResult(result) {
+  const { error } = await supabase
+    .from("results")
+    .upsert(result, { onConflict: "id" });
+
+  if (error) throw error;
+}
+
+
 let ACTIVE_PLAYERS = clonePlayers(PLAYERS);
 let ACTIVE_CATEGORIES = cloneCategories(CATEGORIES);
 let databaseOverridesLoaded = false;
@@ -322,6 +446,9 @@ let localTimerStartedAtMs = 0;
 let lastPlayerActionAt = 0;
 let participantsLoadedForFinish = false;
 let participantsLoadingOnce = false;
+let roomPollInterval = null;
+let mePollInterval = null;
+let participantsPollInterval = null;
 
 const savedName = localStorage.getItem("bingo-kun-name");
 if (savedName) playerNameInput.value = savedName;
@@ -681,7 +808,8 @@ async function signOutAdmin() {
 async function createRoom() {
   const name = getPlayerName();
   if (!name) return;
-  if (!uid) return alert("Connexion Firebase en cours, réessaie dans 2 secondes.");
+  if (!uid) return alert("Connexion en cours, réessaie dans 2 secondes.");
+  if (!supabase) return alert("Supabase n'est pas configuré.");
 
   isAdminUser = await checkIsAdmin(uid);
   updateAdminUi(auth.currentUser);
@@ -699,8 +827,9 @@ async function createRoom() {
 
   selectedPreset = presetModeSelect?.value || selectedPreset || "global-normal";
 
-  const code = generateRoomCode();
+  let code = generateRoomCode();
   const requestedGrid = getRequestedCustomGrid();
+
   if (gridModeSelect?.value === "custom" && !requestedGrid.length) {
     alert("Choisis au moins une catégorie pour lancer un Bingo custom.");
     return;
@@ -719,50 +848,78 @@ async function createRoom() {
 
   const grid = setup.grid;
   const deck = setup.deck.map((player) => player.id);
+  const now = nowIso();
 
-  await setDoc(doc(db, "rooms", code), {
+  const roomRow = {
     code,
-    hostUid: uid,
+    status: "waiting",
+    host_uid: uid,
+    preset: selectedPreset,
+    preset_label: presetModeSelect?.selectedOptions?.[0]?.textContent || selectedPreset,
     grid,
     deck,
-    playableCount: setup.playableCount,
-    minPlayersPerCell: setup.minPlayersPerCell || 0,
-    weakCells: setup.weakCells || [],
-    perfectSolvable: true,
-    perfectAssignment: setup.perfectAssignment || [],
-    comboCount: setup.comboCount || countComboCells(grid),
-    scoringMode: "strategic-combos-v1",
-    scoreMax: getMaxBoardScore(grid),
-    comboPoints: COMBO_CELL_POINTS,
-    simplePoints: SIMPLE_CELL_POINTS,
-    generationRules: {
-      deckSize: MAX_DECK_PLAYERS,
-      minPlayablePlayers: MIN_PLAYABLE_PLAYERS,
-      minPlayersPerStandardCell: MIN_PLAYERS_PER_STANDARD_CELL,
-      minPlayersPerComboCell: MIN_PLAYERS_PER_COMBO_CELL,
-      exactComboCells: EXACT_COMBO_CELLS
-    },
-    gridMode: requestedGrid.length ? "custom" : "random",
-    preset: selectedPreset,
-    playerBase: "players-with-categories",
-    maxDeckPlayers: MAX_DECK_PLAYERS,
-    minPlayablePlayers: MIN_PLAYABLE_PLAYERS,
-    secondsPerPlayer: AUTO_SECONDS,
-    status: "waiting",
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
-    gameStartedAt: null
-  });
+    playable_count: setup.playableCount,
+    combo_count: setup.comboCount || countComboCells(grid),
+    score_max: getMaxBoardScore(grid),
+    created_at: now,
+    updated_at: now
+  };
 
-  await setDoc(doc(db, "rooms", code, "participants", uid), buildFreshParticipant(name, true));
+  let insertedRoom = null;
 
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const { data, error } = await supabase
+      .from("rooms")
+      .insert(roomRow)
+      .select("*")
+      .single();
+
+    if (!error) {
+      insertedRoom = data;
+      break;
+    }
+
+    if (String(error.code) === "23505") {
+      code = generateRoomCode();
+      roomRow.code = code;
+      continue;
+    }
+
+    throw error;
+  }
+
+  if (!insertedRoom) {
+    alert("Impossible de créer une room, réessaie.");
+    return;
+  }
+
+  await supabase
+    .from("participants")
+    .upsert({
+      room_code: code,
+      uid,
+      name,
+      is_host: true,
+      current_index: 0,
+      board: {},
+      filled_count: 0,
+      finished: false,
+      score_max: getMaxBoardScore(grid),
+      bingos: [],
+      result_saved: false,
+      joined_at: now,
+      updated_at: now
+    }, { onConflict: "room_code,uid" });
+
+  localStorage.setItem("bingo-kun-name", name);
   await joinRoom(code, true);
 }
 
 async function joinRoom(code, alreadyJoined = false) {
   const name = getPlayerName();
   if (!name) return;
-  if (!uid) return alert("Connexion Firebase en cours, réessaie dans 2 secondes.");
+  if (!uid) return alert("Connexion en cours, réessaie dans 2 secondes.");
+  if (!supabase) return alert("Supabase n'est pas configuré.");
 
   if (!/^[A-Z0-9]{4,6}$/.test(code)) {
     alert("Entre un code room valide.");
@@ -771,30 +928,56 @@ async function joinRoom(code, alreadyJoined = false) {
 
   await loadDatabaseOverrides(true);
 
-  const roomRef = doc(db, "rooms", code);
-  const roomSnap = await getDoc(roomRef);
+  const room = await supabaseGetRoom(code);
 
-  if (!roomSnap.exists()) {
+  if (!room) {
     alert("Room introuvable.");
     return;
   }
 
-  const participantRef = doc(db, "rooms", code, "participants", uid);
-  const participantSnap = await getDoc(participantRef);
-  const room = roomSnap.data();
+  const participant = await supabaseGetParticipant(code, uid);
 
-  if (room.status !== "waiting" && !participantSnap.exists()) {
+  if (room.status !== "waiting" && !participant) {
     alert("La partie a déjà commencé. Tu pourras rejoindre la prochaine room.");
     return;
   }
 
-  if (!alreadyJoined && !participantSnap.exists()) {
-    await setDoc(participantRef, buildFreshParticipant(name, room.hostUid === uid));
+  if (!alreadyJoined && !participant) {
+    const now = nowIso();
+    const { error } = await supabase
+      .from("participants")
+      .insert({
+        room_code: code,
+        uid,
+        name,
+        is_host: room.hostUid === uid,
+        current_index: 0,
+        board: {},
+        filled_count: 0,
+        finished: false,
+        score_max: room.scoreMax || 30,
+        bingos: [],
+        result_saved: false,
+        joined_at: now,
+        updated_at: now
+      });
+
+    if (error) throw error;
   } else if (!alreadyJoined) {
-    await updateDoc(participantRef, { name });
+    const { error } = await supabase
+      .from("participants")
+      .update({ name, updated_at: nowIso() })
+      .eq("room_code", code)
+      .eq("uid", uid);
+
+    if (error) throw error;
   }
 
   currentRoomCode = code;
+  roomData = room;
+  myData = await supabaseGetParticipant(code, uid);
+  participantsData = [];
+
   hasShownFinishOverlay = false;
   resetLocalTimer();
   if (historyReopenHint) historyReopenHint.classList.add("hidden");
@@ -823,7 +1006,7 @@ function buildFreshParticipant(name, isHost = false) {
     isHost,
     currentIndex: 0,
     currentStartedAt: null,
-    joinedAt: serverTimestamp()
+    joinedAt: nowIso()
   };
 }
 
@@ -839,48 +1022,62 @@ function subscribeToRoom(code) {
   participantsLoadedForFinish = false;
   participantsLoadingOnce = false;
 
-  unsubscribeRoom = onSnapshot(doc(db, "rooms", code), (snapshot) => {
-    if (!snapshot.exists()) {
-      setMessage("La room n’existe plus.", "bad");
-      return;
-    }
+  async function refreshRoomAndMe() {
+    try {
+      const [room, participant] = await Promise.all([
+        supabaseGetRoom(code),
+        supabaseGetParticipant(code, uid)
+      ]);
 
-    roomData = snapshot.data();
+      if (!room) {
+        setMessage("La room n’existe plus.", "bad");
+        cleanupSubscriptions();
+        return;
+      }
 
-    // Anti-coût : dès que la partie démarre, on arrête d'écouter toute la collection participants.
-    // Sinon, chaque action d'un viewer réveille tous les autres et explose les lectures Firestore.
-    if (roomData.status === "playing" && unsubscribePlayers) {
-      unsubscribePlayers();
-      unsubscribePlayers = null;
-      setMessage("Mode économie Firebase : classement live allégé pendant la partie.", "good");
-    }
-
-    renderViews();
-  });
-
-  // Chaque joueur écoute seulement son propre document participant pendant la partie.
-  unsubscribeMe = onSnapshot(doc(db, "rooms", code, "participants", uid), (snapshot) => {
-    myData = snapshot.exists() ? snapshot.data() : null;
-    mergeMyParticipantData();
-    renderViews();
-  });
-
-  // Ce listener sert seulement au lobby / attente. Il est coupé au démarrage de la partie.
-  unsubscribePlayers = onSnapshot(collection(db, "rooms", code, "participants"), (snapshot) => {
-    participantsData = [];
-    snapshot.forEach((item) => participantsData.push({ id: item.id, ...item.data() }));
-
-    if (roomData?.status === "playing") {
-      unsubscribePlayers?.();
-      unsubscribePlayers = null;
+      roomData = room;
+      myData = participant;
       mergeMyParticipantData();
-      renderLeaderboard(participantsData);
-      return;
+      renderViews();
+    } catch (error) {
+      console.warn("Bingo Kun Supabase refresh error:", error);
     }
+  }
 
-    renderParticipants();
-    renderViews();
-  });
+  async function refreshParticipantsLobby() {
+    if (!roomData || roomData.status !== "waiting") return;
+
+    try {
+      participantsData = await supabaseLoadParticipants(code);
+      mergeMyParticipantData();
+      renderParticipants();
+      renderViews();
+    } catch (error) {
+      console.warn("Participants lobby refresh impossible:", error);
+    }
+  }
+
+  refreshRoomAndMe();
+  refreshParticipantsLobby();
+
+  roomPollInterval = setInterval(refreshRoomAndMe, 1200);
+  mePollInterval = setInterval(refreshRoomAndMe, 900);
+  participantsPollInterval = setInterval(refreshParticipantsLobby, 2500);
+
+  unsubscribeRoom = () => {
+    if (roomPollInterval) clearInterval(roomPollInterval);
+    roomPollInterval = null;
+  };
+
+  unsubscribeMe = () => {
+    if (mePollInterval) clearInterval(mePollInterval);
+    mePollInterval = null;
+  };
+
+  unsubscribePlayers = () => {
+    if (participantsPollInterval) clearInterval(participantsPollInterval);
+    participantsPollInterval = null;
+  };
 }
 
 
@@ -903,9 +1100,7 @@ async function loadParticipantsOnce(reason = "") {
   participantsLoadingOnce = true;
 
   try {
-    const snap = await getDocs(collection(db, "rooms", currentRoomCode, "participants"));
-    participantsData = [];
-    snap.forEach((item) => participantsData.push({ id: item.id, ...item.data() }));
+    participantsData = await supabaseLoadParticipants(currentRoomCode);
     mergeMyParticipantData();
     participantsLoadedForFinish = true;
 
@@ -918,6 +1113,7 @@ async function loadParticipantsOnce(reason = "") {
     participantsLoadingOnce = false;
   }
 }
+
 
 
 function renderViews() {
@@ -1041,11 +1237,24 @@ function renderLeaderboard(players = participantsData) {
 async function startGame() {
   if (!roomData || !currentRoomCode || roomData.hostUid !== uid) return;
 
-  await updateDoc(doc(db, "rooms", currentRoomCode), {
+  const now = nowIso();
+  const { error } = await supabase
+    .from("rooms")
+    .update({
+      status: "playing",
+      updated_at: now
+    })
+    .eq("code", currentRoomCode);
+
+  if (error) throw error;
+
+  roomData = {
+    ...roomData,
     status: "playing",
-    gameStartedAt: serverTimestamp(),
-    updatedAt: serverTimestamp()
-  });
+    updatedAt: now
+  };
+
+  renderViews();
 }
 
 function renderGame() {
@@ -1289,7 +1498,7 @@ async function placeCurrentPlayer(cellIndex) {
       const deckLength = roomData.deck?.length || 0;
       const nextIndex = Math.min(getMyCurrentIndex() + 1, deckLength);
       updatePayload.currentIndex = nextIndex;
-      updatePayload.currentStartedAt = serverTimestamp();
+      updatePayload.currentStartedAt = nowIso();
 
       if (nextIndex >= deckLength) {
         const finalScore = calculateBoardScore(newBoard, roomData.grid);
@@ -1300,14 +1509,14 @@ async function placeCurrentPlayer(cellIndex) {
         updatePayload.bingos = calculateBingos(newBoard);
         updatePayload.finishReason = "deck_finished";
         updatePayload.resultSaved = false;
-        updatePayload.finishedAt = serverTimestamp();
+        updatePayload.finishedAt = nowIso();
         setMessage("Deck terminé ! Ton score final est calculé.", "good");
       } else {
         setMessage("Joueur placé. Le prochain joueur arrive pour toi uniquement.", "good");
       }
     }
 
-    await updateDoc(doc(db, "rooms", currentRoomCode, "participants", uid), updatePayload);
+    await supabaseUpdateParticipant(updatePayload);
 
     // Rendu local immédiat : évite l'impression que le joueur ne passe pas.
     myData = {
@@ -1315,6 +1524,7 @@ async function placeCurrentPlayer(cellIndex) {
       ...updatePayload,
       currentStartedAt: updatePayload.currentStartedAt || myData.currentStartedAt
     };
+    mergeMyParticipantData();
     lastBoardRenderKey = "";
     renderViews();
   });
@@ -1339,7 +1549,11 @@ async function finishParticipant(reason = "deck_finished") {
   };
 
   try {
-    await updateDoc(doc(db, "rooms", currentRoomCode, "participants", uid), updatePayload);
+    await supabaseUpdateParticipant(updatePayload);
+    myData = { ...myData, ...updatePayload };
+    mergeMyParticipantData();
+    lastBoardRenderKey = "";
+    renderViews();
     setMessage(reason === "deck_finished" ? "Deck terminé ! Ton score final est calculé." : "Partie terminée.", "good");
   } catch (error) {
     console.warn("Impossible de terminer la partie :", error);
@@ -1374,17 +1588,18 @@ async function advanceMyPlayer(manual = false) {
       updatePayload.bingos = calculateBingos(board);
       updatePayload.finishReason = "deck_finished";
       updatePayload.resultSaved = false;
-      updatePayload.finishedAt = serverTimestamp();
+      updatePayload.finishedAt = nowIso();
     }
 
-    await updateDoc(doc(db, "rooms", currentRoomCode, "participants", uid), updatePayload);
+    await supabaseUpdateParticipant(updatePayload);
 
-    // Rendu local immédiat : évite l'impression que rien ne se passe en attendant le retour Firebase.
+    // Rendu local immédiat : évite l'impression que rien ne se passe.
     myData = {
       ...myData,
       ...updatePayload,
       currentStartedAt: updatePayload.currentStartedAt || myData.currentStartedAt
     };
+    mergeMyParticipantData();
     lastBoardRenderKey = "";
     renderViews();
 
@@ -1419,42 +1634,34 @@ async function ensureResultSaved(board, finalScore, bingos) {
   const playerName = myData.name || getPlayerName() || "Joueur";
 
   try {
-    await setDoc(doc(db, "results", resultId), {
-      resultId,
-      roomCode: currentRoomCode,
-      playerUid: uid,
-      playerName,
-      playerKey: normalizePlayerKey(playerName),
+    await supabaseInsertResult({
+      id: resultId,
+      room_code: currentRoomCode,
+      player_uid: uid,
+      player_name: playerName,
+      player_key: normalizePlayerKey(playerName),
       score: Number(finalScore || 0),
-      finalScore: Number(finalScore || 0),
+      score_max: scoreMax,
       bingos: bingoCount,
-      bingoIds: Array.isArray(bingos) ? bingos : [],
-      wrongAnswers,
+      wrong_answers: wrongAnswers,
       accuracy,
       points,
-      scoreMax,
-      validCells,
-      scoringMode: "strategic-combos-v1",
-      comboPoints: COMBO_CELL_POINTS,
-      simplePoints: SIMPLE_CELL_POINTS,
-      filledCount: Object.keys(board || {}).length,
-      monthKey,
-      year: now.getFullYear(),
-      createdAt: serverTimestamp(),
-      finishedAt: serverTimestamp(),
-      roomCreatedAt: roomData.createdAt || null,
-      deckSize: roomData.deck?.length || 0,
-      gridSize: roomData.grid?.length || 0
-    }, { merge: true });
-
-    await updateDoc(doc(db, "rooms", currentRoomCode, "participants", uid), {
-      resultSaved: true,
-      resultId,
-      rankingPoints: points,
-      finishedAt: serverTimestamp()
+      month_key: monthKey,
+      mode_label: roomData.presetLabel || roomData.preset || selectedPreset || "mode libre",
+      created_at: nowIso()
     });
+
+    await supabaseUpdateParticipant({
+      resultSaved: true
+    });
+
+    myData = {
+      ...myData,
+      resultSaved: true
+    };
+    mergeMyParticipantData();
   } catch (error) {
-    console.error("Bingo Kun : impossible d'enregistrer le résultat.", error);
+    console.error("Bingo Kun : impossible d'enregistrer le résultat Supabase.", error);
   } finally {
     savingResult = false;
   }
@@ -2508,6 +2715,9 @@ function cleanupSubscriptions() {
   unsubscribeRoom = null;
   unsubscribeMe = null;
   unsubscribePlayers = null;
+  roomPollInterval = null;
+  mePollInterval = null;
+  participantsPollInterval = null;
   participantsLoadingOnce = false;
 }
 
