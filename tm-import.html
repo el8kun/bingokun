@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bingo Kun — Import Transfermarkt</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <main class="admin-page supabase-diagnostic-page">
+    <section class="admin-hero">
+      <div>
+        <p class="mini-title">Transfermarkt</p>
+        <h1>Importer un joueur</h1>
+        <p>Charge les transferts Transfermarkt, mappe les clubs vers tes catégories Bingo, puis ajoute ou mets à jour le joueur dans Supabase.</p>
+      </div>
+      <div class="admin-actions">
+        <a class="secondary-btn" href="./index.html">Retour site</a>
+        <a class="secondary-btn" href="./supabase-diagnostic.html">Diagnostic BDD</a>
+        <button id="tmLoginBtn" class="secondary-btn" type="button">Connexion admin</button>
+        <button id="tmLogoutBtn" class="secondary-btn hidden" type="button">Déconnexion</button>
+      </div>
+    </section>
+
+    <section class="admin-panel">
+      <p id="tmAuthStatus" class="admin-status">Lecture seule — connecte-toi en admin.</p>
+      <p id="tmStatus" class="admin-status">Prêt.</p>
+
+      <div class="tm-form-grid">
+        <label>
+          Base API
+          <input id="tmApiBaseInput" value="https://transfermarkt-api.fly.dev" />
+        </label>
+
+        <label>
+          ID Transfermarkt
+          <input id="tmPlayerIdInput" placeholder="Ex : 37647" />
+        </label>
+
+        <label>
+          Nom joueur
+          <input id="tmPlayerNameInput" placeholder="Ex : Dimitri Payet" />
+        </label>
+
+        <label>
+          ID joueur Supabase
+          <input id="tmSupabasePlayerIdInput" placeholder="Ex : tm_37647" />
+        </label>
+      </div>
+
+      <div class="admin-actions tm-actions">
+        <button id="tmLoadTransfersBtn" class="primary-btn" type="button">Charger transferts</button>
+        <button id="tmImportPlayerBtn" class="secondary-btn" type="button" disabled>Importer / mettre à jour joueur</button>
+      </div>
+    </section>
+
+    <section class="diagnostic-grid">
+      <article class="admin-panel">
+        <div class="diagnostic-head">
+          <div>
+            <p class="mini-title">Clubs détectés</p>
+            <h2>Mapping Transfermarkt → Bingo</h2>
+            <p>Les clubs non mappés seront ignorés à l’import.</p>
+          </div>
+        </div>
+        <div id="tmClubsList" class="diagnostic-list large"></div>
+      </article>
+
+      <article class="admin-panel">
+        <div class="diagnostic-head">
+          <div>
+            <p class="mini-title">Tags générés</p>
+            <h2>Prévisualisation joueur</h2>
+            <p>Vérifie les tags avant import dans Supabase.</p>
+          </div>
+        </div>
+        <div id="tmPreviewBox" class="tm-preview-box">Charge un joueur pour voir la prévisualisation.</div>
+      </article>
+    </section>
+
+    <section class="admin-panel">
+      <div class="diagnostic-head">
+        <div>
+          <p class="mini-title">JSON brut</p>
+          <h2>Réponse Transfermarkt</h2>
+        </div>
+      </div>
+      <pre id="tmRawJson" class="tm-json-box">Aucune donnée chargée.</pre>
+    </section>
+  </main>
+
+  <div id="tmLoginOverlay" class="admin-login-overlay hidden">
+    <form id="tmLoginForm" class="admin-login-modal">
+      <div class="finish-badge">ADMIN</div>
+      <h2>Connexion Import</h2>
+      <p>Connecte-toi avec ton compte admin Supabase pour importer des joueurs.</p>
+
+      <label>
+        Email
+        <input id="tmEmailInput" type="email" autocomplete="email" placeholder="ton@email.fr" required />
+      </label>
+
+      <label>
+        Mot de passe
+        <input id="tmPasswordInput" type="password" autocomplete="current-password" placeholder="Mot de passe" required />
+      </label>
+
+      <p id="tmLoginMessage" class="admin-login-message"></p>
+
+      <div class="finish-actions">
+        <button id="tmLoginCancelBtn" class="secondary-btn" type="button">Annuler</button>
+        <button id="tmLoginSubmitBtn" class="primary-btn" type="submit">Se connecter</button>
+      </div>
+    </form>
+  </div>
+
+  <script type="module" src="./tm-import.js"></script>
+</body>
+</html>

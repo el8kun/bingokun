@@ -4672,3 +4672,96 @@ body.overlay-open {
 .admin-login-message.bad {
   color: #ff6b79;
 }
+
+
+/* Bingo Kun v71 — Import Transfermarkt */
+.tm-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(220px, 1fr));
+  gap: 14px;
+  margin-top: 12px;
+}
+
+.tm-form-grid label {
+  display: grid;
+  gap: 7px;
+  color: var(--muted);
+  font-weight: 900;
+  font-size: .82rem;
+}
+
+.tm-actions {
+  margin-top: 16px;
+}
+
+.tm-map-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: min(520px, 100%);
+}
+
+.tm-map-controls select {
+  flex: 1;
+  min-width: 220px;
+}
+
+.tm-preview-box,
+.tm-json-box {
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.05);
+  color: var(--text);
+  padding: 14px;
+}
+
+.tm-json-box {
+  max-height: 460px;
+  overflow: auto;
+  white-space: pre-wrap;
+  font-size: .78rem;
+}
+
+.tm-preview-card {
+  display: grid;
+  gap: 8px;
+}
+
+.tm-preview-card strong {
+  font-size: 1.25rem;
+}
+
+.tm-preview-card span {
+  color: var(--muted);
+}
+
+.tm-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 8px;
+}
+
+.tm-tags code {
+  border-radius: 999px;
+  padding: 5px 8px;
+  background: rgba(44, 245, 198, .12);
+  color: var(--accent);
+  border: 1px solid rgba(44, 245, 198, .22);
+}
+
+@media (max-width: 900px) {
+  .tm-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .tm-map-controls {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .tm-map-controls select {
+    min-width: 0;
+    width: 100%;
+  }
+}
