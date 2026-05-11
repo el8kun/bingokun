@@ -4608,3 +4608,14 @@ body.overlay-open {
     flex-direction: column;
   }
 }
+
+
+/* Bingo Kun v64 — vrais logos .webp avec fallback SVG */
+.cell-image {
+  object-fit: contain;
+}
+
+.cell-visual-combo .cell-image,
+.cell-visual-images.is-combo .cell-image {
+  object-fit: contain;
+}

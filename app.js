@@ -1411,6 +1411,87 @@ function renderBoard(currentPlayer) {
 }
 
 
+
+function getVisualFolder(visualType = "") {
+  const map = {
+    club: "clubs",
+    flag: "flags",
+    league: "leagues",
+    trophy: "trophies",
+    special: "special"
+  };
+
+  return map[String(visualType || "").toLowerCase()] || "imported";
+}
+
+function getCategoryNumberFromVisual(item = {}, category = {}) {
+  const candidates = [
+    item.logo,
+    item.id,
+    category.logo,
+    category.id,
+    item.image,
+    category.image
+  ].filter(Boolean).map(String);
+
+  for (const value of candidates) {
+    const match = value.match(/cat_(\d+)/);
+    if (match) return match[1];
+
+    const numberOnly = value.match(/(?:^|\/)(\d+)\.(?:webp|png|svg|jpg|jpeg)$/i);
+    if (numberOnly) return numberOnly[1];
+  }
+
+  return "";
+}
+
+function getVisualImageCandidates(item = {}, category = {}) {
+  const original = item.image || category.image || "";
+  const number = getCategoryNumberFromVisual(item, category);
+  const visualType = item.visualType || category.visualType || "";
+  const folder = getVisualFolder(visualType);
+
+  const candidates = [];
+
+  if (number) {
+    // Dossier recommandé pour tes vrais logos importés.
+    candidates.push(`./assets/icons/imported/${number}.webp`);
+    candidates.push(`./assets/icons/imported/cat_${number}.webp`);
+
+    // Sécurité si les fichiers ont été uploadés à la racine de assets/icons.
+    candidates.push(`./assets/icons/${number}.webp`);
+    candidates.push(`./assets/icons/cat_${number}.webp`);
+
+    // Sécurité si tu ranges les .webp dans clubs/flags/leagues/etc.
+    candidates.push(`./assets/icons/${folder}/${number}.webp`);
+    candidates.push(`./assets/icons/${folder}/cat_${number}.webp`);
+  }
+
+  if (original) candidates.push(original);
+
+  return [...new Set(candidates.filter(Boolean))];
+}
+
+window.bingoKunImageFallback = function bingoKunImageFallback(img) {
+  try {
+    const fallbacks = JSON.parse(img.dataset.fallbacks || "[]");
+    const next = fallbacks.shift();
+
+    if (!next) {
+      img.onerror = null;
+      img.style.display = "none";
+      return;
+    }
+
+    img.dataset.fallbacks = JSON.stringify(fallbacks);
+    img.src = next;
+  } catch (error) {
+    img.onerror = null;
+    img.style.display = "none";
+  }
+};
+
+
 function renderCategoryVisual(category) {
   const visuals = Array.isArray(category.visuals) && category.visuals.length
     ? category.visuals.slice(0, 2)
@@ -1423,13 +1504,19 @@ function renderCategoryVisual(category) {
   const visualClass = visuals.length > 1 ? "combo" : (visuals[0]?.visualType || "default");
 
   const imagesHtml = visuals.map((item) => {
-    if (!item?.image) {
+    const candidates = getVisualImageCandidates(item, category);
+
+    if (!candidates.length) {
       return `<div class="cell-icon-fallback">${escapeHtml(item?.shortLabel || "★")}</div>`;
     }
 
+    const [firstImage, ...fallbacks] = candidates;
+
     return `
       <img
-        src="${escapeHtml(item.image)}"
+        src="${escapeHtml(firstImage)}"
+        data-fallbacks='${escapeHtml(JSON.stringify(fallbacks))}'
+        onerror="window.bingoKunImageFallback(this)"
         alt="${escapeHtml(category.title || category.name || category.id)}"
         class="cell-image"
         loading="lazy"
