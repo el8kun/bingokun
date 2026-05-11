@@ -1424,15 +1424,23 @@ function getVisualFolder(visualType = "") {
   return map[String(visualType || "").toLowerCase()] || "imported";
 }
 
-function getCategoryNumberFromVisual(item = {}, category = {}) {
+function getCategoryNumberFromVisual(item = {}, category = {}, visualIndex = null) {
+  const categoryTags = Array.isArray(category.tags) ? category.tags : [];
+  const indexedTag = Number.isInteger(visualIndex) ? categoryTags[visualIndex] : "";
+
   const candidates = [
     item.logo,
     item.id,
-    category.logo,
-    category.id,
-    item.image,
-    category.image
+    indexedTag,
+    item.image
   ].filter(Boolean).map(String);
+
+  // Only use category-level fallback when this is not a multi-tag combo visual.
+  if (!indexedTag) {
+    candidates.push(String(category.logo || ""));
+    candidates.push(String(category.id || ""));
+    candidates.push(String(category.image || ""));
+  }
 
   for (const value of candidates) {
     const match = value.match(/cat_(\d+)/);
@@ -1445,10 +1453,32 @@ function getCategoryNumberFromVisual(item = {}, category = {}) {
   return "";
 }
 
-function getVisualImageCandidates(item = {}, category = {}) {
-  const original = item.image || category.image || "";
-  const number = getCategoryNumberFromVisual(item, category);
-  const visualType = item.visualType || category.visualType || "";
+function getCategoryByTagId(tagId) {
+  if (!tagId) return null;
+  return ACTIVE_CATEGORIES.find((category) => category.id === tagId || category.logo === tagId) || null;
+}
+
+function getVisualTypeForTag(tagId, fallbackType = "") {
+  const linked = getCategoryByTagId(tagId);
+  return linked?.visualType || linked?.visuals?.[0]?.visualType || fallbackType || "default";
+}
+
+function getImageForTag(tagId) {
+  const linked = getCategoryByTagId(tagId);
+  return linked?.image || linked?.visuals?.[0]?.image || "";
+}
+
+function getShortLabelForTag(tagId, fallback = "") {
+  const linked = getCategoryByTagId(tagId);
+  return linked?.shortLabel || linked?.title || linked?.name || fallback || tagId || "★";
+}
+
+function getVisualImageCandidates(item = {}, category = {}, visualIndex = null) {
+  const categoryTags = Array.isArray(category.tags) ? category.tags : [];
+  const indexedTag = Number.isInteger(visualIndex) ? categoryTags[visualIndex] : "";
+  const original = item.image || getImageForTag(indexedTag) || (!indexedTag ? category.image : "") || "";
+  const number = getCategoryNumberFromVisual(item, category, visualIndex);
+  const visualType = item.visualType || getVisualTypeForTag(indexedTag, category.visualType) || "";
   const folder = getVisualFolder(visualType);
 
   const candidates = [];
@@ -1493,18 +1523,33 @@ window.bingoKunImageFallback = function bingoKunImageFallback(img) {
 
 
 function renderCategoryVisual(category) {
-  const visuals = Array.isArray(category.visuals) && category.visuals.length
-    ? category.visuals.slice(0, 2)
-    : [{
-        visualType: category.visualType || "default",
-        image: category.image || "",
-        shortLabel: category.shortLabel || (category.logo && TEAMS[category.logo] ? TEAMS[category.logo].short : iconForCategory(category.id))
-      }];
+  const categoryTags = Array.isArray(category.tags) ? category.tags : [];
+  const isComboCategory = categoryTags.length > 1;
+
+  // For combo cells, rebuild the two visuals from category.tags.
+  // This avoids a bug where both images can inherit the first category logo.
+  const visuals = isComboCategory
+    ? categoryTags.slice(0, 2).map((tagId, index) => ({
+        id: tagId,
+        logo: tagId,
+        visualType: getVisualTypeForTag(tagId, category.visualType || "default"),
+        image: getImageForTag(tagId),
+        shortLabel: getShortLabelForTag(tagId, category.shortLabel || iconForCategory(tagId)),
+        _comboIndex: index
+      }))
+    : (Array.isArray(category.visuals) && category.visuals.length
+      ? category.visuals.slice(0, 2)
+      : [{
+          visualType: category.visualType || "default",
+          image: category.image || "",
+          shortLabel: category.shortLabel || (category.logo && TEAMS[category.logo] ? TEAMS[category.logo].short : iconForCategory(category.id))
+        }]);
 
   const visualClass = visuals.length > 1 ? "combo" : (visuals[0]?.visualType || "default");
 
-  const imagesHtml = visuals.map((item) => {
-    const candidates = getVisualImageCandidates(item, category);
+  const imagesHtml = visuals.map((item, index) => {
+    const visualIndex = Number.isInteger(item?._comboIndex) ? item._comboIndex : index;
+    const candidates = getVisualImageCandidates(item, category, isComboCategory ? visualIndex : null);
 
     if (!candidates.length) {
       return `<div class="cell-icon-fallback">${escapeHtml(item?.shortLabel || "★")}</div>`;
