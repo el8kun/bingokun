@@ -126,14 +126,53 @@ function nowIso() {
   return new Date().toISOString();
 }
 
+function parseRoomPreset(rawPreset = "") {
+  const value = String(rawPreset || "");
+  if (value.startsWith(`${GAME_MODE_SUDDEN_DEATH}:`)) {
+    return {
+      gameMode: GAME_MODE_SUDDEN_DEATH,
+      preset: value.replace(`${GAME_MODE_SUDDEN_DEATH}:`, "") || "global-normal"
+    };
+  }
+
+  return {
+    gameMode: GAME_MODE_BINGO,
+    preset: value || "global-normal"
+  };
+}
+
+function encodeRoomPreset(preset, gameMode = GAME_MODE_BINGO) {
+  return gameMode === GAME_MODE_SUDDEN_DEATH ? `${GAME_MODE_SUDDEN_DEATH}:${preset}` : preset;
+}
+
+function getGameModeLabel(gameMode = GAME_MODE_BINGO) {
+  return gameMode === GAME_MODE_SUDDEN_DEATH ? "Mort Subite" : "Bingo classique";
+}
+
+function getDeckSizeForMode(gameMode = selectedGameMode) {
+  return gameMode === GAME_MODE_SUDDEN_DEATH ? SUDDEN_DEATH_DECK_PLAYERS : MAX_DECK_PLAYERS;
+}
+
+function getRequiredPlayableForMode(gameMode = selectedGameMode) {
+  return gameMode === GAME_MODE_SUDDEN_DEATH ? SUDDEN_DEATH_MIN_PLAYABLE_PLAYERS : MIN_PLAYABLE_PLAYERS;
+}
+
+function isSuddenDeathMode(gameMode = roomData?.gameMode || selectedGameMode) {
+  return gameMode === GAME_MODE_SUDDEN_DEATH;
+}
+
 function roomRowToApp(row) {
   if (!row) return null;
+
+  const parsedPreset = parseRoomPreset(row.preset || "");
 
   return {
     code: row.code,
     status: row.status || "waiting",
     hostUid: row.host_uid || "",
-    preset: row.preset || "",
+    preset: parsedPreset.preset,
+    rawPreset: row.preset || "",
+    gameMode: parsedPreset.gameMode,
     presetLabel: row.preset_label || "",
     grid: Array.isArray(row.grid) ? row.grid : [],
     deck: Array.isArray(row.deck) ? row.deck : [],
@@ -281,8 +320,13 @@ const BOARD_ROWS = 4;
 const BOARD_COLS = 5;
 const BOARD_SIZE = BOARD_ROWS * BOARD_COLS;
 const AUTO_SECONDS = 15;
+const GAME_MODE_BINGO = "bingo";
+const GAME_MODE_SUDDEN_DEATH = "sudden-death";
 const MAX_DECK_PLAYERS = 75;
+const SUDDEN_DEATH_DECK_PLAYERS = 100;
 const MIN_PLAYABLE_PLAYERS = 65;
+const SUDDEN_DEATH_MIN_PLAYABLE_PLAYERS = 80;
+const SUDDEN_DEATH_MAX_CONSECUTIVE_SKIPS = 3;
 const MIN_PLAYERS_PER_STANDARD_CELL = 3;
 const MIN_PLAYERS_PER_COMBO_CELL = 2;
 const EXACT_COMBO_CELLS = 5;
@@ -320,6 +364,8 @@ const adminLoginSubmitBtn = $("adminLoginSubmitBtn");
 const adminHeaderLink = $("adminHeaderLink");
 const creatorLockedNotice = $("creatorLockedNotice");
 const createRoomBtn = $("createRoomBtn");
+const gameModeSelect = $("gameMode");
+const gameModeHelp = $("gameModeHelp");
 const presetModeSelect = $("presetMode");
 const presetHelp = $("presetHelp");
 const gridModeSelect = $("gridMode");
@@ -385,6 +431,7 @@ const finishNewRoomBtn = $("finishNewRoomBtn");
 let uid = getOrCreateLocalUid();
 let currentSupabaseUser = null;
 let isAdminUser = false;
+let selectedGameMode = GAME_MODE_BINGO;
 let selectedPreset = "global-normal";
 let currentRoomCode = null;
 let roomData = null;
@@ -522,6 +569,16 @@ function getCategoriesForPreset(preset = selectedPreset) {
   });
 }
 
+function updateGameModeHelp() {
+  if (!gameModeHelp) return;
+
+  if (selectedGameMode === GAME_MODE_SUDDEN_DEATH) {
+    gameModeHelp.textContent = `Mort Subite : 100 joueurs, une erreur élimine, 3 skips consécutifs maximum.`;
+  } else {
+    gameModeHelp.textContent = "Bingo classique : 75 joueurs, erreurs révélées à la fin.";
+  }
+}
+
 function updatePresetHelp() {
   if (!presetHelp) return;
 
@@ -534,6 +591,7 @@ function updatePresetHelp() {
   };
 
   presetHelp.textContent = labels[selectedPreset] || labels["global-normal"];
+  updateGameModeHelp();
 }
 
 
@@ -549,6 +607,9 @@ supabase?.auth?.onAuthStateChange(async (_event, session) => {
 });
 
 loadDatabaseOverrides().then(() => {
+  selectedGameMode = gameModeSelect?.value || selectedGameMode || GAME_MODE_BINGO;
+  selectedPreset = presetModeSelect?.value || selectedPreset || "global-normal";
+  updateGameModeHelp();
   updatePresetHelp();
   renderCustomBuilder();
 });
@@ -605,12 +666,16 @@ adminLoginForm?.addEventListener("submit", async (event) => {
     }
   }
 });
+gameModeSelect?.addEventListener("change", () => {
+  selectedGameMode = gameModeSelect.value || GAME_MODE_BINGO;
+  updateGameModeHelp();
+});
+
 presetModeSelect?.addEventListener("change", () => {
   selectedPreset = presetModeSelect.value || "global-normal";
   categoryMatchCache = new Map();
   updatePresetHelp();
-  updatePresetHelp();
-renderCustomBuilder();
+  renderCustomBuilder();
 });
 $("joinRoomBtn").addEventListener("click", () => joinRoom(joinCodeInput.value.trim().toUpperCase()));
 $("copyRoomBtn").addEventListener("click", copyRoomInfo);
@@ -896,6 +961,7 @@ async function createRoom() {
 
   await loadDatabaseOverrides(true);
 
+  selectedGameMode = gameModeSelect?.value || selectedGameMode || GAME_MODE_BINGO;
   selectedPreset = presetModeSelect?.value || selectedPreset || "global-normal";
 
   let code = generateRoomCode();
@@ -906,12 +972,16 @@ async function createRoom() {
     return;
   }
 
-  const setup = generateGameSetup(requestedGrid, selectedPreset);
+  const setup = generateGameSetup(requestedGrid, selectedPreset, selectedGameMode);
 
-  if (!setup.perfectSolvable || setup.deck.length !== MAX_DECK_PLAYERS || setup.playableCount < MIN_PLAYABLE_PLAYERS || setup.comboCount !== EXACT_COMBO_CELLS) {
+  const expectedDeckSize = getDeckSizeForMode(selectedGameMode);
+  const expectedPlayable = getRequiredPlayableForMode(selectedGameMode);
+
+  if (!setup.perfectSolvable || setup.deck.length !== expectedDeckSize || setup.playableCount < expectedPlayable || setup.comboCount !== EXACT_COMBO_CELLS) {
     alert(
       "Impossible de générer une grille équilibrée avec ces paramètres.\n\n" +
-      `Objectif : ${MAX_DECK_PLAYERS} joueurs, minimum ${MIN_PLAYABLE_PLAYERS} utiles, minimum 3 solutions par case simple, 2 par combo, exactement ${EXACT_COMBO_CELLS} combos.\n\n` +
+      `Mode : ${getGameModeLabel(selectedGameMode)}\n` +
+      `Objectif : ${expectedDeckSize} joueurs, minimum ${expectedPlayable} utiles, minimum 3 solutions par case simple, 2 par combo, exactement ${EXACT_COMBO_CELLS} combos.\n\n` +
       "Essaie un autre type de partie, ou enlève quelques catégories custom trop rares."
     );
     return;
@@ -925,8 +995,8 @@ async function createRoom() {
     code,
     status: "waiting",
     host_uid: uid,
-    preset: selectedPreset,
-    preset_label: presetModeSelect?.selectedOptions?.[0]?.textContent || selectedPreset,
+    preset: encodeRoomPreset(selectedPreset, selectedGameMode),
+    preset_label: `${getGameModeLabel(selectedGameMode)} — ${presetModeSelect?.selectedOptions?.[0]?.textContent || selectedPreset}`,
     grid,
     deck,
     playable_count: setup.playableCount,
@@ -1215,8 +1285,8 @@ function renderWaitingRoom() {
   const isHost = roomData.hostUid === uid;
   startGameBtn.classList.toggle("hidden", !isHost);
   waitingHostHint.textContent = isHost
-    ? "Tu es le créateur de la room. Lance la partie quand tout le monde est là."
-    : "En attente du créateur de la room. La partie commencera quand il lancera le décompte.";
+    ? `Tu es le créateur de la room. Mode : ${getGameModeLabel(roomData.gameMode)}. Lance la partie quand tout le monde est là.`
+    : `En attente du créateur de la room. Mode : ${getGameModeLabel(roomData.gameMode)}.`;
 
   waitingPlayerCount.textContent = `${participantsData.length} joueur${participantsData.length > 1 ? "s" : ""}`;
   waitingGridInfo.textContent = `${roomData.grid?.length || 0} cases`;
@@ -1275,8 +1345,9 @@ function renderLeaderboard(players = participantsData) {
   leaderboardEl.innerHTML = economyNotice + sorted.map((player, index) => {
     const rank = index + 1;
     const isFinished = Boolean(player.finished);
-    const score = isFinished ? (player.finalScore || 0) : Number(player.filledCount || Object.keys(player.board || {}).length || 0);
-    const scoreMax = isFinished ? (player.scoreMax || getMaxBoardScore(roomData?.grid || []) || 30) : BOARD_SIZE;
+    const liveScore = calculateBoardScore(player.board || {}, roomData?.grid || []);
+    const score = isFinished ? (player.finalScore || 0) : (isSuddenDeathMode() ? liveScore : Number(player.filledCount ?? getBoardFilledCount(player.board || {}) || 0));
+    const scoreMax = isFinished || isSuddenDeathMode() ? (player.scoreMax || getMaxBoardScore(roomData?.grid || []) || 30) : BOARD_SIZE;
     const progress = Math.max(0, Math.min(100, Math.round((score / scoreMax) * 100)));
     const bingos = (player.bingos || []).length;
     const medal = rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : `#${rank}`;
@@ -1338,7 +1409,8 @@ function renderGame() {
   const currentPlayer = getCurrentPlayer();
   const finished = Boolean(myData.finished);
   const board = myData.board || {};
-  const filledCount = myData.filledCount || 0;
+  const filledCount = myData.filledCount ?? getBoardFilledCount(board);
+  const skipStreak = isSuddenDeathMode() ? getSkipStreak(board) : 0;
   const currentScore = calculateBoardScore(board, roomData.grid);
   const scoreMax = getMaxBoardScore(roomData.grid);
   const validCount = countValidCells(board);
@@ -1348,6 +1420,11 @@ function renderGame() {
 
   nextPlayerBtn.classList.toggle("hidden", finished);
   nextPlayerBtn.disabled = !currentPlayer || finished;
+  if (isSuddenDeathMode()) {
+    nextPlayerBtn.textContent = skipStreak >= SUDDEN_DEATH_MAX_CONSECUTIVE_SKIPS ? "Skip = élimination" : `Skip ${skipStreak}/${SUDDEN_DEATH_MAX_CONSECUTIVE_SKIPS}`;
+  } else {
+    nextPlayerBtn.textContent = "Passer";
+  }
 
   const deckLength = roomData.deck?.length || 0;
   const currentIndex = getMyCurrentIndex();
@@ -1364,9 +1441,11 @@ function renderGame() {
   currentPlayerInitialsEl.textContent = currentPlayer ? getPlayerInitials(currentPlayer.name) : finished ? "✓" : "—";
   playerCounterBadgeEl.textContent = currentPlayer ? `Joueur ${currentIndex + 1} / ${deckLength}` : finished ? `Partie terminée` : `Deck terminé`;
   currentPlayerSublineEl.textContent = finished
-    ? "Ton score final est verrouillé. Consulte le classement et tes bingos."
+    ? `Score verrouillé. ${getFinishMessage(myData.finishReason)}`
     : currentPlayer
-      ? "Choisis une case vide : ton rythme n'impacte pas les autres joueurs."
+      ? (isSuddenDeathMode()
+        ? `Mort Subite : une erreur t'élimine. Skips consécutifs : ${skipStreak}/${SUDDEN_DEATH_MAX_CONSECUTIVE_SKIPS}.`
+        : "Choisis une case vide : ton rythme n'impacte pas les autres joueurs.")
       : "Tu as terminé ta liste de joueurs.";
 
   myFilledEl.textContent = `${filledCount} / ${BOARD_SIZE}`;
@@ -1418,12 +1497,56 @@ function renderGame() {
   updateCountdown();
 }
 
+
+function getBoardCellEntries(board = {}) {
+  return Object.entries(board || {}).filter(([key, move]) => /^\d+$/.test(String(key)) && move && typeof move === "object");
+}
+
+function getBoardCellValues(board = {}) {
+  return getBoardCellEntries(board).map(([, move]) => move);
+}
+
+function getBoardFilledCount(board = {}) {
+  return getBoardCellEntries(board).length;
+}
+
+function getBoardMeta(board = {}) {
+  return board?.__meta && typeof board.__meta === "object" ? board.__meta : {};
+}
+
+function getSkipStreak(board = myData?.board || {}) {
+  return Number(getBoardMeta(board).skipStreak || 0);
+}
+
+function setBoardMeta(board = {}, meta = {}) {
+  return {
+    ...board,
+    __meta: {
+      ...getBoardMeta(board),
+      ...meta
+    }
+  };
+}
+
+function getFinishMessage(reason = "") {
+  const messages = {
+    deck_finished: "Deck terminé ! Ton score final est calculé.",
+    grid_completed: "Grille complète ! Score verrouillé.",
+    wrong_answer: "Mort Subite : mauvaise réponse, partie terminée.",
+    skip_limit: "Mort Subite : 3 skips déjà utilisés, partie terminée.",
+    sudden_death_clear: "Mort Subite réussie ! Tu as survécu au deck."
+  };
+
+  return messages[reason] || "Partie terminée.";
+}
+
+
 function getBoardRenderKey(currentPlayer) {
   const board = myData?.board || {};
-  const boardKey = Object.entries(board)
+  const boardKey = getBoardCellEntries(board)
     .sort(([a], [b]) => Number(a) - Number(b))
     .map(([cellIndex, move]) => `${cellIndex}:${move?.playerId || ""}:${move?.isValid ? 1 : 0}`)
-    .join("|");
+    .join("|") + `::skip:${getSkipStreak(board)}`;
 
   return [
     currentRoomCode || "",
@@ -1662,7 +1785,7 @@ async function placeCurrentPlayer(cellIndex) {
       return;
     }
 
-    const playerAlreadyUsed = Object.values(board).some((move) => move.playerId === currentPlayer.id);
+    const playerAlreadyUsed = getBoardCellValues(board).some((move) => move.playerId === currentPlayer.id);
     if (playerAlreadyUsed) {
       setMessage("Tu as déjà utilisé ce joueur sur ta grille.", "bad");
       return;
@@ -1670,8 +1793,9 @@ async function placeCurrentPlayer(cellIndex) {
 
     const category = roomData.grid[cellIndex];
     const isValid = canPlayerFillCategory(currentPlayer, category);
+    const suddenDeath = isSuddenDeathMode();
 
-    const newBoard = {
+    let newBoard = {
       ...board,
       [cellIndex]: {
         playerId: currentPlayer.id,
@@ -1682,21 +1806,38 @@ async function placeCurrentPlayer(cellIndex) {
       }
     };
 
-    const filledCount = Object.keys(newBoard).length;
+    newBoard = setBoardMeta(newBoard, {
+      skipStreak: isValid ? 0 : getSkipStreak(board)
+    });
+
+    const filledCount = getBoardFilledCount(newBoard);
     const updatePayload = {
       board: newBoard,
       filledCount
     };
 
-    if (filledCount >= BOARD_SIZE) {
+    if (suddenDeath && !isValid) {
       const finalScore = calculateBoardScore(newBoard, roomData.grid);
       updatePayload.finished = true;
       updatePayload.finalScore = finalScore;
       updatePayload.validCells = countValidCells(newBoard);
       updatePayload.scoreMax = getMaxBoardScore(roomData.grid);
       updatePayload.bingos = calculateBingos(newBoard);
+      updatePayload.finishReason = "wrong_answer";
       updatePayload.resultSaved = false;
-      setMessage("Grille complète ! Le verdict est révélé.", "good");
+      updatePayload.finishedAt = nowIso();
+      setMessage("Mort Subite : mauvaise réponse, partie terminée.", "bad");
+    } else if (filledCount >= BOARD_SIZE) {
+      const finalScore = calculateBoardScore(newBoard, roomData.grid);
+      updatePayload.finished = true;
+      updatePayload.finalScore = finalScore;
+      updatePayload.validCells = countValidCells(newBoard);
+      updatePayload.scoreMax = getMaxBoardScore(roomData.grid);
+      updatePayload.bingos = calculateBingos(newBoard);
+      updatePayload.finishReason = suddenDeath ? "grid_completed" : "grid_completed";
+      updatePayload.resultSaved = false;
+      updatePayload.finishedAt = nowIso();
+      setMessage(suddenDeath ? "Mort Subite : grille complète, score verrouillé !" : "Grille complète ! Le verdict est révélé.", "good");
     } else {
       const deckLength = roomData.deck?.length || 0;
       const nextIndex = Math.min(getMyCurrentIndex() + 1, deckLength);
@@ -1710,18 +1851,17 @@ async function placeCurrentPlayer(cellIndex) {
         updatePayload.validCells = countValidCells(newBoard);
         updatePayload.scoreMax = getMaxBoardScore(roomData.grid);
         updatePayload.bingos = calculateBingos(newBoard);
-        updatePayload.finishReason = "deck_finished";
+        updatePayload.finishReason = suddenDeath ? "sudden_death_clear" : "deck_finished";
         updatePayload.resultSaved = false;
         updatePayload.finishedAt = nowIso();
-        setMessage("Deck terminé ! Ton score final est calculé.", "good");
+        setMessage(suddenDeath ? "Mort Subite réussie ! Tu as survécu au deck." : "Deck terminé ! Ton score final est calculé.", "good");
       } else {
-        setMessage("Joueur placé. Le prochain joueur arrive pour toi uniquement.", "good");
+        setMessage(suddenDeath ? "Bon placement ! Skips remis à zéro." : "Joueur placé. Le prochain joueur arrive pour toi uniquement.", "good");
       }
     }
 
     await supabaseUpdateParticipant(updatePayload);
 
-    // Rendu local immédiat : évite l'impression que le joueur ne passe pas.
     myData = {
       ...myData,
       ...updatePayload,
@@ -1732,7 +1872,6 @@ async function placeCurrentPlayer(cellIndex) {
     renderViews();
   });
 }
-
 
 async function finishParticipant(reason = "deck_finished") {
   if (!roomData || !currentRoomCode || !myData || myData.finished) return;
@@ -1757,7 +1896,7 @@ async function finishParticipant(reason = "deck_finished") {
     mergeMyParticipantData();
     lastBoardRenderKey = "";
     renderViews();
-    setMessage(reason === "deck_finished" ? "Deck terminé ! Ton score final est calculé." : "Partie terminée.", "good");
+    setMessage(getFinishMessage(reason), reason === "wrong_answer" || reason === "skip_limit" ? "bad" : "good");
   } catch (error) {
     console.warn("Impossible de terminer la partie :", error);
   }
@@ -1769,10 +1908,21 @@ async function advanceMyPlayer(manual = false) {
   await runPlayerAction(async () => {
     const currentIndex = Number(myData.currentIndex || 0);
     const deckLength = roomData.deck?.length || 0;
+    const board = myData.board || {};
+    const suddenDeath = isSuddenDeathMode();
 
     if (currentIndex >= deckLength) {
-      await finishParticipant("deck_finished");
+      await finishParticipant(suddenDeath ? "sudden_death_clear" : "deck_finished");
       return;
+    }
+
+    if (manual && suddenDeath) {
+      const skipStreak = getSkipStreak(board);
+
+      if (skipStreak >= SUDDEN_DEATH_MAX_CONSECUTIVE_SKIPS) {
+        await finishParticipant("skip_limit");
+        return;
+      }
     }
 
     const nextIndex = Math.min(currentIndex + 1, deckLength);
@@ -1781,22 +1931,28 @@ async function advanceMyPlayer(manual = false) {
       currentStartedAt: nowIso()
     };
 
+    if (manual && suddenDeath) {
+      updatePayload.board = setBoardMeta(board, {
+        skipStreak: getSkipStreak(board) + 1
+      });
+      updatePayload.filledCount = getBoardFilledCount(updatePayload.board);
+    }
+
     if (nextIndex >= deckLength) {
-      const board = myData.board || {};
-      const finalScore = calculateBoardScore(board, roomData.grid);
+      const finalBoard = updatePayload.board || board;
+      const finalScore = calculateBoardScore(finalBoard, roomData.grid);
       updatePayload.finished = true;
       updatePayload.finalScore = finalScore;
-      updatePayload.validCells = countValidCells(board);
+      updatePayload.validCells = countValidCells(finalBoard);
       updatePayload.scoreMax = getMaxBoardScore(roomData.grid);
-      updatePayload.bingos = calculateBingos(board);
-      updatePayload.finishReason = "deck_finished";
+      updatePayload.bingos = calculateBingos(finalBoard);
+      updatePayload.finishReason = suddenDeath ? "sudden_death_clear" : "deck_finished";
       updatePayload.resultSaved = false;
       updatePayload.finishedAt = nowIso();
     }
 
     await supabaseUpdateParticipant(updatePayload);
 
-    // Rendu local immédiat : évite l'impression que rien ne se passe.
     myData = {
       ...myData,
       ...updatePayload,
@@ -1807,17 +1963,24 @@ async function advanceMyPlayer(manual = false) {
     renderViews();
 
     if (manual) {
-      setMessage("Joueur passé pour toi uniquement.", "good");
+      if (suddenDeath) {
+        const newStreak = getSkipStreak(myData.board || {});
+        setMessage(newStreak >= SUDDEN_DEATH_MAX_CONSECUTIVE_SKIPS
+          ? "3 skips utilisés : le prochain joueur doit être placé, sinon élimination."
+          : `Joueur passé. Skips consécutifs : ${newStreak}/${SUDDEN_DEATH_MAX_CONSECUTIVE_SKIPS}.`, "good");
+      } else {
+        setMessage("Joueur passé pour toi uniquement.", "good");
+      }
     }
   });
 }
 
 function countValidMoves(board) {
-  return Object.values(board || {}).filter((move) => move?.isValid).length;
+  return getBoardCellValues(board || {}).filter((move) => move?.isValid).length;
 }
 
 function countInvalidMoves(board) {
-  return Object.values(board || {}).filter((move) => move && move.isValid === false).length;
+  return getBoardCellValues(board || {}).filter((move) => move && move.isValid === false).length;
 }
 
 
@@ -1850,7 +2013,7 @@ async function ensureResultSaved(board, finalScore, bingos) {
       accuracy,
       points,
       month_key: monthKey,
-      mode_label: roomData.presetLabel || roomData.preset || selectedPreset || "mode libre",
+      mode_label: roomData.presetLabel || `${getGameModeLabel(roomData.gameMode)} — ${roomData.preset || selectedPreset || "mode libre"}`,
       created_at: nowIso()
     });
 
@@ -1891,16 +2054,16 @@ function normalizePlayerKey(name) {
 function updateFinishOverlay(finalScore, bingoCount, wrongCount, accuracy, rank, totalPlayers, scoreMax = 30, validCells = 0) {
   if (!finishTitleEl) return;
 
-  let title = 'Bien joué !';
-  let subtitle = 'Ta grille est complète.';
+  let title = isSuddenDeathMode() ? 'Mort Subite terminée' : 'Bien joué !';
+  let subtitle = isSuddenDeathMode() ? getFinishMessage(myData?.finishReason) : 'Ta grille est complète.';
 
-  if (finalScore >= 25) {
+  if (!isSuddenDeathMode() && finalScore >= 25) {
     title = 'Masterclass !';
     subtitle = 'Énorme performance sur cette grille.';
-  } else if (finalScore >= 20) {
+  } else if (!isSuddenDeathMode() && finalScore >= 20) {
     title = 'Très solide !';
     subtitle = 'Belle partie, ta grille tient bien la route.';
-  } else if (finalScore <= 12) {
+  } else if (!isSuddenDeathMode() && finalScore <= 12) {
     title = 'À retenter !';
     subtitle = 'Tu peux faire mieux sur la prochaine room.';
   }
@@ -1939,7 +2102,7 @@ function renderFinishRanking() {
     const bingos = (player.bingos || []).length;
     const medal = rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : `#${rank}`;
     const me = player.id === uid ? `<span class="leaderboard-me">TOI</span>` : "";
-    const status = player.finished ? "TERMINÉ" : "EN JEU";
+    const status = player.finished ? getFinishMessage(player.finishReason || "deck_finished").toUpperCase() : "EN JEU";
 
     return `
       <div class="finish-ranking-row ${player.id === uid ? "me" : ""}">
@@ -1999,7 +2162,7 @@ function renderFinishRecap() {
   const board = myData?.board || {};
   const movesByPlayerId = new Map();
 
-  Object.entries(board).forEach(([cellIndex, move]) => {
+  getBoardCellEntries(board).forEach(([cellIndex, move]) => {
     if (!move?.playerId) return;
     movesByPlayerId.set(move.playerId, {
       ...move,
@@ -2238,7 +2401,7 @@ function renderPlayedPlayers(currentIndex) {
 
   const board = myData?.board || {};
   const usedByPlayerId = new Map(
-    Object.values(board).map((move) => [move.playerId, move])
+    getBoardCellValues(board).map((move) => [move.playerId, move])
   );
 
   const history = roomData.deck
@@ -2357,13 +2520,13 @@ function getMovePoints(cellIndex, move, grid = roomData?.grid || []) {
 }
 
 function calculateBoardScore(board = {}, grid = roomData?.grid || []) {
-  return Object.entries(board || {}).reduce((total, [cellIndex, move]) => {
+  return getBoardCellEntries(board || {}).reduce((total, [cellIndex, move]) => {
     return total + getMovePoints(cellIndex, move, grid);
   }, 0);
 }
 
 function countValidCells(board = {}) {
-  return Object.values(board || {}).filter((move) => move?.isValid).length;
+  return getBoardCellValues(board || {}).filter((move) => move?.isValid).length;
 }
 
 function countDeckMatchesForCategory(deck, category) {
@@ -2461,10 +2624,10 @@ function isPerfectSolvable(grid, deck) {
 
 
 
-function generateGameSetup(requestedGrid = [], preset = selectedPreset) {
+function generateGameSetup(requestedGrid = [], preset = selectedPreset, gameMode = selectedGameMode) {
   const playerPoolAll = getPlayersForPreset(preset);
-  const maxDeckSize = MAX_DECK_PLAYERS;
-  const requiredPlayable = MIN_PLAYABLE_PLAYERS;
+  const maxDeckSize = getDeckSizeForMode(gameMode);
+  const requiredPlayable = getRequiredPlayableForMode(gameMode);
 
   const categoryPool = getCategoriesForPreset(preset).filter((category) => getCategoryMatchCount(category, playerPoolAll) >= getMinPlayersForCategory(category));
   const fixedGrid = normalizeRequestedGrid(requestedGrid).filter((category) => {
@@ -2528,14 +2691,14 @@ function generateGameSetup(requestedGrid = [], preset = selectedPreset) {
     const perfectAssignment = getPerfectAssignment(grid, deck);
     const deckCoversEveryCell = coverageStats.allCellsHaveEnoughPlayers;
     const perfectSolvable = perfectAssignment.solvable;
-    const deckHas75Players = deck.length === MAX_DECK_PLAYERS;
+    const deckHasExpectedPlayers = deck.length === maxDeckSize;
 
     const score =
       deckPlayableCount * 100 +
       coveredCells +
       (coverageStats.minMatches * 50) +
       (perfectAssignment.assignedCells * 75) +
-      (deckHas75Players ? 2500 : 0) +
+      (deckHasExpectedPlayers ? 2500 : 0) +
       (perfectSolvable ? 5000 : 0) -
       (comboCount * 20);
 
@@ -2553,7 +2716,7 @@ function generateGameSetup(requestedGrid = [], preset = selectedPreset) {
     }
 
     if (
-      deckHas75Players &&
+      deckHasExpectedPlayers &&
       deckPlayableCount >= requiredPlayable &&
       deckCoversEveryCell &&
       perfectSolvable &&
