@@ -3,6 +3,6 @@
 // Copie Project URL et anon public key ici.
 
 export const supabaseConfig = {
-  url: "COLLE_TON_PROJECT_URL_ICI",
-  anonKey: "COLLE_TON_ANON_PUBLIC_KEY_ICI"
+  url: "https://dtbqlghadlkzgakrbtib.supabase.co",
+  anonKey: "sb_publishable_6652tF6aaYtZ1JV9V47uAw_zNlfWdly"
 };
