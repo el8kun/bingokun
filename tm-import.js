@@ -249,24 +249,43 @@ async function loadTransfers() {
 
 async function fetchTransfermarktPlayerTransfers(id) {
   const baseUrl = tmApiBaseInput.value.trim().replace(/\/+$/, "") || "https://transfermarkt-api.fly.dev";
+  const functionUrl = `${supabaseConfig.url.replace(/\/+$/, "")}/functions/v1/tm-transfers`;
 
-  const { data, error } = await withTimeout(
-    supabase.functions.invoke("tm-transfers", {
-      body: {
+  const session = await supabase.auth.getSession();
+  const accessToken = session?.data?.session?.access_token || supabaseConfig.anonKey;
+
+  const response = await withTimeout(
+    fetch(functionUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "apikey": supabaseConfig.anonKey,
+        "Authorization": `Bearer ${accessToken}`
+      },
+      body: JSON.stringify({
         id,
         baseUrl
-      }
+      })
     }),
-    20000,
+    22000,
     "Proxy Transfermarkt trop lent."
   );
 
-  if (error) {
-    throw new Error(error.message || "Erreur Edge Function tm-transfers.");
+  let data = null;
+  const text = await response.text();
+
+  try {
+    data = text ? JSON.parse(text) : null;
+  } catch (_error) {
+    throw new Error(`Edge Function non-JSON (${response.status}) : ${text.slice(0, 180)}`);
+  }
+
+  if (!response.ok) {
+    throw new Error(data?.details ? `${data.error || "Erreur Edge Function"} — ${data.details}` : (data?.error || `Erreur Edge Function ${response.status}`));
   }
 
   if (data?.error) {
-    throw new Error(data.details ? `${data.error} ${data.details}` : data.error);
+    throw new Error(data.details ? `${data.error} — ${data.details}` : data.error);
   }
 
   if (!data?.transfers) {
