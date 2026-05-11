@@ -195,6 +195,8 @@ let savingResult = false;
 let actionInProgress = false;
 let actionLockStartedAt = 0;
 let lastBoardRenderKey = "";
+let lastAutoAdvanceAt = 0;
+let lastPlayerActionAt = 0;
 
 const savedName = localStorage.getItem("bingo-kun-name");
 if (savedName) playerNameInput.value = savedName;
@@ -414,37 +416,49 @@ function setActionLock(locked) {
   actionInProgress = Boolean(locked);
   actionLockStartedAt = actionInProgress ? Date.now() : 0;
 
-  if (nextPlayerBtn) {
-    nextPlayerBtn.disabled = actionInProgress || !getCurrentPlayer() || Boolean(myData?.finished);
-  }
-
-  if (boardEl) {
-    boardEl.classList.toggle("is-action-locked", actionInProgress);
-  }
+  // Important : on ne désactive plus visuellement toute la grille.
+  // Les versions précédentes pouvaient laisser l'interface bloquée.
+  if (boardEl) boardEl.classList.remove("is-action-locked");
 }
 
 function clearStaleActionLock() {
   if (!actionInProgress) return;
-  if (Date.now() - actionLockStartedAt > 4500) {
+  if (Date.now() - actionLockStartedAt > 2500) {
     console.warn("Bingo Kun : verrou d'action débloqué automatiquement.");
-    setActionLock(false);
+    actionInProgress = false;
+    actionLockStartedAt = 0;
   }
 }
 
-async function runPlayerAction(callback) {
+function canStartPlayerAction() {
+  clearStaleActionLock();
+
+  const now = Date.now();
+  if (now - lastPlayerActionAt < 650) return false;
   if (actionInProgress) return false;
 
-  setActionLock(true);
+  lastPlayerActionAt = now;
+  return true;
+}
+
+async function runPlayerAction(callback) {
+  if (!canStartPlayerAction()) return false;
+
+  actionInProgress = true;
+  actionLockStartedAt = Date.now();
 
   try {
     await callback();
     return true;
+  } catch (error) {
+    console.error("Bingo Kun : action joueur impossible.", error);
+    setMessage("Action impossible : " + (error?.message || "réessaie."), "bad");
+    return false;
   } finally {
-    // Petit délai pour absorber les doubles clics / double taps mobile.
-    setTimeout(() => {
-      setActionLock(false);
-      renderBoardIfNeeded(getCurrentPlayer());
-    }, 220);
+    actionInProgress = false;
+    actionLockStartedAt = 0;
+    lastBoardRenderKey = "";
+    renderBoardIfNeeded(getCurrentPlayer());
   }
 }
 
@@ -697,6 +711,8 @@ function subscribeToRoom(code) {
 function renderViews() {
   if (!roomData || !myData) return;
 
+  clearStaleActionLock();
+
   if (roomData.status === "waiting") {
     lastBoardRenderKey = "";
     stopTimers();
@@ -822,6 +838,8 @@ function renderGame() {
 
   clearStaleActionLock();
 
+  if (!actionInProgress && boardEl) boardEl.classList.remove("is-action-locked");
+
   const currentPlayer = getCurrentPlayer();
   const finished = Boolean(myData.finished);
   const board = myData.board || {};
@@ -834,7 +852,7 @@ function renderGame() {
   const myRank = getParticipantRank(uid);
 
   nextPlayerBtn.classList.toggle("hidden", finished);
-  nextPlayerBtn.disabled = actionInProgress || !currentPlayer || finished;
+  nextPlayerBtn.disabled = !currentPlayer || finished;
 
   const deckLength = roomData.deck?.length || 0;
   const currentIndex = getMyCurrentIndex();
@@ -954,7 +972,7 @@ function renderBoard(currentPlayer) {
       </div>
     `;
 
-    cell.disabled = actionInProgress || Boolean(move) || !currentPlayer || Boolean(myData.finished);
+    cell.disabled = Boolean(move) || !currentPlayer || Boolean(myData.finished);
     cell.addEventListener("click", () => placeCurrentPlayer(index));
     boardEl.appendChild(cell);
   });
@@ -998,8 +1016,6 @@ function renderCategoryVisual(category) {
 
 async function placeCurrentPlayer(cellIndex) {
   if (!roomData || !myData || roomData.status !== "playing" || myData.finished) return;
-  if (actionInProgress) return;
-
   await runPlayerAction(async () => {
     const currentPlayer = getCurrentPlayer();
     if (!currentPlayer) return;
@@ -1069,6 +1085,15 @@ async function placeCurrentPlayer(cellIndex) {
     }
 
     await updateDoc(doc(db, "rooms", currentRoomCode, "participants", uid), updatePayload);
+
+    // Rendu local immédiat : évite l'impression que le joueur ne passe pas.
+    myData = {
+      ...myData,
+      ...updatePayload,
+      currentStartedAt: updatePayload.currentStartedAt || myData.currentStartedAt
+    };
+    lastBoardRenderKey = "";
+    renderViews();
   });
 }
 
@@ -1101,61 +1126,46 @@ async function finishParticipant(reason = "deck_finished") {
 
 async function advanceMyPlayer(manual = false) {
   if (!roomData || !currentRoomCode || roomData.status !== "playing" || !myData || myData.finished) return;
-  if (actionInProgress) return;
-
   await runPlayerAction(async () => {
-    const participantRef = doc(db, "rooms", currentRoomCode, "participants", uid);
+    const currentIndex = Number(myData.currentIndex || 0);
+    const deckLength = roomData.deck?.length || 0;
 
-    const advanced = await runTransaction(db, async (transaction) => {
-      const participantSnap = await transaction.get(participantRef);
-      if (!participantSnap.exists()) return false;
+    if (currentIndex >= deckLength) {
+      await finishParticipant("deck_finished");
+      return;
+    }
 
-      const liveParticipant = participantSnap.data();
-      if (liveParticipant.finished) return false;
+    const nextIndex = Math.min(currentIndex + 1, deckLength);
+    const updatePayload = {
+      currentIndex: nextIndex,
+      currentStartedAt: serverTimestamp()
+    };
 
-      const currentIndex = Number(liveParticipant.currentIndex || 0);
-      const deckLength = roomData.deck?.length || 0;
+    if (nextIndex >= deckLength) {
+      const board = myData.board || {};
+      const finalScore = calculateBoardScore(board, roomData.grid);
+      updatePayload.finished = true;
+      updatePayload.finalScore = finalScore;
+      updatePayload.validCells = countValidCells(board);
+      updatePayload.scoreMax = getMaxBoardScore(roomData.grid);
+      updatePayload.bingos = calculateBingos(board);
+      updatePayload.finishReason = "deck_finished";
+      updatePayload.resultSaved = false;
+      updatePayload.finishedAt = serverTimestamp();
+    }
 
-      if (currentIndex >= deckLength) {
-        const board = liveParticipant.board || {};
-        const finalScore = calculateBoardScore(board, roomData.grid);
-        transaction.update(participantRef, {
-          finished: true,
-          finalScore,
-          validCells: countValidCells(board),
-          scoreMax: getMaxBoardScore(roomData.grid),
-          bingos: calculateBingos(board),
-          finishReason: "deck_finished",
-          resultSaved: false,
-          finishedAt: serverTimestamp()
-        });
-        return true;
-      }
+    await updateDoc(doc(db, "rooms", currentRoomCode, "participants", uid), updatePayload);
 
-      const nextIndex = Math.min(currentIndex + 1, deckLength);
-      const updatePayload = {
-        currentIndex: nextIndex,
-        currentStartedAt: serverTimestamp()
-      };
+    // Rendu local immédiat : évite l'impression que rien ne se passe en attendant le retour Firebase.
+    myData = {
+      ...myData,
+      ...updatePayload,
+      currentStartedAt: updatePayload.currentStartedAt || myData.currentStartedAt
+    };
+    lastBoardRenderKey = "";
+    renderViews();
 
-      if (nextIndex >= deckLength) {
-        const board = liveParticipant.board || {};
-        const finalScore = calculateBoardScore(board, roomData.grid);
-        updatePayload.finished = true;
-        updatePayload.finalScore = finalScore;
-        updatePayload.validCells = countValidCells(board);
-        updatePayload.scoreMax = getMaxBoardScore(roomData.grid);
-        updatePayload.bingos = calculateBingos(board);
-        updatePayload.finishReason = "deck_finished";
-        updatePayload.resultSaved = false;
-        updatePayload.finishedAt = serverTimestamp();
-      }
-
-      transaction.update(participantRef, updatePayload);
-      return true;
-    });
-
-    if (manual && advanced) {
+    if (manual) {
       setMessage("Joueur passé pour toi uniquement.", "good");
     }
   });
@@ -1397,9 +1407,15 @@ function startTimers() {
 
   playerAutoInterval = setInterval(() => {
     if (!roomData || roomData.status !== "playing" || !myData || myData.finished) return;
+    clearStaleActionLock();
     if (actionInProgress) return;
     if (!getCurrentPlayer()) return;
-    if (getRemainingSeconds() <= 0) advanceMyPlayer(false);
+    if (getRemainingSeconds() <= 0) {
+      const now = Date.now();
+      if (now - lastAutoAdvanceAt < 2000) return;
+      lastAutoAdvanceAt = now;
+      advanceMyPlayer(false);
+    }
   }, 1000);
 }
 

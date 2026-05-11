@@ -4288,3 +4288,39 @@ body.overlay-open {
   backface-visibility: hidden;
   transform: translateZ(0);
 }
+
+
+/* Bingo Kun v55 — déblocage actions */
+.board-grid.is-action-locked {
+  pointer-events: auto !important;
+  opacity: 1 !important;
+}
+
+.board-grid.is-action-locked .cell {
+  cursor: wait;
+}
+
+.board-grid.is-action-locked .cell:not(:disabled) {
+  pointer-events: none;
+}
+
+.skip-btn:disabled {
+  opacity: .65;
+}
+
+
+/* Bingo Kun v56 — actions fiables, pas de blocage de grille */
+.board-grid,
+.board-grid.is-action-locked,
+.board-grid.is-action-locked .cell,
+.cell {
+  pointer-events: auto !important;
+}
+
+.cell:disabled {
+  pointer-events: none !important;
+}
+
+.skip-btn {
+  pointer-events: auto !important;
+}
