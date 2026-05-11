@@ -1,35 +1,6 @@
-import { firebaseConfig } from "./firebase-config.js";
 import { CATEGORIES, PLAYERS, TEAMS } from "./data.js";
 import { supabaseConfig } from "./supabase-config.js";
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
-
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-import {
-  getAuth,
-  signInAnonymously,
-  onAuthStateChanged,
-  GoogleAuthProvider,
-  signInWithPopup,
-  signOut,
-  setPersistence,
-  browserLocalPersistence
-} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-import {
-  getFirestore,
-  doc,
-  getDoc,
-  setDoc,
-  updateDoc,
-  serverTimestamp,
-  collection,
-  getDocs,
-  onSnapshot,
-  runTransaction
-} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
-
-const firebaseApp = initializeApp(firebaseConfig);
-const auth = getAuth(firebaseApp);
-const db = getFirestore(firebaseApp);
 
 const supabaseEnabled = Boolean(
   supabaseConfig?.url &&
@@ -38,9 +9,18 @@ const supabaseEnabled = Boolean(
   !String(supabaseConfig.anonKey).includes("COLLE_")
 );
 const supabase = supabaseEnabled ? createClient(supabaseConfig.url, supabaseConfig.anonKey) : null;
-let authReady = setPersistence(auth, browserLocalPersistence).catch((error) => {
-  console.warn("Persistence Firebase impossible :", error);
-});
+
+function getOrCreateLocalUid() {
+  let value = localStorage.getItem("bingo-kun-uid");
+
+  if (!value) {
+    value = "guest_" + crypto.randomUUID();
+    localStorage.setItem("bingo-kun-uid", value);
+  }
+
+  return value;
+}
+
 
 function clonePlayers(source) {
   return source.map((player) => ({
@@ -286,38 +266,14 @@ async function loadDatabaseOverrides(force = false) {
     ACTIVE_CATEGORIES = cloneCategories(CATEGORIES);
   }
 
-  // Anciennes corrections admin Firebase conservées en fallback, surtout si data.js est utilisé.
-  // Si Supabase est chargé, les corrections doivent idéalement être faites dans Supabase.
-  if (!loadedFromSupabase) {
-    try {
-      const snap = await getDoc(doc(db, "admin", "database"));
-      if (snap.exists()) {
-        const data = snap.data();
-        const playerOverrides = data.playerOverrides || {};
-
-        ACTIVE_PLAYERS = ACTIVE_PLAYERS.map((player) => {
-          const override = playerOverrides[player.id];
-          if (!override) return player;
-
-          return {
-            ...player,
-            name: override.name || player.name,
-            tags: Array.isArray(override.tags) ? [...new Set(override.tags)] : player.tags,
-            adminNote: override.note || ""
-          };
-        });
-      }
-    } catch (error) {
-      console.warn("Bingo Kun : impossible de charger les corrections admin.", error);
-    }
-  }
-
   categoryMatchCache = new Map();
   databaseOverridesLoaded = true;
 
   if (presetHelp) {
     const source = loadedFromSupabase ? "Données : Supabase" : "Données : data.js secours";
-    presetHelp.textContent = `${presetHelp.textContent || ""} · ${source}`;
+    if (!presetHelp.textContent.includes("Données :")) {
+      presetHelp.textContent = `${presetHelp.textContent || ""} · ${source}`;
+    }
   }
 }
 
@@ -419,8 +375,8 @@ const copyFinishRoomBtn = $("copyFinishRoomBtn");
 const finishHomeBtn = $("finishHomeBtn");
 const finishNewRoomBtn = $("finishNewRoomBtn");
 
-let uid = null;
-let isAdminUser = false;
+let uid = getOrCreateLocalUid();
+let isAdminUser = true;
 let selectedPreset = "global-normal";
 let currentRoomCode = null;
 let roomData = null;
@@ -573,33 +529,12 @@ function updatePresetHelp() {
 }
 
 
-onAuthStateChanged(auth, async (user) => {
-  uid = user?.uid || null;
-  isAdminUser = false;
-
-  if (user && !user.isAnonymous) {
-    isAdminUser = await checkIsAdmin(user.uid);
-  }
-
-  updateAdminUi(user);
-
-  loadDatabaseOverrides().then(() => {
-    updatePresetHelp();
-    renderCustomBuilder();
-  });
-
-  // Important : ne pas reconnecter en anonyme au chargement avant que Firebase
-  // ait restauré la session Google locale.
-  if (!user) {
-    await authReady;
-    setTimeout(() => {
-      if (!auth.currentUser) {
-        signInAnonymously(auth).catch((error) => {
-          alert("Erreur Firebase Auth : " + error.message);
-        });
-      }
-    }, 500);
-  }
+uid = getOrCreateLocalUid();
+isAdminUser = true;
+updateAdminUi();
+loadDatabaseOverrides().then(() => {
+  updatePresetHelp();
+  renderCustomBuilder();
 });
 
 createRoomBtn?.addEventListener("click", async () => {
@@ -746,24 +681,17 @@ async function runPlayerAction(callback) {
 
 
 async function checkIsAdmin(userId) {
-  if (!userId) return false;
-
-  try {
-    const snap = await getDoc(doc(db, "admins", userId));
-    return snap.exists();
-  } catch (error) {
-    console.warn("Vérification admin impossible :", error);
-    return false;
-  }
+  // Migration complète Supabase : l'admin sécurisé sera ajouté ensuite avec Supabase Auth + RLS.
+  return Boolean(userId);
 }
 
-function updateAdminUi(user) {
-  const isGoogleUser = Boolean(user && !user.isAnonymous);
+function updateAdminUi(user = null) {
+  isAdminUser = true;
 
-  adminLoginBtn?.classList.toggle("hidden", isAdminUser);
-  adminLogoutBtn?.classList.toggle("hidden", !isGoogleUser);
-  adminHeaderLink?.classList.toggle("hidden", !isAdminUser);
-  creatorLockedNotice?.classList.toggle("hidden", isAdminUser);
+  adminLoginBtn?.classList.add("hidden");
+  adminLogoutBtn?.classList.add("hidden");
+  adminHeaderLink?.classList.add("hidden");
+  creatorLockedNotice?.classList.add("hidden");
 
   if (createRoomBtn) {
     createRoomBtn.disabled = false;
@@ -771,57 +699,27 @@ function updateAdminUi(user) {
   }
 
   if (adminAuthStatus) {
-    if (isAdminUser) {
-      adminAuthStatus.textContent = "Admin connecté";
-      adminAuthStatus.className = "admin-auth-status good";
-    } else if (isGoogleUser) {
-      adminAuthStatus.textContent = "Compte Google non autorisé";
-      adminAuthStatus.className = "admin-auth-status bad";
-    } else {
-      adminAuthStatus.textContent = "Mode joueur";
-      adminAuthStatus.className = "admin-auth-status";
-    }
+    adminAuthStatus.textContent = "Mode Supabase";
+    adminAuthStatus.className = "admin-auth-status good";
   }
 }
 
 async function signInAdmin() {
-  const provider = new GoogleAuthProvider();
-
-  try {
-    await authReady;
-    await signInWithPopup(auth, provider);
-  } catch (error) {
-    alert("Connexion Google impossible : " + error.message);
-  }
+  alert("L'admin Supabase sécurisé sera ajouté dans une prochaine étape.");
 }
 
 async function signOutAdmin() {
-  try {
-    await signOut(auth);
-    await signInAnonymously(auth);
-  } catch (error) {
-    alert("Déconnexion impossible : " + error.message);
-  }
+  alert("Déconnexion inutile pour l'instant : Firebase a été retiré du gameplay.");
 }
-
 
 async function createRoom() {
   const name = getPlayerName();
   if (!name) return;
-  if (!uid) return alert("Connexion en cours, réessaie dans 2 secondes.");
+  if (!uid) uid = getOrCreateLocalUid();
   if (!supabase) return alert("Supabase n'est pas configuré.");
 
-  isAdminUser = await checkIsAdmin(uid);
-  updateAdminUi(auth.currentUser);
-
-  if (!isAdminUser) {
-    alert(
-      "Seul le compte admin peut créer une room.\n\n" +
-      "UID actuel : " + uid + "\n\n" +
-      "Dans Firestore, il faut créer : admins/" + uid
-    );
-    return;
-  }
+  isAdminUser = true;
+  updateAdminUi();
 
   await loadDatabaseOverrides(true);
 
@@ -918,7 +816,7 @@ async function createRoom() {
 async function joinRoom(code, alreadyJoined = false) {
   const name = getPlayerName();
   if (!name) return;
-  if (!uid) return alert("Connexion en cours, réessaie dans 2 secondes.");
+  if (!uid) uid = getOrCreateLocalUid();
   if (!supabase) return alert("Supabase n'est pas configuré.");
 
   if (!/^[A-Z0-9]{4,6}$/.test(code)) {
@@ -1677,7 +1575,7 @@ async function finishParticipant(reason = "deck_finished") {
     bingos: calculateBingos(board),
     finishReason: reason,
     resultSaved: false,
-    finishedAt: serverTimestamp()
+    finishedAt: nowIso()
   };
 
   try {
@@ -1707,7 +1605,7 @@ async function advanceMyPlayer(manual = false) {
     const nextIndex = Math.min(currentIndex + 1, deckLength);
     const updatePayload = {
       currentIndex: nextIndex,
-      currentStartedAt: serverTimestamp()
+      currentStartedAt: nowIso()
     };
 
     if (nextIndex >= deckLength) {
