@@ -384,7 +384,7 @@
   </div>
 
   <div id="adminLoginOverlay" class="admin-login-overlay hidden">
-    <form id="adminLoginForm" class="admin-login-modal">
+    <form id="adminLoginForm" class="admin-login-modal" onsubmit="window.bingoKunSubmitAdminLogin?.(event)">
       <div class="finish-badge">ADMIN</div>
       <h2>Connexion Supabase</h2>
       <p>Connecte-toi avec le compte admin créé dans Supabase Auth.</p>
@@ -403,7 +403,7 @@
 
       <div class="finish-actions">
         <button id="adminLoginCancelBtn" class="secondary-btn" type="button">Annuler</button>
-        <button id="adminLoginSubmitBtn" class="primary-btn" type="submit">Se connecter</button>
+        <button id="adminLoginSubmitBtn" class="primary-btn" type="submit" onclick="window.bingoKunSubmitAdminLogin?.(event)">Se connecter</button>
       </div>
     </form>
   </div>

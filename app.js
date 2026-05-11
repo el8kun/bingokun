@@ -647,8 +647,18 @@ adminLoginCancelBtn?.addEventListener("click", hideAdminLoginModal);
 adminLoginOverlay?.addEventListener("click", (event) => {
   if (event.target === adminLoginOverlay) hideAdminLoginModal();
 });
-adminLoginForm?.addEventListener("submit", async (event) => {
-  event.preventDefault();
+async function handleAdminLoginSubmit(event) {
+  event?.preventDefault?.();
+  event?.stopPropagation?.();
+
+  if (adminLoginSubmitBtn?.dataset.busy === "1") return;
+  if (!adminEmailInput?.value || !adminPasswordInput?.value) {
+    if (adminLoginMessage) {
+      adminLoginMessage.textContent = "Renseigne l'email et le mot de passe.";
+      adminLoginMessage.className = "admin-login-message bad";
+    }
+    return;
+  }
 
   if (adminLoginMessage) {
     adminLoginMessage.textContent = "Connexion en cours...";
@@ -656,6 +666,7 @@ adminLoginForm?.addEventListener("submit", async (event) => {
   }
 
   if (adminLoginSubmitBtn) {
+    adminLoginSubmitBtn.dataset.busy = "1";
     adminLoginSubmitBtn.disabled = true;
     adminLoginSubmitBtn.textContent = "Connexion...";
   }
@@ -663,6 +674,10 @@ adminLoginForm?.addEventListener("submit", async (event) => {
   try {
     await performAdminLogin(adminEmailInput?.value, adminPasswordInput?.value);
     if (adminPasswordInput) adminPasswordInput.value = "";
+    if (adminLoginMessage) {
+      adminLoginMessage.textContent = "Admin connecté.";
+      adminLoginMessage.className = "admin-login-message good";
+    }
   } catch (error) {
     if (adminLoginMessage) {
       adminLoginMessage.textContent = error?.message || "Connexion impossible.";
@@ -671,11 +686,28 @@ adminLoginForm?.addEventListener("submit", async (event) => {
     console.error("Connexion admin impossible :", error);
   } finally {
     if (adminLoginSubmitBtn) {
+      adminLoginSubmitBtn.dataset.busy = "0";
       adminLoginSubmitBtn.disabled = false;
       adminLoginSubmitBtn.textContent = "Se connecter";
     }
   }
-});
+}
+
+window.bingoKunSubmitAdminLogin = handleAdminLoginSubmit;
+
+adminLoginForm?.addEventListener("submit", handleAdminLoginSubmit);
+adminLoginSubmitBtn?.addEventListener("click", handleAdminLoginSubmit);
+
+document.addEventListener("submit", (event) => {
+  if (event.target?.id !== "adminLoginForm") return;
+  handleAdminLoginSubmit(event);
+}, true);
+
+document.addEventListener("click", (event) => {
+  const submitButton = event.target?.closest?.("#adminLoginSubmitBtn");
+  if (!submitButton) return;
+  handleAdminLoginSubmit(event);
+}, true);
 gameModeSelect?.addEventListener("change", () => {
   selectedGameMode = gameModeSelect.value || GAME_MODE_BINGO;
   updateGameModeHelp();
@@ -931,11 +963,15 @@ async function performAdminLogin(email, password) {
     adminLoginMessage.className = "admin-login-message";
   }
 
+  const refreshed = await supabase.auth.getSession();
+  currentSupabaseUser = refreshed.data?.session?.user || currentSupabaseUser;
+  uid = currentSupabaseUser?.id || uid || getOrCreateLocalUid();
+
   isAdminUser = await checkIsAdmin(currentSupabaseUser.id);
   updateAdminUi(currentSupabaseUser);
 
   if (!isAdminUser) {
-    throw new Error("Connecté, mais ce compte n'est pas autorisé admin. Vérifie la table admins et la policy SQL.");
+    throw new Error(`Connecté, mais ce compte n'est pas autorisé admin. UID à vérifier dans admins : ${currentSupabaseUser.id}`);
   }
 
   hideAdminLoginModal();

@@ -4992,3 +4992,12 @@ body.overlay-open {
   position: relative;
   z-index: 1;
 }
+
+
+/* Bingo Kun v81 — fix validation connexion admin */
+.admin-login-message.good {
+  color: #9fffcf;
+}
+#adminLoginSubmitBtn {
+  pointer-events: auto;
+}
