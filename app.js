@@ -614,23 +614,44 @@ loadDatabaseOverrides().then(() => {
   renderCustomBuilder();
 });
 
-createRoomBtn?.addEventListener("click", async () => {
+async function handleCreateRoomClick(event) {
+  event?.preventDefault?.();
+  event?.stopPropagation?.();
+
+  if (createRoomBtn?.dataset.busy === "1") return;
+
   try {
     if (createRoomBtn) {
+      createRoomBtn.dataset.busy = "1";
       createRoomBtn.disabled = true;
       createRoomBtn.textContent = "Création en cours...";
     }
+
+    // Laisse le navigateur afficher le changement de bouton avant la génération de grille.
+    await nextFrame();
+
     await createRoom();
   } catch (error) {
     console.error("Erreur création room :", error);
     alert("Erreur création room : " + (error?.message || error));
   } finally {
     if (createRoomBtn) {
+      createRoomBtn.dataset.busy = "0";
       createRoomBtn.disabled = false;
       createRoomBtn.textContent = "Créer une room";
     }
   }
-});
+}
+
+window.bingoKunCreateRoomFromButton = handleCreateRoomClick;
+
+createRoomBtn?.addEventListener("click", handleCreateRoomClick);
+
+document.addEventListener("click", (event) => {
+  const button = event.target?.closest?.("#createRoomBtn");
+  if (!button) return;
+  handleCreateRoomClick(event);
+}, true);
 adminLoginBtn?.addEventListener("click", signInAdmin);
 
 // Sécurité v80 : si un élément visuel ou un souci de rendu bloque le listener direct,
@@ -836,6 +857,10 @@ async function runPlayerAction(callback) {
 }
 
 
+function nextFrame() {
+  return new Promise((resolve) => requestAnimationFrame(() => resolve()));
+}
+
 function withTimeout(promise, ms = 8000, label = "Action trop longue") {
   return Promise.race([
     promise,
@@ -1025,7 +1050,11 @@ async function createRoom() {
   const expectedDeckSize = getDeckSizeForMode(selectedGameMode);
   const expectedPlayable = getRequiredPlayableForMode(selectedGameMode);
 
-  if (!setup.perfectSolvable || setup.deck.length !== expectedDeckSize || setup.playableCount < expectedPlayable || setup.comboCount !== EXACT_COMBO_CELLS) {
+  const setupIsPlayable = isSuddenDeathMode(selectedGameMode)
+    ? (setup.deck.length === expectedDeckSize && setup.playableCount >= expectedPlayable && setup.comboCount <= EXACT_COMBO_CELLS)
+    : (setup.perfectSolvable && setup.deck.length === expectedDeckSize && setup.playableCount >= expectedPlayable && setup.comboCount === EXACT_COMBO_CELLS);
+
+  if (!setupIsPlayable) {
     alert(
       "Impossible de générer une grille équilibrée avec ces paramètres.\n\n" +
       `Mode : ${getGameModeLabel(selectedGameMode)}\n` +
@@ -2700,7 +2729,9 @@ function generateGameSetup(requestedGrid = [], preset = selectedPreset, gameMode
   }
 
   let bestSetup = null;
-  const attempts = fixedGrid.length ? 120 : 450;
+  const attempts = isSuddenDeathMode(gameMode)
+    ? (fixedGrid.length ? 70 : 180)
+    : (fixedGrid.length ? 120 : 450);
 
   for (let attempt = 0; attempt < attempts; attempt++) {
     const grid = fixedGrid.length

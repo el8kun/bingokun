@@ -5010,3 +5010,16 @@ body.overlay-open {
 .admin-login-message.bad {
   color: #ff9aa5;
 }
+
+
+/* Bingo Kun v83 — fix création room */
+#createRoomBtn {
+  position: relative;
+  z-index: 50;
+  pointer-events: auto;
+}
+
+#createRoomBtn[disabled] {
+  cursor: wait;
+  opacity: .72;
+}
