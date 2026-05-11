@@ -4272,3 +4272,19 @@ body.overlay-open {
     flex-direction: column;
   }
 }
+
+
+/* Bingo Kun v53 — stabilité multi-joueurs */
+.board-grid.is-action-locked {
+  pointer-events: none;
+  opacity: .98;
+}
+
+.board-grid.is-action-locked .cell {
+  cursor: wait;
+}
+
+.cell {
+  backface-visibility: hidden;
+  transform: translateZ(0);
+}

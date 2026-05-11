@@ -193,6 +193,8 @@ let customSearchTimer = null;
 let categoryMatchCache = new Map();
 let savingResult = false;
 let actionInProgress = false;
+let actionLockStartedAt = 0;
+let lastBoardRenderKey = "";
 
 const savedName = localStorage.getItem("bingo-kun-name");
 if (savedName) playerNameInput.value = savedName;
@@ -410,6 +412,7 @@ renderCustomBuilder();
 
 function setActionLock(locked) {
   actionInProgress = Boolean(locked);
+  actionLockStartedAt = actionInProgress ? Date.now() : 0;
 
   if (nextPlayerBtn) {
     nextPlayerBtn.disabled = actionInProgress || !getCurrentPlayer() || Boolean(myData?.finished);
@@ -417,6 +420,14 @@ function setActionLock(locked) {
 
   if (boardEl) {
     boardEl.classList.toggle("is-action-locked", actionInProgress);
+  }
+}
+
+function clearStaleActionLock() {
+  if (!actionInProgress) return;
+  if (Date.now() - actionLockStartedAt > 4500) {
+    console.warn("Bingo Kun : verrou d'action débloqué automatiquement.");
+    setActionLock(false);
   }
 }
 
@@ -430,7 +441,10 @@ async function runPlayerAction(callback) {
     return true;
   } finally {
     // Petit délai pour absorber les doubles clics / double taps mobile.
-    setTimeout(() => setActionLock(false), 180);
+    setTimeout(() => {
+      setActionLock(false);
+      renderBoardIfNeeded(getCurrentPlayer());
+    }, 220);
   }
 }
 
@@ -665,6 +679,16 @@ function subscribeToRoom(code) {
   unsubscribePlayers = onSnapshot(collection(db, "rooms", code, "participants"), (snapshot) => {
     participantsData = [];
     snapshot.forEach((item) => participantsData.push({ id: item.id, ...item.data() }));
+
+    // Important multi : pendant la partie, les autres joueurs mettent à jour leur participant
+    // en permanence. On ne doit PAS rerender toute la grille chez tout le monde à chaque update,
+    // sinon ça scintille et les clics deviennent difficiles.
+    if (roomData?.status === "playing") {
+      renderLeaderboard(participantsData);
+      if (typeof renderAdminDashboard === "function") renderAdminDashboard();
+      return;
+    }
+
     renderParticipants();
     renderViews();
   });
@@ -674,6 +698,7 @@ function renderViews() {
   if (!roomData || !myData) return;
 
   if (roomData.status === "waiting") {
+    lastBoardRenderKey = "";
     stopTimers();
     waitingView.classList.remove("hidden");
     gameView.classList.add("hidden");
@@ -795,6 +820,8 @@ async function startGame() {
 function renderGame() {
   if (!roomData || !myData || roomData.status !== "playing") return;
 
+  clearStaleActionLock();
+
   const currentPlayer = getCurrentPlayer();
   const finished = Boolean(myData.finished);
   const board = myData.board || {};
@@ -866,8 +893,32 @@ function renderGame() {
     if (historyReopenHint) historyReopenHint.classList.add("hidden");
   }
 
-  renderBoard(currentPlayer);
+  renderBoardIfNeeded(currentPlayer);
   updateCountdown();
+}
+
+function getBoardRenderKey(currentPlayer) {
+  const board = myData?.board || {};
+  const boardKey = Object.entries(board)
+    .sort(([a], [b]) => Number(a) - Number(b))
+    .map(([cellIndex, move]) => `${cellIndex}:${move?.playerId || ""}:${move?.isValid ? 1 : 0}`)
+    .join("|");
+
+  return [
+    currentRoomCode || "",
+    roomData?.status || "",
+    Boolean(myData?.finished) ? "finished" : "playing",
+    getMyCurrentIndex(),
+    currentPlayer?.id || "none",
+    boardKey
+  ].join("::");
+}
+
+function renderBoardIfNeeded(currentPlayer) {
+  const key = getBoardRenderKey(currentPlayer);
+  if (key === lastBoardRenderKey) return;
+  lastBoardRenderKey = key;
+  renderBoard(currentPlayer);
 }
 
 function renderBoard(currentPlayer) {
@@ -903,7 +954,7 @@ function renderBoard(currentPlayer) {
       </div>
     `;
 
-    cell.disabled = Boolean(move) || !currentPlayer || Boolean(myData.finished);
+    cell.disabled = actionInProgress || Boolean(move) || !currentPlayer || Boolean(myData.finished);
     cell.addEventListener("click", () => placeCurrentPlayer(index));
     boardEl.appendChild(cell);
   });
