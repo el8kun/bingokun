@@ -4765,3 +4765,13 @@ body.overlay-open {
     width: 100%;
   }
 }
+
+
+/* Bingo Kun v74 — Import Transfermarkt + */
+.tm-club-info {
+  min-width: 240px;
+}
+
+.diagnostic-row.danger .tm-club-info span {
+  color: #ff9aa5;
+}

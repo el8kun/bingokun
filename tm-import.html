@@ -50,6 +50,7 @@
 
       <div class="admin-actions tm-actions">
         <button id="tmLoadTransfersBtn" class="primary-btn" type="button">Charger transferts</button>
+        <button id="tmSaveAllMappingsBtn" class="secondary-btn" type="button" disabled>Sauver mappings visibles</button>
         <button id="tmImportPlayerBtn" class="secondary-btn" type="button" disabled>Importer / mettre à jour joueur</button>
       </div>
     </section>
@@ -60,7 +61,7 @@
           <div>
             <p class="mini-title">Clubs détectés</p>
             <h2>Mapping Transfermarkt → Bingo</h2>
-            <p>Les clubs non mappés seront ignorés à l’import.</p>
+            <p id="tmMappingSummary">Les clubs non mappés seront ignorés à l’import.</p>
           </div>
         </div>
         <div id="tmClubsList" class="diagnostic-list large"></div>

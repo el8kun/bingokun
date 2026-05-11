@@ -9,6 +9,8 @@ const tmPlayerNameInput = $("tmPlayerNameInput");
 const tmSupabasePlayerIdInput = $("tmSupabasePlayerIdInput");
 const tmLoadTransfersBtn = $("tmLoadTransfersBtn");
 const tmImportPlayerBtn = $("tmImportPlayerBtn");
+const tmSaveAllMappingsBtn = $("tmSaveAllMappingsBtn");
+const tmMappingSummary = $("tmMappingSummary");
 const tmClubsList = $("tmClubsList");
 const tmPreviewBox = $("tmPreviewBox");
 const tmRawJson = $("tmRawJson");
@@ -39,11 +41,13 @@ const IGNORED_CLUB_NAMES = new Set([
   "without club",
   "retired",
   "unknown",
-  "-"
+  "-",
+  "career break"
 ]);
 
 tmLoadTransfersBtn?.addEventListener("click", loadTransfers);
 tmImportPlayerBtn?.addEventListener("click", importPlayer);
+tmSaveAllMappingsBtn?.addEventListener("click", saveAllVisibleMappings);
 tmLoginBtn?.addEventListener("click", showLoginModal);
 tmLogoutBtn?.addEventListener("click", signOut);
 tmLoginCancelBtn?.addEventListener("click", hideLoginModal);
@@ -115,6 +119,7 @@ function updateAuthUi() {
     tmAuthStatus.className = "admin-status";
   }
 
+  renderMappingSummary();
   updateImportButton();
 }
 
@@ -228,6 +233,7 @@ async function loadTransfers() {
 
   try {
     transferData = await fetchTransfermarktPlayerTransfers(id);
+    autoFillPlayerNameFromTransfermarkt(transferData);
     detectedClubs = extractClubsFromTransfers(transferData?.transfers || []);
     tmRawJson.textContent = JSON.stringify(transferData, null, 2);
 
@@ -295,6 +301,39 @@ async function fetchTransfermarktPlayerTransfers(id) {
   return data;
 }
 
+function autoFillPlayerNameFromTransfermarkt(data) {
+  if (tmPlayerNameInput.value.trim()) return;
+
+  const profile = data?.profile || {};
+  const candidates = [
+    data?.name,
+    data?.playerName,
+    data?.fullName,
+    profile?.name,
+    profile?.playerName,
+    profile?.fullName,
+    profile?.data?.name,
+    profile?.data?.playerName,
+    profile?.data?.fullName
+  ].filter(Boolean);
+
+  if (candidates.length) {
+    tmPlayerNameInput.value = String(candidates[0]);
+  }
+}
+
+function isReserveOrYouthClubName(name) {
+  const n = String(name || "");
+  if (/\byouth\b/i.test(n)) return true;
+  if (/\bU\d{2}\b/i.test(n)) return true;
+  if (/\bB$/i.test(n)) return true;
+  if (/\bII$/i.test(n)) return true;
+  if (/\breserve\b/i.test(n)) return true;
+  if (/\bunder \d{2}\b/i.test(n)) return true;
+  return false;
+}
+
+
 function extractClubsFromTransfers(transfers) {
   const map = new Map();
 
@@ -319,10 +358,7 @@ function extractClubsFromTransfers(transfers) {
 function shouldIgnoreClub(name) {
   const normalized = normalize(name);
   if (IGNORED_CLUB_NAMES.has(normalized)) return true;
-  if (/\byouth\b/i.test(name)) return true;
-  if (/\bU\d{2}\b/i.test(name)) return true;
-  if (/\bB$/i.test(name)) return true;
-  if (/\bII$/i.test(name)) return true;
+  if (isReserveOrYouthClubName(name)) return true;
   return false;
 }
 
@@ -335,21 +371,26 @@ function getCategory(categoryId) {
 }
 
 function renderClubs() {
-  tmClubsList.innerHTML = detectedClubs.map((club) => {
+  const rows = detectedClubs.map((club) => {
     const mapping = getMapping(club.tm_id);
-    const mappedCategory = getCategory(mapping?.category_id);
+    const guessedCategory = mapping ? null : guessCategoryForClub(club.tm_name);
+    const selectedCategoryId = mapping?.category_id || guessedCategory?.id || "";
+    const mappedCategory = getCategory(selectedCategoryId);
 
     return `
-      <article class="diagnostic-row ${mapping ? "good" : "warning"}">
+      <article class="diagnostic-row ${mapping ? "good" : guessedCategory ? "warning" : "danger"}">
         <div class="tm-club-info">
           <strong>${escapeHtml(club.tm_name)}</strong>
-          <span>Transfermarkt ID ${escapeHtml(club.tm_id)} · ${mapping ? `mappé vers ${escapeHtml(mappedCategory?.title || mapping.category_id)}` : "non mappé"}</span>
+          <span>
+            Transfermarkt ID ${escapeHtml(club.tm_id)} ·
+            ${mapping ? `mappé vers ${escapeHtml(mappedCategory?.title || mapping.category_id)}` : guessedCategory ? `suggestion : ${escapeHtml(guessedCategory.title || guessedCategory.name)}` : "non mappé"}
+          </span>
         </div>
         <div class="tm-map-controls">
           <select data-tm-select="${escapeHtml(club.tm_id)}">
             <option value="">— Ignorer —</option>
             ${clubCategories.map((category) => `
-              <option value="${escapeHtml(category.id)}" ${mapping?.category_id === category.id ? "selected" : ""}>
+              <option value="${escapeHtml(category.id)}" ${selectedCategoryId === category.id ? "selected" : ""}>
                 ${escapeHtml(category.title || category.name || category.id)} (${escapeHtml(category.id)})
               </option>
             `).join("")}
@@ -358,18 +399,82 @@ function renderClubs() {
         </div>
       </article>
     `;
-  }).join("");
+  });
+
+  tmClubsList.innerHTML = rows.join("");
 
   tmClubsList.querySelectorAll("[data-save-map]").forEach((button) => {
     button.addEventListener("click", () => saveMapping(button.dataset.saveMap));
   });
 
   tmClubsList.querySelectorAll("[data-tm-select]").forEach((select) => {
-    select.addEventListener("change", renderPreview);
+    select.addEventListener("change", () => {
+      renderMappingSummary();
+      renderPreview();
+      updateImportButton();
+    });
   });
+
+  renderMappingSummary();
+  updateImportButton();
 }
 
-async function saveMapping(tmId) {
+
+function guessCategoryForClub(clubName) {
+  const target = normalize(clubName);
+  if (!target) return null;
+
+  const exact = clubCategories.find((category) => {
+    return normalize(category.title) === target || normalize(category.name) === target || normalize(category.short_label) === target;
+  });
+  if (exact) return exact;
+
+  return clubCategories.find((category) => {
+    const title = normalize(category.title || category.name || "");
+    if (!title) return false;
+    return title.includes(target) || target.includes(title);
+  }) || null;
+}
+
+function getSelectedMappingStats() {
+  const mapped = getSelectedTagIds().length;
+  const total = detectedClubs.length;
+  const unmapped = Math.max(0, total - mapped);
+  return { total, mapped, unmapped };
+}
+
+function renderMappingSummary() {
+  if (!tmMappingSummary) return;
+
+  const { total, mapped, unmapped } = getSelectedMappingStats();
+  tmMappingSummary.textContent = `${mapped}/${total} clubs utilisables · ${unmapped} ignoré(s). Sauvegarde les suggestions importantes pour les prochains imports.`;
+
+  if (tmSaveAllMappingsBtn) {
+    tmSaveAllMappingsBtn.disabled = !isAdmin || mapped === 0;
+  }
+}
+
+async function saveAllVisibleMappings() {
+  if (!isAdmin) return alert("Connecte-toi en admin.");
+
+  const buttons = [...tmClubsList.querySelectorAll("[data-save-map]")];
+  let saved = 0;
+
+  for (const button of buttons) {
+    const tmId = button.dataset.saveMap;
+    const select = tmClubsList.querySelector(`[data-tm-select="${CSS.escape(tmId)}"]`);
+    if (!select?.value) continue;
+    await saveMapping(tmId, { silent: true });
+    saved++;
+  }
+
+  setStatus(`${saved} mapping(s) sauvegardé(s).`, "good");
+  renderClubs();
+  renderPreview();
+}
+
+
+async function saveMapping(tmId, options = {}) {
   if (!isAdmin) return alert("Connecte-toi en admin.");
   const club = detectedClubs.find((item) => item.tm_id === tmId);
   const select = tmClubsList.querySelector(`[data-tm-select="${CSS.escape(tmId)}"]`);
@@ -382,7 +487,7 @@ async function saveMapping(tmId) {
       .eq("tm_id", tmId);
 
     if (error) {
-      setStatus("Suppression mapping impossible : " + error.message, "bad");
+      if (!options.silent) setStatus("Suppression mapping impossible : " + error.message, "bad");
       return;
     }
 
@@ -403,7 +508,7 @@ async function saveMapping(tmId) {
     }, { onConflict: "tm_id" });
 
   if (error) {
-    setStatus("Mapping impossible : " + error.message, "bad");
+    if (!options.silent) setStatus("Mapping impossible : " + error.message, "bad");
     return;
   }
 
@@ -415,7 +520,7 @@ async function saveMapping(tmId) {
     mappings.push({ tm_id: tmId, tm_name: club?.tm_name || tmId, category_id: categoryId, enabled: true });
   }
 
-  setStatus("Mapping sauvegardé.");
+  if (!options.silent) setStatus("Mapping sauvegardé.");
   renderClubs();
   renderPreview();
 }
@@ -445,6 +550,7 @@ function renderPreview() {
       <span>ID Supabase : ${escapeHtml(playerId || "—")}</span>
       <span>ID Transfermarkt : ${escapeHtml(tmPlayerIdInput.value.trim() || "—")}</span>
       <span>Tags clubs : ${tags.length}</span>
+      <span>Profil TM : ${transferData?.profile ? "détecté" : "non disponible"}</span>
       <div class="tm-tags">
         ${tags.length ? tags.map((tag) => `<code>${escapeHtml(tag)}</code>`).join("") : "<em>Aucun tag mappé pour l'instant.</em>"}
       </div>
