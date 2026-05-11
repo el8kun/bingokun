@@ -25,7 +25,7 @@
           <button id="copyRoomBtn" type="button">Copier</button>
         </div>
         <div class="admin-auth-line">
-          <button id="adminLoginBtn" class="tiny-btn" type="button" onclick="window.bingoKunOpenAdminLogin?.()">Connexion admin</button>
+          <button id="adminLoginBtn" class="tiny-btn" type="button">Connexion admin</button>
           <button id="adminLogoutBtn" class="tiny-btn hidden" type="button">Déconnexion</button>
           <span id="adminAuthStatus">Mode joueur</span>
         </div>
@@ -55,8 +55,8 @@
         <p class="mini-title">Bingo foot multijoueur · 5x5</p>
         <h1>Crée une room, attends ton chat, puis lance la partie.</h1>
         <p>
-          Choisis entre le Bingo classique ou la Mort Subite. La grille est commune à tous,
-          mais chaque joueur avance à son propre rythme : placer ou passer ne change rien pour les autres.
+          La grille et la liste des 75 joueurs sont communes à tous.
+          Ensuite, chaque joueur avance à son propre rythme : placer ou passer un joueur ne change rien pour les autres.
         </p>
       </div>
 
@@ -68,13 +68,6 @@
 
         <label for="playerName">Ton pseudo</label>
         <input id="playerName" maxlength="20" placeholder="Ex : Kun" autocomplete="nickname" />
-
-        <label for="gameMode">Mode de jeu</label>
-        <select id="gameMode" class="setup-select">
-          <option value="bingo">Bingo classique — 75 joueurs, erreurs révélées à la fin</option>
-          <option value="sudden-death">Mort Subite — 100 joueurs, une erreur élimine</option>
-        </select>
-        <p id="gameModeHelp" class="hint preset-help">Bingo classique : score final à la fin de la grille ou du deck.</p>
 
         <label for="presetMode">Type de partie</label>
         <select id="presetMode" class="setup-select">
@@ -116,7 +109,7 @@
           <p class="hint custom-hint">Tu peux choisir 1 à 20 cases. Si tu n’en mets pas 20, le jeu complète automatiquement la grille.</p>
         </div>
 
-        <button id="createRoomBtn" class="primary-btn" type="button" onclick="window.bingoKunCreateRoomFromButton?.(event)">Créer une room</button>
+        <button id="createRoomBtn" class="primary-btn" type="button">Créer une room</button>
 
         <div class="separator"><span>ou</span></div>
 
@@ -384,7 +377,7 @@
   </div>
 
   <div id="adminLoginOverlay" class="admin-login-overlay hidden">
-    <form id="adminLoginForm" class="admin-login-modal" onsubmit="window.bingoKunSubmitAdminLogin?.(event)">
+    <form id="adminLoginForm" class="admin-login-modal">
       <div class="finish-badge">ADMIN</div>
       <h2>Connexion Supabase</h2>
       <p>Connecte-toi avec le compte admin créé dans Supabase Auth.</p>
@@ -403,27 +396,11 @@
 
       <div class="finish-actions">
         <button id="adminLoginCancelBtn" class="secondary-btn" type="button">Annuler</button>
-        <button id="adminLoginSubmitBtn" class="primary-btn" type="submit" onclick="window.bingoKunSubmitAdminLogin?.(event)">Se connecter</button>
+        <button id="adminLoginSubmitBtn" class="primary-btn" type="submit">Se connecter</button>
       </div>
     </form>
   </div>
 
-  <script id="admin-login-fallback-v80">
-    document.addEventListener("click", function(event) {
-      var btn = event.target && event.target.closest && event.target.closest("#adminLoginBtn");
-      if (!btn) return;
-      var overlay = document.getElementById("adminLoginOverlay");
-      if (!overlay) return;
-      if (window.bingoKunOpenAdminLogin) return;
-      overlay.classList.remove("hidden");
-      document.body.classList.add("overlay-open");
-      setTimeout(function() {
-        var email = document.getElementById("adminEmailInput");
-        if (email) email.focus();
-      }, 50);
-    }, true);
-  </script>
   <script type="module" src="./app.js"></script>
-  <script type="module" src="./admin-login-rescue.js"></script>
 </body>
 </html>
