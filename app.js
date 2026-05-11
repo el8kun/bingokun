@@ -310,6 +310,13 @@ const joinCodeInput = $("joinCode");
 const adminLoginBtn = $("adminLoginBtn");
 const adminLogoutBtn = $("adminLogoutBtn");
 const adminAuthStatus = $("adminAuthStatus");
+const adminLoginOverlay = $("adminLoginOverlay");
+const adminLoginForm = $("adminLoginForm");
+const adminEmailInput = $("adminEmailInput");
+const adminPasswordInput = $("adminPasswordInput");
+const adminLoginCancelBtn = $("adminLoginCancelBtn");
+const adminLoginMessage = $("adminLoginMessage");
+const adminLoginSubmitBtn = $("adminLoginSubmitBtn");
 const adminHeaderLink = $("adminHeaderLink");
 const creatorLockedNotice = $("creatorLockedNotice");
 const createRoomBtn = $("createRoomBtn");
@@ -565,6 +572,38 @@ createRoomBtn?.addEventListener("click", async () => {
 });
 adminLoginBtn?.addEventListener("click", signInAdmin);
 adminLogoutBtn?.addEventListener("click", signOutAdmin);
+adminLoginCancelBtn?.addEventListener("click", hideAdminLoginModal);
+adminLoginOverlay?.addEventListener("click", (event) => {
+  if (event.target === adminLoginOverlay) hideAdminLoginModal();
+});
+adminLoginForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  if (adminLoginMessage) {
+    adminLoginMessage.textContent = "Connexion en cours...";
+    adminLoginMessage.className = "admin-login-message";
+  }
+
+  if (adminLoginSubmitBtn) {
+    adminLoginSubmitBtn.disabled = true;
+    adminLoginSubmitBtn.textContent = "Connexion...";
+  }
+
+  try {
+    await performAdminLogin(adminEmailInput?.value, adminPasswordInput?.value);
+    if (adminPasswordInput) adminPasswordInput.value = "";
+  } catch (error) {
+    if (adminLoginMessage) {
+      adminLoginMessage.textContent = error?.message || "Connexion impossible.";
+      adminLoginMessage.className = "admin-login-message bad";
+    }
+  } finally {
+    if (adminLoginSubmitBtn) {
+      adminLoginSubmitBtn.disabled = false;
+      adminLoginSubmitBtn.textContent = "Se connecter";
+    }
+  }
+});
 presetModeSelect?.addEventListener("change", () => {
   selectedPreset = presetModeSelect.value || "global-normal";
   categoryMatchCache = new Map();
@@ -746,34 +785,45 @@ function updateAdminUi(user = currentSupabaseUser) {
   }
 }
 
+function showAdminLoginModal() {
+  if (!adminLoginOverlay) return alert("Fenêtre de connexion introuvable. Recharge la page avec Ctrl + F5.");
+
+  if (adminLoginMessage) adminLoginMessage.textContent = "";
+  adminLoginOverlay.classList.remove("hidden");
+  document.body.classList.add("overlay-open");
+  setTimeout(() => adminEmailInput?.focus(), 50);
+}
+
+function hideAdminLoginModal() {
+  adminLoginOverlay?.classList.add("hidden");
+  document.body.classList.remove("overlay-open");
+}
+
 async function signInAdmin() {
   if (!supabase) return alert("Supabase n'est pas configuré.");
+  showAdminLoginModal();
+}
 
-  const email = prompt("Email admin Supabase :");
-  if (!email) return;
+async function performAdminLogin(email, password) {
+  if (!supabase) throw new Error("Supabase n'est pas configuré.");
 
-  const password = prompt("Mot de passe admin Supabase :");
-  if (!password) return;
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email: String(email || "").trim(),
+    password: String(password || "")
+  });
 
-  try {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: email.trim(),
-      password
-    });
+  if (error) throw error;
 
-    if (error) throw error;
+  currentSupabaseUser = data?.user || null;
+  uid = currentSupabaseUser?.id || getOrCreateLocalUid();
+  isAdminUser = currentSupabaseUser ? await checkIsAdmin(currentSupabaseUser.id) : false;
+  updateAdminUi(currentSupabaseUser);
 
-    currentSupabaseUser = data?.user || null;
-    uid = currentSupabaseUser?.id || getOrCreateLocalUid();
-    isAdminUser = currentSupabaseUser ? await checkIsAdmin(currentSupabaseUser.id) : false;
-    updateAdminUi(currentSupabaseUser);
-
-    if (!isAdminUser) {
-      alert("Connecté, mais ce compte n'est pas dans la table admins.");
-    }
-  } catch (error) {
-    alert("Connexion Supabase impossible : " + error.message);
+  if (!isAdminUser) {
+    throw new Error("Connecté, mais ce compte n'est pas dans la table admins.");
   }
+
+  hideAdminLoginModal();
 }
 
 async function signOutAdmin() {

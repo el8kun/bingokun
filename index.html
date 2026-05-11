@@ -376,6 +376,31 @@
     </div>
   </div>
 
+  <div id="adminLoginOverlay" class="admin-login-overlay hidden">
+    <form id="adminLoginForm" class="admin-login-modal">
+      <div class="finish-badge">ADMIN</div>
+      <h2>Connexion Supabase</h2>
+      <p>Connecte-toi avec le compte admin créé dans Supabase Auth.</p>
+
+      <label>
+        Email
+        <input id="adminEmailInput" type="email" autocomplete="email" placeholder="ton@email.fr" required />
+      </label>
+
+      <label>
+        Mot de passe
+        <input id="adminPasswordInput" type="password" autocomplete="current-password" placeholder="Mot de passe" required />
+      </label>
+
+      <p id="adminLoginMessage" class="admin-login-message"></p>
+
+      <div class="finish-actions">
+        <button id="adminLoginCancelBtn" class="secondary-btn" type="button">Annuler</button>
+        <button id="adminLoginSubmitBtn" class="primary-btn" type="submit">Se connecter</button>
+      </div>
+    </form>
+  </div>
+
   <script type="module" src="./app.js"></script>
 </body>
 </html>

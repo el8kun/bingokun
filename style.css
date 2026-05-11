@@ -4619,3 +4619,56 @@ body.overlay-open {
 .cell-visual-images.is-combo .cell-image {
   object-fit: contain;
 }
+
+
+/* Bingo Kun v68 — connexion admin avec formulaire */
+.admin-login-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(0, 0, 0, .72);
+  backdrop-filter: blur(10px);
+}
+
+.admin-login-overlay.hidden {
+  display: none !important;
+}
+
+.admin-login-modal {
+  width: min(440px, 100%);
+  padding: 22px;
+  border-radius: 24px;
+  border: 1px solid rgba(255,255,255,.14);
+  background: linear-gradient(180deg, rgba(13,23,38,.98), rgba(5,10,17,.98));
+  box-shadow: 0 30px 80px rgba(0,0,0,.42);
+}
+
+.admin-login-modal h2 {
+  margin: 8px 0 6px;
+}
+
+.admin-login-modal p {
+  color: var(--muted);
+}
+
+.admin-login-modal label {
+  display: grid;
+  gap: 7px;
+  margin-top: 14px;
+  color: var(--muted);
+  font-size: .86rem;
+  font-weight: 800;
+}
+
+.admin-login-message {
+  min-height: 20px;
+  margin-top: 12px;
+  font-size: .84rem;
+}
+
+.admin-login-message.bad {
+  color: #ff6b79;
+}
