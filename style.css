@@ -4324,3 +4324,95 @@ body.overlay-open {
 .skip-btn {
   pointer-events: auto !important;
 }
+
+
+/* Bingo Kun v57 — classement final + actions de fin */
+.finish-ranking {
+  margin-top: 18px;
+}
+
+.finish-ranking-list {
+  display: grid;
+  gap: 8px;
+  max-height: 280px;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.finish-ranking-row {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 12px;
+  border-radius: 15px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.055);
+}
+
+.finish-ranking-row.me {
+  border-color: rgba(39, 242, 195, .45);
+  background: rgba(39, 242, 195, .10);
+}
+
+.finish-ranking-rank {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.08);
+  font-weight: 1000;
+}
+
+.finish-ranking-player {
+  min-width: 0;
+}
+
+.finish-ranking-player strong,
+.finish-ranking-player small {
+  display: block;
+}
+
+.finish-ranking-player strong {
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.finish-ranking-player small {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: .78rem;
+}
+
+.finish-ranking-score {
+  color: var(--cyan);
+  font-size: 1.05rem;
+}
+
+.history-title-btn {
+  cursor: pointer;
+}
+
+@media (max-width: 760px) {
+  .finish-ranking-row {
+    grid-template-columns: 38px minmax(0, 1fr) auto;
+    gap: 8px;
+    padding: 9px;
+  }
+
+  .finish-ranking-rank {
+    width: 30px;
+    height: 30px;
+  }
+
+  .finish-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .finish-actions button {
+    width: 100%;
+  }
+}

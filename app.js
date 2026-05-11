@@ -139,7 +139,9 @@ const playerCounterBadgeEl = $("playerCounterBadge");
 const currentPlayerSublineEl = $("currentPlayerSubline");
 const playedPlayersListEl = $("playedPlayersList");
 const openFinishRecapBtn = $("openFinishRecapBtn");
+const openFinishRankingBtn = $("openFinishRankingBtn");
 const historyReopenHint = $("historyReopenHint");
+const rankingReopenHint = $("rankingReopenHint");
 const globalTimerTextEl = $("globalTimerText");
 const globalTimerBarEl = $("globalTimerBar");
 const circleTimerTextEl = $("circleTimerText");
@@ -171,8 +173,12 @@ const finishRankEl = $("finishRank");
 const finishTotalPlayersEl = $("finishTotalPlayers");
 const finishRecapStatsEl = $("finishRecapStats");
 const finishRecapListEl = $("finishRecapList");
+const finishRankingStatsEl = $("finishRankingStats");
+const finishRankingListEl = $("finishRankingList");
 const closeFinishOverlayBtn = $("closeFinishOverlayBtn");
 const copyFinishRoomBtn = $("copyFinishRoomBtn");
+const finishHomeBtn = $("finishHomeBtn");
+const finishNewRoomBtn = $("finishNewRoomBtn");
 
 let uid = null;
 let isAdminUser = false;
@@ -380,9 +386,21 @@ startGameBtn.addEventListener("click", startGame);
 nextPlayerBtn.addEventListener("click", () => advanceMyPlayer(true));
 closeFinishOverlayBtn?.addEventListener("click", () => hideFinishOverlay());
 copyFinishRoomBtn?.addEventListener("click", copyRoomInfo);
+finishHomeBtn?.addEventListener("click", goHomeFromFinish);
+finishNewRoomBtn?.addEventListener("click", recreateRoomFromFinish);
+
 openFinishRecapBtn?.addEventListener("click", () => {
   if (myData?.finished) {
     renderFinishRecap();
+    renderFinishRanking();
+    showFinishOverlay();
+  }
+});
+
+openFinishRankingBtn?.addEventListener("click", () => {
+  if (myData?.finished) {
+    renderFinishRecap();
+    renderFinishRanking();
     showFinishOverlay();
   }
 });
@@ -641,7 +659,13 @@ async function joinRoom(code, alreadyJoined = false) {
 
   currentRoomCode = code;
   hasShownFinishOverlay = false;
+  if (historyReopenHint) historyReopenHint.classList.add("hidden");
+  if (rankingReopenHint) rankingReopenHint.classList.add("hidden");
   hideFinishOverlay();
+
+  const cleanUrl = new URL(window.location.href);
+  cleanUrl.searchParams.delete("room");
+  window.history.replaceState({}, "", cleanUrl.toString());
   localStorage.setItem("bingo-kun-name", name);
   showRoomShell(code);
   subscribeToRoom(code);
@@ -896,6 +920,7 @@ function renderGame() {
     if (myAccuracyEl) myAccuracyEl.textContent = `${accuracy}%`;
     updateFinishOverlay(finalScore, finalBingos, invalidCount, accuracy, myRank, participantsData.length, finalScoreMax, finalValidCells);
     if (historyReopenHint) historyReopenHint.classList.remove("hidden");
+    if (rankingReopenHint) rankingReopenHint.classList.remove("hidden");
     ensureResultSaved(board, finalScore, myData.bingos || []);
     if (!hasShownFinishOverlay) {
       showFinishOverlay();
@@ -909,6 +934,7 @@ function renderGame() {
     finalResultBox.classList.add("hidden");
     hideFinishOverlay();
     if (historyReopenHint) historyReopenHint.classList.add("hidden");
+    if (rankingReopenHint) rankingReopenHint.classList.add("hidden");
   }
 
   renderBoardIfNeeded(currentPlayer);
@@ -1280,7 +1306,71 @@ function updateFinishOverlay(finalScore, bingoCount, wrongCount, accuracy, rank,
   finishAccuracyEl.textContent = `${accuracy}%`;
   finishRankEl.textContent = rank ? `#${rank}` : '#-';
   finishTotalPlayersEl.textContent = `${totalPlayers} joueur${totalPlayers > 1 ? 's' : ''}`;
+  renderFinishRanking();
   renderFinishRecap();
+}
+
+
+
+function renderFinishRanking() {
+  if (!finishRankingListEl || !finishRankingStatsEl) return;
+
+  const sorted = getSortedParticipants(participantsData);
+  const total = sorted.length;
+  const finishedCount = sorted.filter((player) => player.finished).length;
+
+  finishRankingStatsEl.textContent = `${finishedCount}/${total} joueur${total > 1 ? "s" : ""} terminé${finishedCount > 1 ? "s" : ""}`;
+
+  if (!sorted.length) {
+    finishRankingListEl.innerHTML = `<div class="empty-history">Aucun joueur dans cette room.</div>`;
+    return;
+  }
+
+  finishRankingListEl.innerHTML = sorted.map((player, index) => {
+    const rank = index + 1;
+    const score = player.finished ? (player.finalScore || 0) : calculateBoardScore(player.board || {}, roomData?.grid || []);
+    const scoreMax = player.scoreMax || getMaxBoardScore(roomData?.grid || []) || 30;
+    const bingos = (player.bingos || []).length;
+    const medal = rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : `#${rank}`;
+    const me = player.id === uid ? `<span class="leaderboard-me">TOI</span>` : "";
+    const status = player.finished ? "TERMINÉ" : "EN JEU";
+
+    return `
+      <div class="finish-ranking-row ${player.id === uid ? "me" : ""}">
+        <span class="finish-ranking-rank">${medal}</span>
+        <div class="finish-ranking-player">
+          <strong>${escapeHtml(player.name || "Joueur")}</strong>
+          <small>${me} ${status} · ${bingos} bingo${bingos > 1 ? "s" : ""}</small>
+        </div>
+        <strong class="finish-ranking-score">${score}/${scoreMax}</strong>
+      </div>
+    `;
+  }).join("");
+}
+
+function goHomeFromFinish() {
+  const keepName = playerNameInput?.value || myData?.name || localStorage.getItem("bingo-kun-name") || "";
+  leaveRoom();
+  if (playerNameInput && keepName) playerNameInput.value = keepName;
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+async function recreateRoomFromFinish() {
+  const keepName = playerNameInput?.value || myData?.name || localStorage.getItem("bingo-kun-name") || "";
+  const canCreate = Boolean(isAdminUser);
+
+  leaveRoom();
+  if (playerNameInput && keepName) playerNameInput.value = keepName;
+  window.scrollTo({ top: 0, behavior: "smooth" });
+
+  if (!canCreate) {
+    setTimeout(() => alert("Tu es revenu à l’accueil. Connecte-toi en admin pour recréer une room."), 100);
+    return;
+  }
+
+  setTimeout(() => {
+    createRoomBtn?.click();
+  }, 150);
 }
 
 
@@ -2152,7 +2242,13 @@ function leaveRoom() {
   participantsData = [];
 
   hasShownFinishOverlay = false;
+  if (historyReopenHint) historyReopenHint.classList.add("hidden");
+  if (rankingReopenHint) rankingReopenHint.classList.add("hidden");
   hideFinishOverlay();
+
+  const cleanUrl = new URL(window.location.href);
+  cleanUrl.searchParams.delete("room");
+  window.history.replaceState({}, "", cleanUrl.toString());
 
   waitingView.classList.add("hidden");
   gameView.classList.add("hidden");

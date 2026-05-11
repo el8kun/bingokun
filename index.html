@@ -292,7 +292,10 @@
         </div>
 
         <div class="side-card leaderboard-card">
-          <p class="side-title">Classement live</p>
+          <button id="openFinishRankingBtn" class="side-title history-title-btn" type="button">
+            Classement live
+            <span id="rankingReopenHint" class="history-reopen-hint hidden">Revoir</span>
+          </button>
           <div id="leaderboard" class="leaderboard-list"></div>
         </div>
 
@@ -330,6 +333,16 @@
         Tu termines <strong id="finishRank">#-</strong> sur <strong id="finishTotalPlayers">0 joueurs</strong>
       </div>
 
+      <section class="finish-ranking">
+        <div class="finish-recap-head">
+          <div>
+            <strong>Classement de la room</strong>
+            <span id="finishRankingStats">—</span>
+          </div>
+        </div>
+        <div id="finishRankingList" class="finish-ranking-list"></div>
+      </section>
+
       <section class="finish-recap">
         <div class="finish-recap-head">
           <div>
@@ -342,7 +355,9 @@
 
       <div class="finish-actions">
         <button id="closeFinishOverlayBtn" class="secondary-btn" type="button">Fermer</button>
-        <button id="copyFinishRoomBtn" class="primary-btn" type="button">Copier le code room</button>
+        <button id="finishHomeBtn" class="secondary-btn" type="button">Accueil</button>
+        <button id="finishNewRoomBtn" class="primary-btn" type="button">Recréer une room</button>
+        <button id="copyFinishRoomBtn" class="secondary-btn" type="button">Copier le code room</button>
       </div>
     </div>
   </div>
