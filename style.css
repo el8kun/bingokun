@@ -4968,3 +4968,27 @@ body.overlay-open {
 .leaderboard-status {
   max-width: 220px;
 }
+
+
+/* Bingo Kun v80 — fix clic Connexion admin */
+.game-header {
+  position: relative;
+  z-index: 1000;
+}
+
+.admin-auth-line,
+.admin-auth-line button,
+#adminLoginBtn,
+#adminLogoutBtn {
+  position: relative;
+  z-index: 1001;
+  pointer-events: auto;
+}
+
+.page-shell,
+.setup-screen,
+.setup-card,
+.setup-hero {
+  position: relative;
+  z-index: 1;
+}

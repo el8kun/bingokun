@@ -632,6 +632,16 @@ createRoomBtn?.addEventListener("click", async () => {
   }
 });
 adminLoginBtn?.addEventListener("click", signInAdmin);
+
+// Sécurité v80 : si un élément visuel ou un souci de rendu bloque le listener direct,
+// on capte aussi le clic au niveau document.
+document.addEventListener("click", (event) => {
+  const adminButton = event.target?.closest?.("#adminLoginBtn");
+  if (!adminButton) return;
+
+  event.preventDefault();
+  signInAdmin();
+}, true);
 adminLogoutBtn?.addEventListener("click", signOutAdmin);
 adminLoginCancelBtn?.addEventListener("click", hideAdminLoginModal);
 adminLoginOverlay?.addEventListener("click", (event) => {
@@ -882,6 +892,8 @@ function showAdminLoginModal() {
   document.body.classList.add("overlay-open");
   setTimeout(() => adminEmailInput?.focus(), 50);
 }
+
+window.bingoKunOpenAdminLogin = showAdminLoginModal;
 
 function hideAdminLoginModal() {
   adminLoginOverlay?.classList.add("hidden");
