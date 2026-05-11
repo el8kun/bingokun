@@ -16,11 +16,14 @@
       </div>
       <div class="admin-actions">
         <a class="secondary-btn" href="./index.html">Retour site</a>
+        <button id="diagnosticLoginBtn" class="secondary-btn" type="button">Connexion admin</button>
+        <button id="diagnosticLogoutBtn" class="secondary-btn hidden" type="button">Déconnexion</button>
         <button id="reloadDiagnosticBtn" class="primary-btn" type="button">Actualiser</button>
       </div>
     </section>
 
     <section class="admin-panel">
+      <p id="diagnosticAuthStatus" class="admin-status">Lecture seule.</p>
       <p id="supabaseStatus" class="admin-status">Chargement…</p>
 
       <div class="admin-live-grid diagnostic-stats">

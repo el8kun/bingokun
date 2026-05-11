@@ -376,7 +376,8 @@ const finishHomeBtn = $("finishHomeBtn");
 const finishNewRoomBtn = $("finishNewRoomBtn");
 
 let uid = getOrCreateLocalUid();
-let isAdminUser = true;
+let currentSupabaseUser = null;
+let isAdminUser = false;
 let selectedPreset = "global-normal";
 let currentRoomCode = null;
 let roomData = null;
@@ -529,9 +530,17 @@ function updatePresetHelp() {
 }
 
 
-uid = getOrCreateLocalUid();
-isAdminUser = true;
-updateAdminUi();
+refreshSupabaseAuthUi().then(() => {
+  updateAdminUi(currentSupabaseUser);
+});
+
+supabase?.auth?.onAuthStateChange(async (_event, session) => {
+  currentSupabaseUser = session?.user || null;
+  uid = currentSupabaseUser?.id || getOrCreateLocalUid();
+  isAdminUser = currentSupabaseUser ? await checkIsAdmin(currentSupabaseUser.id) : false;
+  updateAdminUi(currentSupabaseUser);
+});
+
 loadDatabaseOverrides().then(() => {
   updatePresetHelp();
   renderCustomBuilder();
@@ -681,17 +690,42 @@ async function runPlayerAction(callback) {
 
 
 async function checkIsAdmin(userId) {
-  // Migration complète Supabase : l'admin sécurisé sera ajouté ensuite avec Supabase Auth + RLS.
-  return Boolean(userId);
+  if (!supabase || !userId) return false;
+
+  try {
+    const { data, error } = await supabase
+      .from("admins")
+      .select("uid,role")
+      .eq("uid", userId)
+      .maybeSingle();
+
+    if (error) throw error;
+    return Boolean(data?.uid);
+  } catch (error) {
+    console.warn("Vérification admin Supabase impossible :", error);
+    return false;
+  }
 }
 
-function updateAdminUi(user = null) {
-  isAdminUser = true;
+async function refreshSupabaseAuthUi() {
+  if (!supabase) return;
 
-  adminLoginBtn?.classList.add("hidden");
-  adminLogoutBtn?.classList.add("hidden");
-  adminHeaderLink?.classList.add("hidden");
-  creatorLockedNotice?.classList.add("hidden");
+  const { data } = await supabase.auth.getSession();
+  currentSupabaseUser = data?.session?.user || null;
+
+  uid = currentSupabaseUser?.id || getOrCreateLocalUid();
+  isAdminUser = currentSupabaseUser ? await checkIsAdmin(currentSupabaseUser.id) : false;
+
+  updateAdminUi(currentSupabaseUser);
+}
+
+function updateAdminUi(user = currentSupabaseUser) {
+  const isLogged = Boolean(user);
+
+  adminLoginBtn?.classList.toggle("hidden", isAdminUser);
+  adminLogoutBtn?.classList.toggle("hidden", !isLogged);
+  adminHeaderLink?.classList.toggle("hidden", !isAdminUser);
+  creatorLockedNotice?.classList.toggle("hidden", isAdminUser);
 
   if (createRoomBtn) {
     createRoomBtn.disabled = false;
@@ -699,17 +733,61 @@ function updateAdminUi(user = null) {
   }
 
   if (adminAuthStatus) {
-    adminAuthStatus.textContent = "Mode Supabase";
-    adminAuthStatus.className = "admin-auth-status good";
+    if (isAdminUser) {
+      adminAuthStatus.textContent = "Admin Supabase connecté";
+      adminAuthStatus.className = "admin-auth-status good";
+    } else if (isLogged) {
+      adminAuthStatus.textContent = "Compte connecté mais non admin";
+      adminAuthStatus.className = "admin-auth-status bad";
+    } else {
+      adminAuthStatus.textContent = "Mode joueur";
+      adminAuthStatus.className = "admin-auth-status";
+    }
   }
 }
 
 async function signInAdmin() {
-  alert("L'admin Supabase sécurisé sera ajouté dans une prochaine étape.");
+  if (!supabase) return alert("Supabase n'est pas configuré.");
+
+  const email = prompt("Email admin Supabase :");
+  if (!email) return;
+
+  const password = prompt("Mot de passe admin Supabase :");
+  if (!password) return;
+
+  try {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: email.trim(),
+      password
+    });
+
+    if (error) throw error;
+
+    currentSupabaseUser = data?.user || null;
+    uid = currentSupabaseUser?.id || getOrCreateLocalUid();
+    isAdminUser = currentSupabaseUser ? await checkIsAdmin(currentSupabaseUser.id) : false;
+    updateAdminUi(currentSupabaseUser);
+
+    if (!isAdminUser) {
+      alert("Connecté, mais ce compte n'est pas dans la table admins.");
+    }
+  } catch (error) {
+    alert("Connexion Supabase impossible : " + error.message);
+  }
 }
 
 async function signOutAdmin() {
-  alert("Déconnexion inutile pour l'instant : Firebase a été retiré du gameplay.");
+  if (!supabase) return;
+
+  try {
+    await supabase.auth.signOut();
+    currentSupabaseUser = null;
+    uid = getOrCreateLocalUid();
+    isAdminUser = false;
+    updateAdminUi(null);
+  } catch (error) {
+    alert("Déconnexion impossible : " + error.message);
+  }
 }
 
 async function createRoom() {
@@ -718,8 +796,15 @@ async function createRoom() {
   if (!uid) uid = getOrCreateLocalUid();
   if (!supabase) return alert("Supabase n'est pas configuré.");
 
-  isAdminUser = true;
-  updateAdminUi();
+  await refreshSupabaseAuthUi();
+
+  if (!isAdminUser) {
+    alert(
+      "Seul le compte admin Supabase peut créer une room.\n\n" +
+      "Connecte-toi avec le bouton Admin, puis vérifie que ton UID est dans la table admins."
+    );
+    return;
+  }
 
   await loadDatabaseOverrides(true);
 
@@ -1096,7 +1181,7 @@ function getParticipantRank(participantId) {
 function renderLeaderboard(players = participantsData) {
   const sorted = getSortedParticipants(players);
   const economyNotice = roomData?.status === "playing" && !participantsLoadedForFinish
-    ? `<div class="leaderboard-economy">Classement allégé pendant la partie pour limiter Firebase.</div>`
+    ? `<div class="leaderboard-economy">Classement allégé pendant la partie pour limiter les requêtes.</div>`
     : "";
 
   leaderboardEl.innerHTML = economyNotice + sorted.map((player, index) => {

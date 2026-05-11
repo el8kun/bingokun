@@ -13,15 +13,22 @@ const emptyCategoriesList = $("emptyCategoriesList");
 const categoriesDiagnosticList = $("categoriesDiagnosticList");
 const categorySearch = $("categoryDiagnosticSearch");
 const reloadBtn = $("reloadDiagnosticBtn");
+const diagnosticLoginBtn = $("diagnosticLoginBtn");
+const diagnosticLogoutBtn = $("diagnosticLogoutBtn");
+const diagnosticAuthStatus = $("diagnosticAuthStatus");
 
 let supabase = null;
 let players = [];
 let categories = [];
 let issues = [];
 let categoryCounts = new Map();
+let currentUser = null;
+let isAdmin = false;
 
 reloadBtn?.addEventListener("click", loadDiagnostic);
 categorySearch?.addEventListener("input", renderCategoriesDiagnostic);
+diagnosticLoginBtn?.addEventListener("click", signInDiagnosticAdmin);
+diagnosticLogoutBtn?.addEventListener("click", signOutDiagnosticAdmin);
 
 init();
 
@@ -32,8 +39,90 @@ async function init() {
   }
 
   supabase = createClient(supabaseConfig.url, supabaseConfig.anonKey);
+
+  supabase.auth.onAuthStateChange(async (_event, session) => {
+    currentUser = session?.user || null;
+    isAdmin = currentUser ? await checkDiagnosticAdmin(currentUser.id) : false;
+    updateDiagnosticAuthUi();
+    renderEmptyCategories(issues.filter((issue) => issue.issue_type === "empty_category"));
+    renderCategoriesDiagnostic();
+  });
+
+  await refreshDiagnosticAuth();
   await loadDiagnostic();
 }
+
+
+async function refreshDiagnosticAuth() {
+  const { data } = await supabase.auth.getSession();
+  currentUser = data?.session?.user || null;
+  isAdmin = currentUser ? await checkDiagnosticAdmin(currentUser.id) : false;
+  updateDiagnosticAuthUi();
+}
+
+async function checkDiagnosticAdmin(userId) {
+  if (!userId) return false;
+
+  try {
+    const { data, error } = await supabase
+      .from("admins")
+      .select("uid")
+      .eq("uid", userId)
+      .maybeSingle();
+
+    if (error) throw error;
+    return Boolean(data?.uid);
+  } catch (error) {
+    console.warn("Diagnostic admin check impossible :", error);
+    return false;
+  }
+}
+
+function updateDiagnosticAuthUi() {
+  diagnosticLoginBtn?.classList.toggle("hidden", isAdmin);
+  diagnosticLogoutBtn?.classList.toggle("hidden", !currentUser);
+
+  if (!diagnosticAuthStatus) return;
+
+  if (isAdmin) {
+    diagnosticAuthStatus.textContent = "Admin connecté — modification autorisée";
+    diagnosticAuthStatus.className = "admin-status good";
+  } else if (currentUser) {
+    diagnosticAuthStatus.textContent = "Compte connecté mais non admin";
+    diagnosticAuthStatus.className = "admin-status bad";
+  } else {
+    diagnosticAuthStatus.textContent = "Lecture seule — connecte-toi en admin pour modifier";
+    diagnosticAuthStatus.className = "admin-status";
+  }
+}
+
+async function signInDiagnosticAdmin() {
+  const email = prompt("Email admin Supabase :");
+  if (!email) return;
+
+  const password = prompt("Mot de passe admin Supabase :");
+  if (!password) return;
+
+  const { error } = await supabase.auth.signInWithPassword({
+    email: email.trim(),
+    password
+  });
+
+  if (error) {
+    alert("Connexion impossible : " + error.message);
+    return;
+  }
+
+  await refreshDiagnosticAuth();
+}
+
+async function signOutDiagnosticAdmin() {
+  await supabase.auth.signOut();
+  currentUser = null;
+  isAdmin = false;
+  updateDiagnosticAuthUi();
+}
+
 
 async function loadDiagnostic() {
   try {
@@ -159,8 +248,8 @@ function renderEmptyCategories(emptyIssues) {
           <strong>${escapeHtml(issue.tag_id)} — ${escapeHtml(title)}</strong>
           <span>${escapeHtml(category?.kicker || "Catégorie")} · ${disabled ? "désactivée" : "active"}</span>
         </div>
-        <button class="tiny-btn danger-btn" type="button" data-disable-category="${escapeHtml(issue.tag_id)}" ${disabled ? "disabled" : ""}>
-          ${disabled ? "Déjà désactivée" : "Désactiver"}
+        <button class="tiny-btn danger-btn" type="button" data-disable-category="${escapeHtml(issue.tag_id)}" ${disabled || !isAdmin ? "disabled" : ""}>
+          ${!isAdmin ? "Lecture seule" : disabled ? "Déjà désactivée" : "Désactiver"}
         </button>
       </article>
     `;
@@ -199,8 +288,8 @@ function renderCategoriesDiagnostic() {
           <strong>${escapeHtml(category.id)} — ${escapeHtml(category.title || category.name || category.id)}</strong>
           <span>${escapeHtml(category.kicker || "Catégorie")} · ${count} joueur(s) · ${disabled ? "désactivée" : "active"}</span>
         </div>
-        <button class="tiny-btn ${disabled ? "" : "danger-btn"}" type="button" data-toggle-category="${escapeHtml(category.id)}">
-          ${disabled ? "Réactiver" : "Désactiver"}
+        <button class="tiny-btn ${disabled ? "" : "danger-btn"}" type="button" data-toggle-category="${escapeHtml(category.id)}" ${!isAdmin ? "disabled" : ""}>
+          ${!isAdmin ? "Lecture seule" : disabled ? "Réactiver" : "Désactiver"}
         </button>
       </article>
     `;
@@ -222,6 +311,11 @@ async function toggleCategory(categoryId) {
 }
 
 async function updateCategoryEnabled(categoryId, enabled) {
+  if (!isAdmin) {
+    alert("Connecte-toi en admin pour modifier les catégories.");
+    return;
+  }
+
   const category = categories.find((item) => item.id === categoryId);
   const label = category?.title || categoryId;
 
