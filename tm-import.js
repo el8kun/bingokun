@@ -248,37 +248,32 @@ async function loadTransfers() {
 }
 
 async function fetchTransfermarktPlayerTransfers(id) {
-  const base = tmApiBaseInput.value.trim().replace(/\/+$/, "");
+  const baseUrl = tmApiBaseInput.value.trim().replace(/\/+$/, "") || "https://transfermarkt-api.fly.dev";
 
-  const candidates = [
-    `${base}/players/${encodeURIComponent(id)}/transfers`,
-    `${base}/players/${encodeURIComponent(id)}/transfers/`,
-    `${base}/player/${encodeURIComponent(id)}/transfers`,
-    `${base}/player/${encodeURIComponent(id)}/transfers/`
-  ];
-
-  let lastError = null;
-
-  for (const url of candidates) {
-    try {
-      const response = await withTimeout(fetch(url), 12000, "Transfermarkt API trop lente.");
-      if (!response.ok) {
-        lastError = new Error(`${response.status} ${response.statusText} sur ${url}`);
-        continue;
+  const { data, error } = await withTimeout(
+    supabase.functions.invoke("tm-transfers", {
+      body: {
+        id,
+        baseUrl
       }
+    }),
+    20000,
+    "Proxy Transfermarkt trop lent."
+  );
 
-      const json = await response.json();
-      if (json?.transfers || Array.isArray(json)) {
-        return Array.isArray(json) ? { id, transfers: json } : json;
-      }
-
-      lastError = new Error(`Réponse inattendue sur ${url}`);
-    } catch (error) {
-      lastError = error;
-    }
+  if (error) {
+    throw new Error(error.message || "Erreur Edge Function tm-transfers.");
   }
 
-  throw lastError || new Error("Impossible de charger les transferts.");
+  if (data?.error) {
+    throw new Error(data.details ? `${data.error} ${data.details}` : data.error);
+  }
+
+  if (!data?.transfers) {
+    throw new Error("Réponse Transfermarkt inattendue : aucun champ transfers.");
+  }
+
+  return data;
 }
 
 function extractClubsFromTransfers(transfers) {
