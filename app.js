@@ -202,6 +202,8 @@ let actionInProgress = false;
 let actionLockStartedAt = 0;
 let lastBoardRenderKey = "";
 let lastAutoAdvanceAt = 0;
+let localTimerKey = "";
+let localTimerStartedAtMs = 0;
 let lastPlayerActionAt = 0;
 
 const savedName = localStorage.getItem("bingo-kun-name");
@@ -659,6 +661,7 @@ async function joinRoom(code, alreadyJoined = false) {
 
   currentRoomCode = code;
   hasShownFinishOverlay = false;
+  resetLocalTimer();
   if (historyReopenHint) historyReopenHint.classList.add("hidden");
   if (rankingReopenHint) rankingReopenHint.classList.add("hidden");
   hideFinishOverlay();
@@ -739,6 +742,7 @@ function renderViews() {
 
   if (roomData.status === "waiting") {
     lastBoardRenderKey = "";
+    resetLocalTimer();
     stopTimers();
     waitingView.classList.remove("hidden");
     gameView.classList.add("hidden");
@@ -880,6 +884,8 @@ function renderGame() {
 
   const deckLength = roomData.deck?.length || 0;
   const currentIndex = getMyCurrentIndex();
+
+  ensureLocalTimerForCurrentPlayer();
 
   if (!finished && deckLength > 0 && currentIndex >= deckLength) {
     finishParticipant("deck_finished");
@@ -1516,6 +1522,40 @@ function stopTimers() {
   playerAutoInterval = null;
 }
 
+
+function getCurrentTimerKey() {
+  if (!roomData || roomData.status !== "playing" || !myData || myData.finished) return "";
+  const index = getMyCurrentIndex();
+  const player = getCurrentPlayer();
+  return [
+    currentRoomCode || "",
+    uid || "",
+    index,
+    player?.id || "none"
+  ].join("::");
+}
+
+function ensureLocalTimerForCurrentPlayer() {
+  const key = getCurrentTimerKey();
+
+  if (!key) {
+    localTimerKey = "";
+    localTimerStartedAtMs = 0;
+    return;
+  }
+
+  if (key !== localTimerKey) {
+    localTimerKey = key;
+    localTimerStartedAtMs = Date.now();
+  }
+}
+
+function resetLocalTimer() {
+  localTimerKey = "";
+  localTimerStartedAtMs = 0;
+}
+
+
 function updateCountdown() {
   if (!roomData || roomData.status !== "playing") {
     globalTimerTextEl.textContent = `${AUTO_SECONDS}s`;
@@ -1536,13 +1576,13 @@ function updateCountdown() {
 }
 
 function getRemainingSeconds() {
-  if (!roomData || roomData.status !== "playing") return AUTO_SECONDS;
+  if (!roomData || roomData.status !== "playing" || !myData || myData.finished) return AUTO_SECONDS;
 
-  const timestamp = myData?.currentStartedAt || roomData.gameStartedAt;
-  if (!timestamp) return AUTO_SECONDS;
+  ensureLocalTimerForCurrentPlayer();
 
-  const startedAt = timestamp.toMillis ? timestamp.toMillis() : Date.now();
-  const elapsed = (Date.now() - startedAt) / 1000;
+  if (!localTimerStartedAtMs) return AUTO_SECONDS;
+
+  const elapsed = (Date.now() - localTimerStartedAtMs) / 1000;
   return AUTO_SECONDS - elapsed;
 }
 
@@ -2242,6 +2282,7 @@ function leaveRoom() {
   participantsData = [];
 
   hasShownFinishOverlay = false;
+  resetLocalTimer();
   if (historyReopenHint) historyReopenHint.classList.add("hidden");
   if (rankingReopenHint) rankingReopenHint.classList.add("hidden");
   hideFinishOverlay();
