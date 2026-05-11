@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bingo Kun — Sync Catégories PlayFootball</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <main class="admin-page supabase-diagnostic-page">
+    <section class="admin-hero">
+      <div>
+        <p class="mini-title">BDD</p>
+        <h1>Synchroniser les catégories PlayFootball</h1>
+        <p>Extrait les catégories depuis le fichier <code>_gameIndex_</code>, compare avec Supabase, puis crée/corrige les catégories manquantes.</p>
+      </div>
+      <div class="admin-actions">
+        <a class="secondary-btn" href="./index.html">Retour site</a>
+        <a class="secondary-btn" href="./playfootball-sync.html">Sync joueurs</a>
+        <button id="catLoginBtn" class="secondary-btn" type="button">Connexion admin</button>
+        <button id="catLogoutBtn" class="secondary-btn hidden" type="button">Déconnexion</button>
+      </div>
+    </section>
+
+    <section class="admin-panel">
+      <p id="catAuthStatus" class="admin-status">Lecture seule — connecte-toi en admin.</p>
+      <p id="catStatus" class="admin-status">Prêt.</p>
+
+      <label class="full-width-label">
+        URL fichier _gameIndex_
+        <input id="catSourceUrlInput" value="https://cdn.playfootball.games/_astro/_gameIndex_.json.DezB7G-7.js" />
+      </label>
+
+      <div class="pf-options-grid">
+        <label class="pf-check-option">
+          <input id="catPreferFullNameCheck" type="checkbox" checked />
+          <span>Utiliser le nom complet comme titre principal quand c’est un club/pays</span>
+        </label>
+
+        <label class="pf-check-option">
+          <input id="catKeepExistingNamesCheck" type="checkbox" checked />
+          <span>Ne pas écraser les noms déjà personnalisés dans Supabase</span>
+        </label>
+      </div>
+
+      <div class="admin-live-grid diagnostic-stats">
+        <div><span>Catégories source</span><strong id="catSourceCount">—</strong></div>
+        <div><span>Supabase</span><strong id="catSupabaseCount">—</strong></div>
+        <div><span>Nouvelles</span><strong id="catNewCount">—</strong></div>
+        <div><span>À corriger</span><strong id="catUpdateCount">—</strong></div>
+      </div>
+
+      <div class="admin-actions tm-actions">
+        <button id="catLoadBtn" class="primary-btn" type="button">Charger & comparer</button>
+        <button id="catImportNewBtn" class="secondary-btn" type="button" disabled>Créer catégories manquantes</button>
+        <button id="catUpdateExistingBtn" class="secondary-btn" type="button" disabled>Corriger catégories existantes</button>
+        <button id="catSyncAllBtn" class="primary-btn" type="button" disabled>Tout synchroniser</button>
+      </div>
+    </section>
+
+    <section class="diagnostic-grid">
+      <article class="admin-panel">
+        <div class="diagnostic-head">
+          <div>
+            <p class="mini-title">Nouvelles catégories</p>
+            <h2>Présentes dans PlayFootball, absentes de Supabase</h2>
+            <p>Preview limitée aux 300 premières.</p>
+          </div>
+        </div>
+        <div id="catNewList" class="diagnostic-list large"></div>
+      </article>
+
+      <article class="admin-panel">
+        <div class="diagnostic-head">
+          <div>
+            <p class="mini-title">Catégories à corriger</p>
+            <h2>Nom, type, helperText ou visuel différent</h2>
+            <p>Preview limitée aux 300 premières.</p>
+          </div>
+        </div>
+        <div id="catUpdateList" class="diagnostic-list large"></div>
+      </article>
+    </section>
+
+    <section class="admin-panel">
+      <div class="diagnostic-head">
+        <div>
+          <p class="mini-title">Import local</p>
+          <h2>Si l’URL est bloquée</h2>
+          <p>Tu peux uploader le fichier <code>_gameIndex_.json...js</code> directement ici.</p>
+        </div>
+        <input id="catLocalFileInput" type="file" accept=".js,.json,.txt" />
+      </div>
+    </section>
+  </main>
+
+  <div id="catLoginOverlay" class="admin-login-overlay hidden">
+    <form id="catLoginForm" class="admin-login-modal">
+      <div class="finish-badge">ADMIN</div>
+      <h2>Connexion Sync Catégories</h2>
+      <p>Connecte-toi avec ton compte admin Supabase.</p>
+
+      <label>
+        Email
+        <input id="catEmailInput" type="email" autocomplete="email" placeholder="ton@email.fr" required />
+      </label>
+
+      <label>
+        Mot de passe
+        <input id="catPasswordInput" type="password" autocomplete="current-password" placeholder="Mot de passe" required />
+      </label>
+
+      <p id="catLoginMessage" class="admin-login-message"></p>
+
+      <div class="finish-actions">
+        <button id="catLoginCancelBtn" class="secondary-btn" type="button">Annuler</button>
+        <button id="catLoginSubmitBtn" class="primary-btn" type="submit">Se connecter</button>
+      </div>
+    </form>
+  </div>
+
+  <script type="module" src="./playfootball-categories-sync.js"></script>
+</body>
+</html>

@@ -4909,3 +4909,42 @@ body.overlay-open {
   font-size: .75rem;
   font-weight: 950;
 }
+
+
+/* Bingo Kun v77 — Sync PlayFootball */
+.full-width-label {
+  display: grid;
+  gap: 8px;
+  color: var(--muted);
+  font-weight: 900;
+  font-size: .82rem;
+  margin-bottom: 14px;
+}
+
+.pf-options-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.pf-check-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.055);
+  font-weight: 850;
+}
+
+.pf-check-option input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent);
+}
+
+
+/* Bingo Kun v78 — Sync catégories PlayFootball */
+#catLocalFileInput {
+  max-width: 520px;
+}

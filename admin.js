@@ -11,6 +11,8 @@ document.body.innerHTML = `
         <a class="primary-btn" href="./supabase-diagnostic.html">Diagnostic Supabase</a>
         <a class="secondary-btn" href="./tm-import.html">Import Transfermarkt</a>
         <a class="secondary-btn" href="./europe-cleanup.html">Nettoyage Europe</a>
+        <a class="secondary-btn" href="./playfootball-sync.html">Sync PlayFootball</a>
+        <a class="secondary-btn" href="./playfootball-categories-sync.html">Sync Catégories</a>
         <a class="secondary-btn" href="./index.html">Retour au site</a>
       </div>
     </section>
