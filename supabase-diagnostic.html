@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bingo Kun — Diagnostic Supabase</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <main class="admin-page supabase-diagnostic-page">
+    <section class="admin-hero">
+      <div>
+        <p class="mini-title">Supabase</p>
+        <h1>Diagnostic BDD Bingo Kun</h1>
+        <p>Vérifie les joueurs, catégories, tags orphelins et catégories injouables avant de brancher le jeu dessus.</p>
+      </div>
+      <div class="admin-actions">
+        <a class="secondary-btn" href="./index.html">Retour site</a>
+        <button id="reloadDiagnosticBtn" class="primary-btn" type="button">Actualiser</button>
+      </div>
+    </section>
+
+    <section class="admin-panel">
+      <p id="supabaseStatus" class="admin-status">Chargement…</p>
+
+      <div class="admin-live-grid diagnostic-stats">
+        <div><span>Joueurs</span><strong id="playersCountDiag">—</strong></div>
+        <div><span>Catégories</span><strong id="categoriesCountDiag">—</strong></div>
+        <div><span>Tags orphelins</span><strong id="orphanCountDiag">—</strong></div>
+        <div><span>Catégories vides</span><strong id="emptyCountDiag">—</strong></div>
+      </div>
+    </section>
+
+    <section class="diagnostic-grid">
+      <article class="admin-panel">
+        <div class="diagnostic-head">
+          <div>
+            <p class="mini-title">Tags orphelins</p>
+            <h2>Utilisés par les joueurs, mais sans catégorie</h2>
+          </div>
+        </div>
+        <div id="orphanTagsList" class="diagnostic-list"></div>
+      </article>
+
+      <article class="admin-panel">
+        <div class="diagnostic-head">
+          <div>
+            <p class="mini-title">Catégories vides</p>
+            <h2>Cases existantes mais 0 joueur</h2>
+          </div>
+        </div>
+        <div id="emptyCategoriesList" class="diagnostic-list"></div>
+      </article>
+    </section>
+
+    <section class="admin-panel">
+      <div class="diagnostic-head">
+        <div>
+          <p class="mini-title">Catégories</p>
+          <h2>Recherche et contrôle</h2>
+          <p>Utile pour vérifier une catégorie avant de la garder dans le générateur.</p>
+        </div>
+        <input id="categoryDiagnosticSearch" placeholder="Cherche cat_333, Ballon, Euro, Premier League…" />
+      </div>
+      <div id="categoriesDiagnosticList" class="diagnostic-list large"></div>
+    </section>
+  </main>
+
+  <script type="module" src="./supabase-diagnostic.js"></script>
+</body>
+</html>

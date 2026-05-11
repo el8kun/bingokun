@@ -4479,3 +4479,132 @@ body.overlay-open {
     max-height: 52vh;
   }
 }
+
+
+/* Bingo Kun v60 — économie Firestore */
+.leaderboard-economy {
+  padding: 9px 10px;
+  margin-bottom: 8px;
+  border-radius: 12px;
+  color: var(--muted);
+  background: rgba(255,255,255,.055);
+  border: 1px solid rgba(255,255,255,.09);
+  font-size: .74rem;
+  line-height: 1.25;
+}
+
+
+/* Bingo Kun v61 — Supabase diagnostic */
+.supabase-diagnostic-page {
+  width: min(1500px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 42px 0;
+}
+
+.diagnostic-stats {
+  margin-top: 12px;
+}
+
+.diagnostic-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  margin-top: 18px;
+}
+
+.diagnostic-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.diagnostic-head h2 {
+  margin: 4px 0 0;
+  font-size: 1.25rem;
+}
+
+.diagnostic-head p {
+  color: var(--muted);
+}
+
+.diagnostic-head input {
+  max-width: 420px;
+}
+
+.diagnostic-list {
+  display: grid;
+  gap: 10px;
+  max-height: 460px;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.diagnostic-list.large {
+  max-height: 640px;
+}
+
+.diagnostic-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 13px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.055);
+}
+
+.diagnostic-row strong,
+.diagnostic-row span {
+  display: block;
+}
+
+.diagnostic-row span {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: .82rem;
+}
+
+.diagnostic-row.warning {
+  border-color: rgba(255, 189, 33, .35);
+  background: rgba(255, 189, 33, .08);
+}
+
+.diagnostic-row.danger {
+  border-color: rgba(255, 77, 93, .38);
+  background: rgba(255, 77, 93, .08);
+}
+
+.diagnostic-row.good {
+  border-color: rgba(39, 242, 195, .22);
+}
+
+.diagnostic-row.disabled {
+  opacity: .62;
+}
+
+.tiny-btn:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+}
+
+@media (max-width: 900px) {
+  .diagnostic-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .diagnostic-head {
+    display: grid;
+  }
+
+  .diagnostic-head input {
+    max-width: none;
+  }
+
+  .diagnostic-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
