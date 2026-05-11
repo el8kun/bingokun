@@ -5001,3 +5001,12 @@ body.overlay-open {
 #adminLoginSubmitBtn {
   pointer-events: auto;
 }
+
+
+/* Bingo Kun v82 — rescue connexion admin */
+.admin-login-message.good {
+  color: #9fffcf;
+}
+.admin-login-message.bad {
+  color: #ff9aa5;
+}
