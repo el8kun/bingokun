@@ -4948,3 +4948,15 @@ body.overlay-open {
 #catLocalFileInput {
   max-width: 520px;
 }
+
+
+/* Bingo Kun v86 — page Mort Subite séparée */
+.message.bad {
+  animation: suddenShake .22s ease-in-out 2;
+}
+
+@keyframes suddenShake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-3px); }
+  75% { transform: translateX(3px); }
+}
