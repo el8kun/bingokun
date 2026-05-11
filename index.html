@@ -55,8 +55,8 @@
         <p class="mini-title">Bingo foot multijoueur · 5x5</p>
         <h1>Crée une room, attends ton chat, puis lance la partie.</h1>
         <p>
-          La grille et la liste des 75 joueurs sont communes à tous.
-          Ensuite, chaque joueur avance à son propre rythme : placer ou passer un joueur ne change rien pour les autres.
+          Choisis le Bingo classique ou la Mort Subite. La grille est commune à tous.
+          Ensuite, chaque joueur avance à son propre rythme : placer ou passer ne change rien pour les autres.
         </p>
       </div>
 
@@ -68,6 +68,13 @@
 
         <label for="playerName">Ton pseudo</label>
         <input id="playerName" maxlength="20" placeholder="Ex : Kun" autocomplete="nickname" />
+
+        <label for="gameMode">Mode de jeu</label>
+        <select id="gameMode" class="setup-select">
+          <option value="bingo">Bingo classique — 75 joueurs</option>
+          <option value="sudden-death">Mort Subite — 100 joueurs, une erreur élimine</option>
+        </select>
+        <p id="gameModeHelp" class="hint preset-help">Bingo classique : fonctionnement actuel.</p>
 
         <label for="presetMode">Type de partie</label>
         <select id="presetMode" class="setup-select">
