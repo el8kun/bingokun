@@ -4416,3 +4416,66 @@ body.overlay-open {
     width: 100%;
   }
 }
+
+
+/* Bingo Kun v59 — overlays séparés + classement live compact */
+.leaderboard-card {
+  max-height: 330px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.leaderboard-card .history-title-btn {
+  flex: 0 0 auto;
+}
+
+.leaderboard-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: 265px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 4px;
+  scrollbar-width: thin;
+}
+
+.finish-modal-ranking {
+  max-width: 760px;
+}
+
+.finish-modal-recap {
+  max-width: 880px;
+}
+
+.finish-modal-ranking .finish-ranking-list {
+  max-height: min(48vh, 430px);
+}
+
+.finish-modal-recap .finish-recap-list {
+  max-height: min(58vh, 560px);
+}
+
+.recap-only {
+  margin-top: 18px;
+}
+
+@media (max-width: 760px) {
+  .leaderboard-card {
+    max-height: 240px;
+  }
+
+  .leaderboard-list {
+    max-height: 185px;
+  }
+
+  .finish-modal-ranking,
+  .finish-modal-recap {
+    max-width: calc(100vw - 18px);
+  }
+
+  .finish-modal-ranking .finish-ranking-list,
+  .finish-modal-recap .finish-recap-list {
+    max-height: 52vh;
+  }
+}

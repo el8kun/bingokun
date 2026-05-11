@@ -304,16 +304,17 @@
     </section>
   </main>
 
+
   <div id="finishOverlay" class="finish-overlay hidden">
-    <div class="finish-modal">
+    <div class="finish-modal finish-modal-ranking">
       <div class="finish-badge">PARTIE TERMINÉE</div>
-      <h2 id="finishTitle">Grille terminée !</h2>
+      <h2 id="finishTitle">Classement final</h2>
       <p id="finishSubtitle">Bravo, ton score final est calculé.</p>
 
       <div class="finish-stats">
         <div>
           <span>Score</span>
-          <strong id="finishScore">0 / 20</strong>
+          <strong id="finishScore">0 / 30</strong>
         </div>
         <div>
           <span>Bingos</span>
@@ -343,10 +344,25 @@
         <div id="finishRankingList" class="finish-ranking-list"></div>
       </section>
 
-      <section class="finish-recap">
+      <div class="finish-actions">
+        <button id="closeFinishOverlayBtn" class="secondary-btn" type="button">Fermer</button>
+        <button id="showRecapFromRankingBtn" class="secondary-btn" type="button">Voir le récap</button>
+        <button id="finishHomeBtn" class="secondary-btn" type="button">Accueil</button>
+        <button id="finishNewRoomBtn" class="primary-btn" type="button">Recréer une room</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="recapOverlay" class="finish-overlay hidden">
+    <div class="finish-modal finish-modal-recap">
+      <div class="finish-badge">RÉCAP</div>
+      <h2>Récap des joueurs</h2>
+      <p>Les joueurs passés, placés, et les cases où ils pouvaient aller.</p>
+
+      <section class="finish-recap recap-only">
         <div class="finish-recap-head">
           <div>
-            <strong>Récap des joueurs</strong>
+            <strong>Joueurs de la partie</strong>
             <span id="finishRecapStats">—</span>
           </div>
         </div>
@@ -354,10 +370,8 @@
       </section>
 
       <div class="finish-actions">
-        <button id="closeFinishOverlayBtn" class="secondary-btn" type="button">Fermer</button>
-        <button id="finishHomeBtn" class="secondary-btn" type="button">Accueil</button>
-        <button id="finishNewRoomBtn" class="primary-btn" type="button">Recréer une room</button>
-        <button id="copyFinishRoomBtn" class="secondary-btn" type="button">Copier le code room</button>
+        <button id="closeRecapOverlayBtn" class="secondary-btn" type="button">Fermer</button>
+        <button id="showRankingFromRecapBtn" class="primary-btn" type="button">Voir le classement</button>
       </div>
     </div>
   </div>

@@ -163,6 +163,7 @@ const myWrongEl = $("myWrong");
 const myFinalRankEl = $("myFinalRank");
 const myAccuracyEl = $("myAccuracy");
 const finishOverlay = $("finishOverlay");
+const recapOverlay = $("recapOverlay");
 const finishTitleEl = $("finishTitle");
 const finishSubtitleEl = $("finishSubtitle");
 const finishScoreEl = $("finishScore");
@@ -176,6 +177,9 @@ const finishRecapListEl = $("finishRecapList");
 const finishRankingStatsEl = $("finishRankingStats");
 const finishRankingListEl = $("finishRankingList");
 const closeFinishOverlayBtn = $("closeFinishOverlayBtn");
+const closeRecapOverlayBtn = $("closeRecapOverlayBtn");
+const showRecapFromRankingBtn = $("showRecapFromRankingBtn");
+const showRankingFromRecapBtn = $("showRankingFromRecapBtn");
 const copyFinishRoomBtn = $("copyFinishRoomBtn");
 const finishHomeBtn = $("finishHomeBtn");
 const finishNewRoomBtn = $("finishNewRoomBtn");
@@ -386,7 +390,20 @@ $("leaveRoomBtn").addEventListener("click", leaveRoom);
 $("leaveWaitingRoomBtn").addEventListener("click", leaveRoom);
 startGameBtn.addEventListener("click", startGame);
 nextPlayerBtn.addEventListener("click", () => advanceMyPlayer(true));
-closeFinishOverlayBtn?.addEventListener("click", () => hideFinishOverlay());
+closeFinishOverlayBtn?.addEventListener("click", hideAllFinishOverlays);
+closeRecapOverlayBtn?.addEventListener("click", hideAllFinishOverlays);
+showRecapFromRankingBtn?.addEventListener("click", () => {
+  if (myData?.finished) {
+    renderFinishRecap();
+    showRecapOverlay();
+  }
+});
+showRankingFromRecapBtn?.addEventListener("click", () => {
+  if (myData?.finished) {
+    renderFinishRanking();
+    showFinishOverlay();
+  }
+});
 copyFinishRoomBtn?.addEventListener("click", copyRoomInfo);
 finishHomeBtn?.addEventListener("click", goHomeFromFinish);
 finishNewRoomBtn?.addEventListener("click", recreateRoomFromFinish);
@@ -394,14 +411,12 @@ finishNewRoomBtn?.addEventListener("click", recreateRoomFromFinish);
 openFinishRecapBtn?.addEventListener("click", () => {
   if (myData?.finished) {
     renderFinishRecap();
-    renderFinishRanking();
-    showFinishOverlay();
+    showRecapOverlay();
   }
 });
 
 openFinishRankingBtn?.addEventListener("click", () => {
   if (myData?.finished) {
-    renderFinishRecap();
     renderFinishRanking();
     showFinishOverlay();
   }
@@ -801,9 +816,6 @@ function getSortedParticipants(players = participantsData) {
       return (a.joinedAt?.seconds || 0) - (b.joinedAt?.seconds || 0);
     }
     if (a.finished !== b.finished) return a.finished ? -1 : 1;
-    const scoreA = calculateBoardScore(a.board || {}, roomData?.grid || []);
-    const scoreB = calculateBoardScore(b.board || {}, roomData?.grid || []);
-    if (scoreB !== scoreA) return scoreB - scoreA;
     if ((b.filledCount || 0) !== (a.filledCount || 0)) return (b.filledCount || 0) - (a.filledCount || 0);
     if (((b.bingos || []).length) !== ((a.bingos || []).length)) return ((b.bingos || []).length) - ((a.bingos || []).length);
     return String(a.name || "").localeCompare(String(b.name || ""));
@@ -821,8 +833,9 @@ function renderLeaderboard(players = participantsData) {
 
   leaderboardEl.innerHTML = sorted.map((player, index) => {
     const rank = index + 1;
-    const score = player.finished ? (player.finalScore || 0) : calculateBoardScore(player.board || {}, roomData?.grid || []);
-    const scoreMax = player.scoreMax || getMaxBoardScore(roomData?.grid || []) || 30;
+    const isFinished = Boolean(player.finished);
+    const score = isFinished ? (player.finalScore || 0) : Number(player.filledCount || Object.keys(player.board || {}).length || 0);
+    const scoreMax = isFinished ? (player.scoreMax || getMaxBoardScore(roomData?.grid || []) || 30) : BOARD_SIZE;
     const progress = Math.max(0, Math.min(100, Math.round((score / scoreMax) * 100)));
     const bingos = (player.bingos || []).length;
     const medal = rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : `#${rank}`;
@@ -840,7 +853,7 @@ function renderLeaderboard(players = participantsData) {
               <span class="leaderboard-status">${statusText}</span>
             </div>
             <div class="leaderboard-subline">
-              <span>${score}/${scoreMax} pts</span>
+              <span>${score}/${scoreMax} ${isFinished ? "pts" : "cases"}</span>
               <span>${bingos} bingo${bingos > 1 ? "s" : ""}</span>
             </div>
             <div class="leaderboard-progress"><span style="width:${progress}%"></span></div>
@@ -933,9 +946,9 @@ function renderGame() {
       hasShownFinishOverlay = true;
     }
   } else {
-    scoreDisplayEl.textContent = currentScore;
-    if (compactScoreDisplayEl) compactScoreDisplayEl.textContent = `${currentScore}/${scoreMax}`;
-    scoreSublineEl.textContent = "points";
+    scoreDisplayEl.textContent = filledCount;
+    if (compactScoreDisplayEl) compactScoreDisplayEl.textContent = `${filledCount}/${BOARD_SIZE}`;
+    scoreSublineEl.textContent = "cases";
     hiddenResultBox.classList.remove("hidden");
     finalResultBox.classList.add("hidden");
     hideFinishOverlay();
@@ -1313,7 +1326,6 @@ function updateFinishOverlay(finalScore, bingoCount, wrongCount, accuracy, rank,
   finishRankEl.textContent = rank ? `#${rank}` : '#-';
   finishTotalPlayersEl.textContent = `${totalPlayers} joueur${totalPlayers > 1 ? 's' : ''}`;
   renderFinishRanking();
-  renderFinishRecap();
 }
 
 
@@ -1484,13 +1496,25 @@ function renderFinishRecap() {
 
 function showFinishOverlay() {
   if (!finishOverlay) return;
+  recapOverlay?.classList.add('hidden');
   finishOverlay.classList.remove('hidden');
   document.body.classList.add('overlay-open');
 }
 
+function showRecapOverlay() {
+  if (!recapOverlay) return;
+  finishOverlay?.classList.add('hidden');
+  recapOverlay.classList.remove('hidden');
+  document.body.classList.add('overlay-open');
+}
+
 function hideFinishOverlay() {
-  if (!finishOverlay) return;
-  finishOverlay.classList.add('hidden');
+  hideAllFinishOverlays();
+}
+
+function hideAllFinishOverlays() {
+  finishOverlay?.classList.add('hidden');
+  recapOverlay?.classList.add('hidden');
   document.body.classList.remove('overlay-open');
 }
 
