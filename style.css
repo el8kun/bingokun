@@ -4881,3 +4881,31 @@ body.overlay-open {
     grid-template-columns: 1fr;
   }
 }
+
+
+/* Bingo Kun v76 — Nettoyage Europe */
+.danger-action {
+  background: linear-gradient(135deg, #ff5d72, #ffbd21);
+}
+
+.eu-tag-row {
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  justify-content: start;
+}
+
+.eu-tag-row input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent);
+}
+
+.eu-muted-chip {
+  border-radius: 999px;
+  padding: 6px 9px;
+  background: rgba(255, 77, 93, .12);
+  color: #ff9aa5;
+  border: 1px solid rgba(255, 77, 93, .22);
+  font-size: .75rem;
+  font-weight: 950;
+}

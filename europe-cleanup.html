@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bingo Kun — Nettoyage Europe</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <main class="admin-page supabase-diagnostic-page">
+    <section class="admin-hero">
+      <div>
+        <p class="mini-title">Admin BDD</p>
+        <h1>Nettoyage joueurs Europe</h1>
+        <p>Désactive les joueurs qui n’ont aucun tag prouvant qu’ils ont joué en Europe. Rien n’est supprimé : on passe seulement <code>enabled = false</code>.</p>
+      </div>
+      <div class="admin-actions">
+        <a class="secondary-btn" href="./index.html">Retour site</a>
+        <a class="secondary-btn" href="./supabase-diagnostic.html">Diagnostic BDD</a>
+        <button id="euLoginBtn" class="secondary-btn" type="button">Connexion admin</button>
+        <button id="euLogoutBtn" class="secondary-btn hidden" type="button">Déconnexion</button>
+        <button id="euReloadBtn" class="primary-btn" type="button">Actualiser</button>
+      </div>
+    </section>
+
+    <section class="admin-panel">
+      <p id="euAuthStatus" class="admin-status">Lecture seule — connecte-toi en admin.</p>
+      <p id="euStatus" class="admin-status">Chargement…</p>
+
+      <div class="admin-live-grid diagnostic-stats">
+        <div><span>Joueurs total</span><strong id="euTotalPlayers">—</strong></div>
+        <div><span>Joueurs activés</span><strong id="euEnabledPlayers">—</strong></div>
+        <div><span>Détectés Europe</span><strong id="euEuropePlayers">—</strong></div>
+        <div><span>À désactiver</span><strong id="euOutsidePlayers">—</strong></div>
+      </div>
+
+      <div class="admin-actions tm-actions">
+        <button id="euPreviewBtn" class="secondary-btn" type="button">Recalculer preview</button>
+        <button id="euDisableBtn" class="primary-btn danger-action" type="button" disabled>Désactiver les joueurs hors Europe</button>
+      </div>
+    </section>
+
+    <section class="diagnostic-grid">
+      <article class="admin-panel">
+        <div class="diagnostic-head">
+          <div>
+            <p class="mini-title">Tags Europe</p>
+            <h2>Ce qui prouve qu’un joueur a joué en Europe</h2>
+            <p>Coche/décoche avant de désactiver. Les nationalités ne sont pas utilisées.</p>
+          </div>
+          <input id="euTagSearch" placeholder="Cherche PSG, Premier League, Milan…" />
+        </div>
+        <div id="euTagsList" class="diagnostic-list large"></div>
+      </article>
+
+      <article class="admin-panel">
+        <div class="diagnostic-head">
+          <div>
+            <p class="mini-title">Preview</p>
+            <h2>Joueurs détectés hors Europe</h2>
+            <p>Liste limitée aux 300 premiers pour contrôle visuel.</p>
+          </div>
+        </div>
+        <div id="euPlayersList" class="diagnostic-list large"></div>
+      </article>
+    </section>
+  </main>
+
+  <div id="euLoginOverlay" class="admin-login-overlay hidden">
+    <form id="euLoginForm" class="admin-login-modal">
+      <div class="finish-badge">ADMIN</div>
+      <h2>Connexion nettoyage</h2>
+      <p>Connecte-toi avec ton compte admin Supabase.</p>
+
+      <label>
+        Email
+        <input id="euEmailInput" type="email" autocomplete="email" placeholder="ton@email.fr" required />
+      </label>
+
+      <label>
+        Mot de passe
+        <input id="euPasswordInput" type="password" autocomplete="current-password" placeholder="Mot de passe" required />
+      </label>
+
+      <p id="euLoginMessage" class="admin-login-message"></p>
+
+      <div class="finish-actions">
+        <button id="euLoginCancelBtn" class="secondary-btn" type="button">Annuler</button>
+        <button id="euLoginSubmitBtn" class="primary-btn" type="submit">Se connecter</button>
+      </div>
+    </form>
+  </div>
+
+  <script type="module" src="./europe-cleanup.js"></script>
+</body>
+</html>
