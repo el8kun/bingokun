@@ -125,7 +125,7 @@ function updateAuthUi() {
 
 async function loadSupabaseRefs() {
   const [categoriesResult, mappingsResult] = await Promise.all([
-    fetchAll("categories", "id,title,name,kicker,tags,visual_type,short_label,enabled"),
+    fetchAll("categories", "id,title,name,kicker,tags,visual_type,short_label,image,logo,visuals,enabled"),
     fetchAll("transfermarkt_club_map", "tm_id,tm_name,category_id,enabled")
   ]);
 
@@ -370,6 +370,143 @@ function getCategory(categoryId) {
   return categories.find((category) => category.id === categoryId);
 }
 
+
+function getVisualFolder(visualType = "") {
+  const map = {
+    club: "clubs",
+    flag: "flags",
+    league: "leagues",
+    trophy: "trophies",
+    special: "special"
+  };
+
+  return map[String(visualType || "").toLowerCase()] || "imported";
+}
+
+function getCategoryNumber(category = {}) {
+  const candidates = [
+    category.logo,
+    category.id,
+    category.image,
+    Array.isArray(category.visuals) ? category.visuals?.[0]?.image : ""
+  ].filter(Boolean).map(String);
+
+  for (const value of candidates) {
+    const match = value.match(/cat_(\d+)/);
+    if (match) return match[1];
+
+    const numberOnly = value.match(/(?:^|\/)(\d+)\.(?:webp|png|svg|jpg|jpeg)$/i);
+    if (numberOnly) return numberOnly[1];
+  }
+
+  return "";
+}
+
+function getCategoryImageCandidates(category = {}) {
+  const original = category.image || category.visuals?.[0]?.image || "";
+  const number = getCategoryNumber(category);
+  const folder = getVisualFolder(category.visual_type || category.visualType);
+  const candidates = [];
+
+  if (number) {
+    candidates.push(`./assets/icons/imported/${number}.webp`);
+    candidates.push(`./assets/icons/imported/cat_${number}.webp`);
+    candidates.push(`./assets/icons/${number}.webp`);
+    candidates.push(`./assets/icons/cat_${number}.webp`);
+    candidates.push(`./assets/icons/${folder}/${number}.webp`);
+    candidates.push(`./assets/icons/${folder}/cat_${number}.webp`);
+  }
+
+  if (original) candidates.push(original);
+
+  return [...new Set(candidates.filter(Boolean))];
+}
+
+window.bingoKunTmImageFallback = function bingoKunTmImageFallback(img) {
+  try {
+    const fallbacks = JSON.parse(img.dataset.fallbacks || "[]");
+    const next = fallbacks.shift();
+
+    if (!next) {
+      img.onerror = null;
+      img.style.display = "none";
+      img.parentElement?.classList.add("is-missing-logo");
+      return;
+    }
+
+    img.dataset.fallbacks = JSON.stringify(fallbacks);
+    img.src = next;
+  } catch (_error) {
+    img.onerror = null;
+    img.style.display = "none";
+    img.parentElement?.classList.add("is-missing-logo");
+  }
+};
+
+function renderCategoryLogo(category, extraClass = "") {
+  if (!category) {
+    return `<div class="tm-category-logo ${extraClass} is-missing-logo"><span>?</span></div>`;
+  }
+
+  const candidates = getCategoryImageCandidates(category);
+  const label = category.short_label || category.shortLabel || category.title || category.name || category.id || "?";
+
+  if (!candidates.length) {
+    return `<div class="tm-category-logo ${extraClass} is-missing-logo"><span>${escapeHtml(String(label).slice(0, 3).toUpperCase())}</span></div>`;
+  }
+
+  const [first, ...fallbacks] = candidates;
+
+  return `
+    <div class="tm-category-logo ${extraClass}">
+      <img
+        src="${escapeHtml(first)}"
+        data-fallbacks='${escapeHtml(JSON.stringify(fallbacks))}'
+        onerror="window.bingoKunTmImageFallback(this)"
+        alt="${escapeHtml(label)}"
+        loading="lazy"
+      />
+      <span>${escapeHtml(String(label).slice(0, 3).toUpperCase())}</span>
+    </div>
+  `;
+}
+
+function renderCategoryIdentity(category) {
+  if (!category) {
+    return `
+      <div class="tm-category-identity is-empty">
+        ${renderCategoryLogo(null)}
+        <div>
+          <strong>Ignoré</strong>
+          <span>Aucune catégorie Bingo sélectionnée</span>
+        </div>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="tm-category-identity">
+      ${renderCategoryLogo(category)}
+      <div>
+        <strong>${escapeHtml(category.title || category.name || category.id)}</strong>
+        <span>${escapeHtml(category.kicker || "Catégorie")} · ${escapeHtml(category.id)}</span>
+      </div>
+    </div>
+  `;
+}
+
+function updateMappingPreviewForClub(tmId) {
+  const row = tmClubsList.querySelector(`[data-tm-row="${CSS.escape(tmId)}"]`);
+  if (!row) return;
+
+  const select = row.querySelector(`[data-tm-select="${CSS.escape(tmId)}"]`);
+  const preview = row.querySelector("[data-category-preview]");
+  const category = getCategory(select?.value || "");
+
+  if (preview) preview.innerHTML = renderCategoryIdentity(category);
+}
+
+
 function renderClubs() {
   const rows = detectedClubs.map((club) => {
     const mapping = getMapping(club.tm_id);
@@ -378,20 +515,25 @@ function renderClubs() {
     const mappedCategory = getCategory(selectedCategoryId);
 
     return `
-      <article class="diagnostic-row ${mapping ? "good" : guessedCategory ? "warning" : "danger"}">
+      <article class="diagnostic-row tm-mapping-row ${mapping ? "good" : guessedCategory ? "warning" : "danger"}" data-tm-row="${escapeHtml(club.tm_id)}">
         <div class="tm-club-info">
           <strong>${escapeHtml(club.tm_name)}</strong>
           <span>
             Transfermarkt ID ${escapeHtml(club.tm_id)} ·
-            ${mapping ? `mappé vers ${escapeHtml(mappedCategory?.title || mapping.category_id)}` : guessedCategory ? `suggestion : ${escapeHtml(guessedCategory.title || guessedCategory.name)}` : "non mappé"}
+            ${mapping ? `mapping sauvegardé` : guessedCategory ? `suggestion automatique` : "non mappé"}
           </span>
         </div>
+
+        <div class="tm-selected-category-preview" data-category-preview>
+          ${renderCategoryIdentity(mappedCategory)}
+        </div>
+
         <div class="tm-map-controls">
           <select data-tm-select="${escapeHtml(club.tm_id)}">
             <option value="">— Ignorer —</option>
             ${clubCategories.map((category) => `
               <option value="${escapeHtml(category.id)}" ${selectedCategoryId === category.id ? "selected" : ""}>
-                ${escapeHtml(category.title || category.name || category.id)} (${escapeHtml(category.id)})
+                ${escapeHtml(category.title || category.name || category.id)} · ${escapeHtml(category.kicker || "Catégorie")} · ${escapeHtml(category.id)}
               </option>
             `).join("")}
           </select>
@@ -409,6 +551,7 @@ function renderClubs() {
 
   tmClubsList.querySelectorAll("[data-tm-select]").forEach((select) => {
     select.addEventListener("change", () => {
+      updateMappingPreviewForClub(select.dataset.tmSelect);
       renderMappingSummary();
       renderPreview();
       updateImportButton();
@@ -551,8 +694,19 @@ function renderPreview() {
       <span>ID Transfermarkt : ${escapeHtml(tmPlayerIdInput.value.trim() || "—")}</span>
       <span>Tags clubs : ${tags.length}</span>
       <span>Profil TM : ${transferData?.profile ? "détecté" : "non disponible"}</span>
-      <div class="tm-tags">
-        ${tags.length ? tags.map((tag) => `<code>${escapeHtml(tag)}</code>`).join("") : "<em>Aucun tag mappé pour l'instant.</em>"}
+      <div class="tm-tags tm-tags-visual">
+        ${tags.length ? tags.map((tag) => {
+          const category = getCategory(tag);
+          return `
+            <div class="tm-tag-visual">
+              ${renderCategoryLogo(category, "mini")}
+              <div>
+                <strong>${escapeHtml(category?.title || category?.name || tag)}</strong>
+                <span>${escapeHtml(tag)}</span>
+              </div>
+            </div>
+          `;
+        }).join("") : "<em>Aucun tag mappé pour l'instant.</em>"}
       </div>
     </div>
   `;
