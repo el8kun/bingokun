@@ -294,8 +294,8 @@ const BOARD_ROWS = 4;
 const BOARD_COLS = 5;
 const BOARD_SIZE = BOARD_ROWS * BOARD_COLS;
 const AUTO_SECONDS = 15;
-const MAX_DECK_PLAYERS = 100;
-const MIN_PLAYABLE_PLAYERS = 80;
+const MAX_DECK_PLAYERS = 65;
+const MIN_PLAYABLE_PLAYERS = 55;
 const SUDDEN_DEATH_MAX_CONSECUTIVE_SKIPS = 3;
 const SUDDEN_DEATH_MODE_LABEL = "Mort Subite";
 const MIN_PLAYERS_PER_STANDARD_CELL = 3;
@@ -549,7 +549,7 @@ function updatePresetHelp() {
     "premierleague": "Mort Subite Premier League.",
   };
 
-  presetHelp.textContent = `${labels[selectedPreset] || labels["global-normal"]} · 100 joueurs · 3 skips max · 15s = skip · une erreur élimine.`;
+  presetHelp.textContent = `${labels[selectedPreset] || labels["global-normal"]} · 65 joueurs · 3 skips max · 15s = skip · une erreur élimine.`;
 }
 
 
@@ -2920,6 +2920,65 @@ function normalizeSearch(text) {
     .trim();
 }
 
+
+function getPlayerMatchingCellIndexes(player, grid = roomData?.grid || []) {
+  return (Array.isArray(grid) ? grid : [])
+    .map((category, cellIndex) => ({ category, cellIndex }))
+    .filter(({ category }) => canPlayerFillCategory(player, category))
+    .map(({ cellIndex }) => cellIndex);
+}
+
+function getUniqueMatchingCellIndex(player, grid = roomData?.grid || []) {
+  const matches = getPlayerMatchingCellIndexes(player, grid);
+  return matches.length === 1 ? matches[0] : null;
+}
+
+function isSingleCellPlayer(player, grid = roomData?.grid || []) {
+  return getUniqueMatchingCellIndex(player, grid) !== null;
+}
+
+function getDeckSpacingScore(player, grid = roomData?.grid || []) {
+  const matches = getPlayerMatchingCellIndexes(player, grid).length;
+  // Plus le score est haut, plus le joueur est facile à placer.
+  // 0/1 = joueur dangereux, 2 = moyen, 3+ = flexible.
+  return Math.min(4, matches);
+}
+
+function reorderDeckAvoidingSameUniqueCellStreaks(deck, grid = roomData?.grid || []) {
+  const remaining = [...deck];
+  const ordered = [];
+  let previousUniqueCellIndex = null;
+
+  while (remaining.length) {
+    let chosenIndex = -1;
+
+    if (previousUniqueCellIndex !== null) {
+      // Cas précis demandé : éviter deux joueurs à tag/case unique identique à la suite.
+      // Exemple : joueur A ne peut aller que sur OM, joueur B ne peut aller que sur OM -> on sépare.
+      chosenIndex = remaining.findIndex((player) => getUniqueMatchingCellIndex(player, grid) !== previousUniqueCellIndex);
+    }
+
+    if (chosenIndex < 0) {
+      // Si tout ce qui reste bloque le même tag unique, on prend quand même le plus flexible possible.
+      let bestScore = -1;
+      for (let index = 0; index < remaining.length; index++) {
+        const score = getDeckSpacingScore(remaining[index], grid);
+        if (score > bestScore) {
+          bestScore = score;
+          chosenIndex = index;
+        }
+      }
+    }
+
+    const [chosen] = remaining.splice(chosenIndex, 1);
+    ordered.push(chosen);
+    previousUniqueCellIndex = getUniqueMatchingCellIndex(chosen, grid);
+  }
+
+  return ordered;
+}
+
+
 function buildDeck(grid, playablePlayers, maxDeckSize = MAX_DECK_PLAYERS, preset = selectedPreset) {
   const selected = new Map();
 
@@ -2971,7 +3030,8 @@ function buildDeck(grid, playablePlayers, maxDeckSize = MAX_DECK_PLAYERS, preset
     usedIds.add(player.id);
   }
 
-  return shuffle(deck).slice(0, maxDeckSize);
+  const shuffledDeck = shuffle(deck).slice(0, maxDeckSize);
+  return reorderDeckAvoidingSameUniqueCellStreaks(shuffledDeck, grid);
 }
 
 function canPlayerFillAnyCell(player, grid) {
