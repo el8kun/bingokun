@@ -4960,3 +4960,14 @@ body.overlay-open {
   25% { transform: translateX(-3px); }
   75% { transform: translateX(3px); }
 }
+
+
+/* Bingo Kun v88 — Mort Subite classement live */
+#refreshSuddenRankingBtn {
+  border-color: rgba(44,245,198,.35);
+}
+
+#refreshSuddenRankingBtn[disabled] {
+  opacity: .7;
+  cursor: wait;
+}

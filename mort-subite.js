@@ -353,6 +353,7 @@ const currentPlayerSublineEl = $("currentPlayerSubline");
 const playedPlayersListEl = $("playedPlayersList");
 const openFinishRecapBtn = $("openFinishRecapBtn");
 const openFinishRankingBtn = $("openFinishRankingBtn");
+const refreshSuddenRankingBtn = $("refreshSuddenRankingBtn");
 const historyReopenHint = $("historyReopenHint");
 const rankingReopenHint = $("rankingReopenHint");
 const globalTimerTextEl = $("globalTimerText");
@@ -667,6 +668,8 @@ openFinishRankingBtn?.addEventListener("click", () => {
     showFinishOverlay();
   }
 });
+
+refreshSuddenRankingBtn?.addEventListener("click", () => refreshSuddenDeathRanking(true));
 
 gridModeSelect?.addEventListener("change", renderCustomBuilder);
 customCategorySearch?.addEventListener("input", () => {
@@ -1201,6 +1204,36 @@ async function loadParticipantsOnce(reason = "") {
 }
 
 
+async function refreshSuddenDeathRanking(manual = false) {
+  if (!currentRoomCode || participantsLoadingOnce) return;
+
+  if (manual && refreshSuddenRankingBtn) {
+    refreshSuddenRankingBtn.disabled = true;
+    refreshSuddenRankingBtn.textContent = "Refresh...";
+  }
+
+  try {
+    participantsData = await supabaseLoadParticipants(currentRoomCode);
+    mergeMyParticipantData();
+    participantsLoadedForFinish = true;
+    renderLeaderboard(participantsData);
+    renderFinishRanking();
+
+    if (manual) {
+      setMessage("Classement mis à jour.", "good");
+    }
+  } catch (error) {
+    console.warn("Refresh classement Mort Subite impossible :", error);
+    if (manual) setMessage("Impossible de rafraîchir le classement.", "bad");
+  } finally {
+    if (manual && refreshSuddenRankingBtn) {
+      refreshSuddenRankingBtn.disabled = false;
+      refreshSuddenRankingBtn.textContent = "Refresh classement";
+    }
+  }
+}
+
+
 
 function renderViews() {
   if (!roomData || !myData) return;
@@ -1395,7 +1428,7 @@ function renderGame() {
   renderPlayedPlayers(currentIndex);
 
   if (finished) {
-    if (!participantsLoadedForFinish && !participantsLoadingOnce) {
+    if (!participantsLoadingOnce) {
       loadParticipantsOnce("finish");
     }
 
@@ -1417,6 +1450,7 @@ function renderGame() {
     updateFinishOverlay(finalScore, finalBingos, invalidCount, accuracy, myRank, participantsData.length, finalScoreMax, finalValidCells);
     if (historyReopenHint) historyReopenHint.classList.remove("hidden");
     if (rankingReopenHint) rankingReopenHint.classList.remove("hidden");
+    if (refreshSuddenRankingBtn) refreshSuddenRankingBtn.classList.remove("hidden");
     ensureResultSaved(board, finalScore, myData.bingos || []);
     if (!hasShownFinishOverlay) {
       showFinishOverlay();
@@ -1431,6 +1465,7 @@ function renderGame() {
     hideFinishOverlay();
     if (historyReopenHint) historyReopenHint.classList.add("hidden");
     if (rankingReopenHint) rankingReopenHint.classList.add("hidden");
+    if (refreshSuddenRankingBtn) refreshSuddenRankingBtn.classList.add("hidden");
   }
 
   renderBoardIfNeeded(currentPlayer);
@@ -2195,7 +2230,16 @@ function startTimers() {
   }, 250);
 
   playerAutoInterval = setInterval(() => {
-    if (!roomData || roomData.status !== "playing" || !myData || myData.finished) return;
+    if (!roomData || roomData.status !== "playing" || !myData) return;
+
+    if (myData.finished) {
+      const now = Date.now();
+      if (now - lastAutoAdvanceAt < 2500) return;
+      lastAutoAdvanceAt = now;
+      refreshSuddenDeathRanking(false);
+      return;
+    }
+
     clearStaleActionLock();
     if (actionInProgress) return;
     if (!getCurrentPlayer()) return;
