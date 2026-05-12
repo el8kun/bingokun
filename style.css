@@ -4971,3 +4971,158 @@ body.overlay-open {
   opacity: .7;
   cursor: wait;
 }
+
+
+/* Bingo Kun v89 — Mort Subite fin de partie plus compacte */
+.finish-overlay {
+  overflow-y: auto;
+  align-items: center;
+}
+
+.finish-modal-ranking,
+.finish-modal-recap {
+  width: min(760px, 100%);
+  max-height: calc(100dvh - 28px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.finish-modal-recap {
+  width: min(880px, 100%);
+}
+
+.finish-ranking,
+.finish-recap.recap-only {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.finish-ranking-list,
+.finish-recap-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none !important;
+}
+
+.finish-actions {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255,255,255,.08);
+  flex-shrink: 0;
+}
+
+@media (max-width: 900px) {
+  .finish-modal-ranking,
+  .finish-modal-recap {
+    max-height: calc(100dvh - 18px);
+    padding: 20px;
+    border-radius: 22px;
+  }
+
+  .finish-modal h2 {
+    font-size: clamp(1.8rem, 4.8vw, 2.8rem);
+  }
+
+  .finish-stats div {
+    padding: 12px;
+  }
+
+  .finish-stats strong {
+    font-size: 1.3rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .finish-overlay {
+    padding: 10px;
+  }
+
+  .finish-modal-ranking,
+  .finish-modal-recap {
+    max-height: calc(100dvh - 12px);
+    padding: 16px;
+    border-radius: 18px;
+  }
+
+  .finish-rankline {
+    margin-top: 14px;
+    padding: 12px 14px;
+  }
+
+  .finish-ranking-row {
+    grid-template-columns: 34px minmax(0, 1fr) auto;
+    gap: 8px;
+    padding: 9px;
+  }
+
+  .finish-ranking-player strong {
+    font-size: .95rem;
+  }
+
+  .finish-ranking-player small {
+    font-size: .72rem;
+  }
+}
+
+
+/* Bingo Kun v90 — Qualité joueurs */
+.quality-page .quality-stats {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.quality-row em {
+  display: block;
+  margin-top: 6px;
+  color: var(--muted);
+  font-style: normal;
+  font-size: .78rem;
+}
+
+.quality-row.level-5,
+.quality-row.level-4 {
+  border-color: rgba(44,245,198,.35);
+}
+
+.quality-row.level-3 {
+  border-color: rgba(255,189,33,.32);
+}
+
+.quality-row.level-0,
+.quality-row.level-1 {
+  border-color: rgba(255,94,115,.35);
+  background: rgba(255,94,115,.06);
+}
+
+.quality-rules {
+  display: grid;
+  gap: 10px;
+}
+
+.quality-rules div {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.045);
+}
+
+.quality-rules strong {
+  color: var(--cyan);
+  font-size: 1.1rem;
+}
+
+.danger-soft {
+  border-color: rgba(255,94,115,.35) !important;
+}
+
+@media (max-width: 760px) {
+  .quality-page .quality-stats {
+    grid-template-columns: 1fr;
+  }
+}

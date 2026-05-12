@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bingo Kun — Qualité joueurs</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <main class="admin-page supabase-diagnostic-page quality-page">
+    <section class="admin-hero">
+      <div>
+        <p class="mini-title">BDD</p>
+        <h1>Qualité des joueurs</h1>
+        <p>
+          Calcule un niveau de notoriété pour éviter trop de noms inconnus dans les decks.
+          Première version de test : on ne supprime rien, on classe et tu peux désactiver les niveaux trop faibles.
+        </p>
+      </div>
+      <div class="admin-actions">
+        <a class="secondary-btn" href="./index.html">Retour site</a>
+        <a class="secondary-btn" href="./admin.html">Admin</a>
+        <a class="secondary-btn" href="./supabase-diagnostic.html">Diagnostic BDD</a>
+        <button id="qualityLoginBtn" class="secondary-btn" type="button">Connexion admin</button>
+        <button id="qualityLogoutBtn" class="secondary-btn hidden" type="button">Déconnexion</button>
+      </div>
+    </section>
+
+    <section class="admin-panel">
+      <p id="qualityAuthStatus" class="admin-status">Lecture seule — connecte-toi en admin.</p>
+      <p id="qualityStatus" class="admin-status">Prêt.</p>
+
+      <div class="admin-live-grid diagnostic-stats quality-stats">
+        <div><span>Joueurs chargés</span><strong id="qualityTotalPlayers">—</strong></div>
+        <div><span>Stars 5</span><strong id="qualityLevel5">—</strong></div>
+        <div><span>Connus 4</span><strong id="qualityLevel4">—</strong></div>
+        <div><span>Jouables 3</span><strong id="qualityLevel3">—</strong></div>
+        <div><span>Niche 2</span><strong id="qualityLevel2">—</strong></div>
+        <div><span>Obscurs 0-1</span><strong id="qualityLevelLow">—</strong></div>
+      </div>
+
+      <div class="admin-actions tm-actions">
+        <button id="qualityLoadBtn" class="primary-btn" type="button">Charger & calculer</button>
+        <button id="qualitySaveBtn" class="secondary-btn" type="button" disabled>Enregistrer les scores</button>
+        <button id="qualityDisable01Btn" class="secondary-btn danger-soft" type="button" disabled>Désactiver niveau 0-1</button>
+        <button id="qualityDisable02Btn" class="secondary-btn danger-soft" type="button" disabled>Désactiver niveau 0-2</button>
+        <button id="qualityEnable3Btn" class="secondary-btn" type="button" disabled>Réactiver niveau 3+</button>
+      </div>
+
+      <p class="hint">
+        Conseil : pour commencer, teste seulement “Enregistrer les scores”. Ensuite regarde la liste avant de désactiver.
+      </p>
+    </section>
+
+    <section class="diagnostic-grid">
+      <article class="admin-panel">
+        <div class="diagnostic-head">
+          <div>
+            <p class="mini-title">Obscurs</p>
+            <h2>Niveau 0-1</h2>
+            <p>Joueurs que le jeu devrait éviter en live classique. Preview limitée aux 400 premiers.</p>
+          </div>
+        </div>
+        <div id="qualityLowList" class="diagnostic-list large"></div>
+      </article>
+
+      <article class="admin-panel">
+        <div class="diagnostic-head">
+          <div>
+            <p class="mini-title">Jouables + connus</p>
+            <h2>Niveau 3, 4 et 5</h2>
+            <p>Ceux à privilégier pour Bingo normal et Mort Subite.</p>
+          </div>
+        </div>
+        <div id="qualityGoodList" class="diagnostic-list large"></div>
+      </article>
+    </section>
+
+    <section class="admin-panel">
+      <div class="diagnostic-head">
+        <div>
+          <p class="mini-title">Barème v1</p>
+          <h2>Comment le niveau est calculé</h2>
+        </div>
+      </div>
+      <div class="quality-rules">
+        <div><strong>+4</strong><span>club mondial type Real, Barça, Bayern, Milan, Liverpool, PSG...</span></div>
+        <div><strong>+3</strong><span>compétition ou trophée majeur : LDC, Coupe du Monde, Euro, Copa...</span></div>
+        <div><strong>+3</strong><span>catégorie Big 5 / championnat majeur</span></div>
+        <div><strong>+2</strong><span>plusieurs grands clubs ou beaucoup de tags</span></div>
+        <div><strong>-2</strong><span>très peu de tags ou profil trop pauvre</span></div>
+      </div>
+    </section>
+  </main>
+
+  <div id="qualityLoginOverlay" class="admin-login-overlay hidden">
+    <form id="qualityLoginForm" class="admin-login-modal">
+      <div class="finish-badge">ADMIN</div>
+      <h2>Connexion Qualité</h2>
+      <p>Connecte-toi avec ton compte admin Supabase.</p>
+
+      <label>
+        Email
+        <input id="qualityEmailInput" type="email" autocomplete="email" placeholder="ton@email.fr" required />
+      </label>
+
+      <label>
+        Mot de passe
+        <input id="qualityPasswordInput" type="password" autocomplete="current-password" placeholder="Mot de passe" required />
+      </label>
+
+      <p id="qualityLoginMessage" class="admin-login-message"></p>
+
+      <div class="finish-actions">
+        <button id="qualityLoginCancelBtn" class="secondary-btn" type="button">Annuler</button>
+        <button id="qualityLoginSubmitBtn" class="primary-btn" type="submit">Se connecter</button>
+      </div>
+    </form>
+  </div>
+
+  <script type="module" src="./player-quality.js"></script>
+</body>
+</html>
