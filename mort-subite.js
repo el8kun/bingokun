@@ -548,7 +548,7 @@ function updatePresetHelp() {
     "premierleague": "Mort Subite Premier League.",
   };
 
-  presetHelp.textContent = `${labels[selectedPreset] || labels["global-normal"]} · 100 joueurs · 3 skips max · une erreur élimine.`;
+  presetHelp.textContent = `${labels[selectedPreset] || labels["global-normal"]} · 100 joueurs · 3 skips max · 15s = skip · une erreur élimine.`;
 }
 
 
@@ -2203,7 +2203,8 @@ function startTimers() {
       const now = Date.now();
       if (now - lastAutoAdvanceAt < 2000) return;
       lastAutoAdvanceAt = now;
-      advanceMyPlayer(false);
+      // Mort Subite : laisser filer les 15 secondes compte comme un skip.
+      advanceMyPlayer(true);
     }
   }, 1000);
 }
