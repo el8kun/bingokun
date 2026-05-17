@@ -286,7 +286,7 @@ async function loadDatabaseOverrides(force = false) {
 const BOARD_ROWS = 4;
 const BOARD_COLS = 5;
 const BOARD_SIZE = BOARD_ROWS * BOARD_COLS;
-const AUTO_SECONDS = 15;
+const AUTO_SECONDS = 10;
 const MAX_DECK_PLAYERS = 65;
 const MIN_PLAYABLE_PLAYERS = 55;
 const SUDDEN_DEATH_MAX_CONSECUTIVE_SKIPS = 3;
@@ -542,7 +542,7 @@ function updatePresetHelp() {
     "premierleague": "Mort Subite Premier League.",
   };
 
-  presetHelp.textContent = `${labels[selectedPreset] || labels["global-normal"]} · 65 joueurs · 3 skips max · 15s = skip · une erreur élimine.`;
+  presetHelp.textContent = `${labels[selectedPreset] || labels["global-normal"]} · 65 joueurs · 3 skips max · 10s = skip · une erreur élimine.`;
 }
 
 
@@ -1421,7 +1421,7 @@ function renderGame() {
   renderPlayedPlayers(currentIndex);
 
   if (finished) {
-    if (!participantsLoadingOnce) {
+    if (!participantsLoadedForFinish && !participantsLoadingOnce) {
       loadParticipantsOnce("finish");
     }
 
@@ -2247,14 +2247,6 @@ function startTimers() {
   playerAutoInterval = setInterval(() => {
     if (!roomData || roomData.status !== "playing" || !myData) return;
 
-    if (myData.finished) {
-      const now = Date.now();
-      if (now - lastAutoAdvanceAt < 2500) return;
-      lastAutoAdvanceAt = now;
-      refreshSuddenDeathRanking(false);
-      return;
-    }
-
     clearStaleActionLock();
     if (actionInProgress) return;
     if (!getCurrentPlayer()) return;
@@ -2262,7 +2254,7 @@ function startTimers() {
       const now = Date.now();
       if (now - lastAutoAdvanceAt < 2000) return;
       lastAutoAdvanceAt = now;
-      // Mort Subite : laisser filer les 15 secondes compte comme un skip.
+      // Mort Subite : laisser filer les 10 secondes compte comme un skip.
       advanceMyPlayer(true);
     }
   }, 1000);

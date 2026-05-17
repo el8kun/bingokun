@@ -5126,3 +5126,14 @@ body.overlay-open {
     grid-template-columns: 1fr;
   }
 }
+
+
+/* Bingo Kun v96 — Mort Subite 10s + refresh manuel */
+#refreshSuddenRankingBtn {
+  border-color: rgba(44,245,198,.35);
+}
+
+#refreshSuddenRankingBtn[disabled] {
+  opacity: .7;
+  cursor: wait;
+}
