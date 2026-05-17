@@ -265,25 +265,18 @@ let databaseOverridesLoaded = false;
 async function loadDatabaseOverrides(force = false) {
   if (databaseOverridesLoaded && !force) return;
 
+  // URGENCE v95 ANTI-EGRESS :
+  // Le jeu ne charge plus toute la BDD players/categories depuis Supabase.
+  // Supabase reste utilisé pour les rooms, participants et résultats.
+  // La BDD de jeu vient de data.js, servi par GitHub Pages, pour éviter de cramer l'egress Supabase.
   ACTIVE_PLAYERS = clonePlayers(PLAYERS);
   ACTIVE_CATEGORIES = cloneCategories(CATEGORIES);
-
-  let loadedFromSupabase = false;
-
-  try {
-    loadedFromSupabase = await loadSupabaseDatabase();
-  } catch (error) {
-    console.warn("Bingo Kun : impossible de charger Supabase, fallback data.js.", error);
-    loadedFromSupabase = false;
-    ACTIVE_PLAYERS = clonePlayers(PLAYERS);
-    ACTIVE_CATEGORIES = cloneCategories(CATEGORIES);
-  }
 
   categoryMatchCache = new Map();
   databaseOverridesLoaded = true;
 
   if (presetHelp) {
-    const source = loadedFromSupabase ? "Données : Supabase" : "Données : data.js secours";
+    const source = "Données : data.js local — Supabase économisé";
     if (!presetHelp.textContent.includes("Données :")) {
       presetHelp.textContent = `${presetHelp.textContent || ""} · ${source}`;
     }
@@ -1735,11 +1728,52 @@ function renderCategoryVisual(category) {
   `;
 }
 
+
+function buildSuddenDeathFinishPayload(board, reason = "wrong_answer") {
+  return {
+    board,
+    filledCount: getBoardFilledCount(board),
+    finished: true,
+    finalScore: calculateBoardScore(board, roomData.grid),
+    validCells: countValidCells(board),
+    scoreMax: getMaxBoardScore(roomData.grid),
+    bingos: calculateBingos(board),
+    finishReason: reason,
+    resultSaved: false,
+    finishedAt: nowIso()
+  };
+}
+
+async function commitParticipantUpdate(updatePayload, immediateMessage = "", messageType = "good") {
+  // Mise à jour locale immédiate, avant Supabase.
+  // Comme ça, en Mort Subite, l'écran se bloque tout de suite même si le réseau est lent.
+  myData = {
+    ...myData,
+    ...updatePayload,
+    currentStartedAt: updatePayload.currentStartedAt || myData?.currentStartedAt
+  };
+  mergeMyParticipantData();
+  lastBoardRenderKey = "";
+  renderViews();
+
+  if (immediateMessage) {
+    setMessage(immediateMessage, messageType);
+  }
+
+  await supabaseUpdateParticipant(updatePayload);
+}
+
+
 async function placeCurrentPlayer(cellIndex) {
   if (!roomData || !myData || roomData.status !== "playing" || myData.finished) return;
+
   await runPlayerAction(async () => {
     const currentPlayer = getCurrentPlayer();
-    if (!currentPlayer) return;
+
+    if (!currentPlayer) {
+      await finishParticipant("deck_finished");
+      return;
+    }
 
     const board = myData.board || {};
 
@@ -1750,12 +1784,22 @@ async function placeCurrentPlayer(cellIndex) {
 
     const playerAlreadyUsed = getBoardCellValues(board).some((move) => move.playerId === currentPlayer.id);
     if (playerAlreadyUsed) {
-      setMessage("Tu as déjà utilisé ce joueur sur ta grille.", "bad");
+      // Cas très rare, mais en Mort Subite on bloque net pour éviter toute faille.
+      const finishedBoard = setBoardMeta(board, { lastError: "player_already_used" });
+      const payload = buildSuddenDeathFinishPayload(finishedBoard, "wrong_answer");
+      await commitParticipantUpdate(payload, "Mort Subite : joueur déjà utilisé, partie terminée.", "bad");
       return;
     }
 
     const category = roomData.grid[cellIndex];
-    const isValid = canPlayerFillCategory(currentPlayer, category);
+
+    let isValid = false;
+    try {
+      isValid = Boolean(canPlayerFillCategory(currentPlayer, category));
+    } catch (error) {
+      console.warn("Erreur validation joueur/catégorie :", error);
+      isValid = false;
+    }
 
     let newBoard = {
       ...board,
@@ -1773,65 +1817,36 @@ async function placeCurrentPlayer(cellIndex) {
     }
 
     const filledCount = getBoardFilledCount(newBoard);
+
+    if (!isValid) {
+      const payload = buildSuddenDeathFinishPayload(newBoard, "wrong_answer");
+      await commitParticipantUpdate(payload, "Mort Subite : mauvaise réponse, partie terminée.", "bad");
+      return;
+    }
+
     const updatePayload = {
       board: newBoard,
       filledCount
     };
 
-    if (!isValid) {
-      const finalScore = calculateBoardScore(newBoard, roomData.grid);
-      updatePayload.finished = true;
-      updatePayload.finalScore = finalScore;
-      updatePayload.validCells = countValidCells(newBoard);
-      updatePayload.scoreMax = getMaxBoardScore(roomData.grid);
-      updatePayload.bingos = calculateBingos(newBoard);
-      updatePayload.finishReason = "wrong_answer";
-      updatePayload.resultSaved = false;
-      updatePayload.finishedAt = nowIso();
-      setMessage("Mort Subite : mauvaise réponse, partie terminée.", "bad");
-    } else if (filledCount >= BOARD_SIZE) {
-      const finalScore = calculateBoardScore(newBoard, roomData.grid);
-      updatePayload.finished = true;
-      updatePayload.finalScore = finalScore;
-      updatePayload.validCells = countValidCells(newBoard);
-      updatePayload.scoreMax = getMaxBoardScore(roomData.grid);
-      updatePayload.bingos = calculateBingos(newBoard);
-      updatePayload.finishReason = "grid_completed";
-      updatePayload.resultSaved = false;
-      updatePayload.finishedAt = nowIso();
-      setMessage("Mort Subite : grille complète, score verrouillé !", "good");
-    } else {
-      const deckLength = roomData.deck?.length || 0;
-      const nextIndex = Math.min(getMyCurrentIndex() + 1, deckLength);
-      updatePayload.currentIndex = nextIndex;
-      updatePayload.currentStartedAt = nowIso();
-
-      if (nextIndex >= deckLength) {
-        const finalScore = calculateBoardScore(newBoard, roomData.grid);
-        updatePayload.finished = true;
-        updatePayload.finalScore = finalScore;
-        updatePayload.validCells = countValidCells(newBoard);
-        updatePayload.scoreMax = getMaxBoardScore(roomData.grid);
-        updatePayload.bingos = calculateBingos(newBoard);
-        updatePayload.finishReason = "sudden_death_clear";
-        updatePayload.resultSaved = false;
-        updatePayload.finishedAt = nowIso();
-        setMessage("Mort Subite réussie ! Tu as survécu au deck.", "good");
-      } else {
-        setMessage("Bon placement ! Skips remis à zéro.", "good");
-      }
+    if (filledCount >= BOARD_SIZE) {
+      Object.assign(updatePayload, buildSuddenDeathFinishPayload(newBoard, "grid_completed"));
+      await commitParticipantUpdate(updatePayload, "Mort Subite : grille complète, score verrouillé !", "good");
+      return;
     }
 
-    await supabaseUpdateParticipant(updatePayload);
+    const deckLength = roomData.deck?.length || 0;
+    const nextIndex = Math.min(getMyCurrentIndex() + 1, deckLength);
+    updatePayload.currentIndex = nextIndex;
+    updatePayload.currentStartedAt = nowIso();
 
-    myData = {
-      ...myData,
-      ...updatePayload,
-      currentStartedAt: updatePayload.currentStartedAt || myData.currentStartedAt
-    };
-    mergeMyParticipantData();
-    lastBoardRenderKey = "";
-    renderViews();
+    if (nextIndex >= deckLength) {
+      Object.assign(updatePayload, buildSuddenDeathFinishPayload(newBoard, "sudden_death_clear"));
+      await commitParticipantUpdate(updatePayload, "Mort Subite réussie ! Tu as survécu au deck.", "good");
+      return;
+    }
+
+    await commitParticipantUpdate(updatePayload, "Bon placement ! Skips remis à zéro.", "good");
   });
 }
 
@@ -3039,10 +3054,18 @@ function canPlayerFillAnyCell(player, grid) {
 }
 
 function canPlayerFillCategory(player, category) {
-  if (!category?.tags?.length) return false;
-  const mode = category.match || "any";
-  if (mode === "all") return category.tags.every((tag) => player.tags.includes(tag));
-  return category.tags.some((tag) => player.tags.includes(tag));
+  const categoryTags = Array.isArray(category?.tags) ? category.tags : [];
+  const playerTags = Array.isArray(player?.tags) ? player.tags : [];
+
+  if (!categoryTags.length || !playerTags.length) return false;
+
+  const mode = category.match || category.matchRule || category.match_rule || "any";
+
+  if (mode === "all") {
+    return categoryTags.every((tag) => playerTags.includes(tag));
+  }
+
+  return categoryTags.some((tag) => playerTags.includes(tag));
 }
 
 function getPlayerName() {

@@ -252,25 +252,18 @@ let databaseOverridesLoaded = false;
 async function loadDatabaseOverrides(force = false) {
   if (databaseOverridesLoaded && !force) return;
 
+  // URGENCE v95 ANTI-EGRESS :
+  // Le jeu ne charge plus toute la BDD players/categories depuis Supabase.
+  // Supabase reste utilisé pour les rooms, participants et résultats.
+  // La BDD de jeu vient de data.js, servi par GitHub Pages, pour éviter de cramer l'egress Supabase.
   ACTIVE_PLAYERS = clonePlayers(PLAYERS);
   ACTIVE_CATEGORIES = cloneCategories(CATEGORIES);
-
-  let loadedFromSupabase = false;
-
-  try {
-    loadedFromSupabase = await loadSupabaseDatabase();
-  } catch (error) {
-    console.warn("Bingo Kun : impossible de charger Supabase, fallback data.js.", error);
-    loadedFromSupabase = false;
-    ACTIVE_PLAYERS = clonePlayers(PLAYERS);
-    ACTIVE_CATEGORIES = cloneCategories(CATEGORIES);
-  }
 
   categoryMatchCache = new Map();
   databaseOverridesLoaded = true;
 
   if (presetHelp) {
-    const source = loadedFromSupabase ? "Données : Supabase" : "Données : data.js secours";
+    const source = "Données : data.js local — Supabase économisé";
     if (!presetHelp.textContent.includes("Données :")) {
       presetHelp.textContent = `${presetHelp.textContent || ""} · ${source}`;
     }
