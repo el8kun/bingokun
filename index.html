@@ -24,25 +24,16 @@
           Room <strong id="roomCodeDisplay">----</strong>
           <button id="copyRoomBtn" type="button">Copier</button>
         </div>
-        <div class="admin-auth-line">
-          <button id="adminLoginBtn" class="tiny-btn" type="button">Connexion admin</button>
-          <button id="adminLogoutBtn" class="tiny-btn hidden" type="button">Déconnexion</button>
-          <span id="adminAuthStatus">Mode joueur</span>
-        </div>
       </div>
     </div>
 
     <div class="brand-title">
       <strong>BINGO KUN</strong>
       <span>🔥</span>
-      <div class="header-links">
-        <a href="./classement.html">Classement</a>
-        <a id="adminHeaderLink" class="hidden" href="./admin.html">Admin</a>
-      </div>
     </div>
   </header>
 
-  <div id="topTimer" class="top-timer hidden">
+  <div class="top-timer">
     <div class="timer-count" id="globalTimerText">15s</div>
     <div class="top-timer-track">
       <div id="globalTimerBar" class="top-timer-bar"></div>
@@ -53,121 +44,30 @@
     <section id="setupView" class="setup-screen">
       <div class="setup-hero">
         <p class="mini-title">Bingo foot multijoueur · 5x5</p>
-        <h1>Crée une room, attends ton chat, puis lance la partie.</h1>
+        <h1>Crée une room, partage le code, et joue avec ton chat.</h1>
         <p>
-          La grille et la liste des 75 joueurs sont communes à tous.
-          Ensuite, chaque joueur avance à son propre rythme : placer ou passer un joueur ne change rien pour les autres.
+          Les joueurs défilent automatiquement toutes les 15 secondes.
+          Chaque viewer remplit sa grille, mais le verdict reste caché jusqu’à la fin.
         </p>
       </div>
 
       <div class="setup-card">
         <h2>Lancer une partie</h2>
-        <div id="creatorLockedNotice" class="creator-locked-notice">
-          Connecte-toi en admin pour créer une room. Les viewers peuvent uniquement rejoindre une room existante.
-        </div>
 
         <label for="playerName">Ton pseudo</label>
         <input id="playerName" maxlength="20" placeholder="Ex : Kun" autocomplete="nickname" />
 
-        <label for="presetMode">Type de partie</label>
-        <select id="presetMode" class="setup-select">
-          <option value="kun-challenge">Kun Challenge — mode live équilibré</option>
-          <option value="global-normal">Global normal — connu et équilibré</option>
-          <option value="global-easy">Global facile — stars + grands clubs</option>
-          <option value="global-hard">Global difficile — plus large</option>
-          <option value="ligue1">Ligue 1 — joueurs passés en L1</option>
-          <option value="premierleague">Premier League — joueurs passés en PL</option>
-          <option value="theme-ldc">Thème du jour — Ligue des Champions</option>
-          <option value="theme-2000s">Thème du jour — Années 2000</option>
-          <option value="theme-brazil">Thème du jour — Brésil</option>
-        </select>
-        <p id="presetHelp" class="hint preset-help">Kun Challenge est le mode conseillé pour les lives.</p>
-<label for="gridMode">Mode de grille</label>
-        <select id="gridMode" class="setup-select">
-          <option value="random">Grille aléatoire</option>
-          <option value="custom">Bingo custom</option>
-        </select>
-
-        <div id="customBuilder" class="custom-builder hidden">
-          <div class="custom-builder-head">
-            <div>
-              <strong>Choisis tes cases</strong>
-              <span id="customCount">0 / 20 cases</span>
-            </div>
-            <button id="customClearBtn" class="tiny-btn" type="button">Vider</button>
-          </div>
-
-          <input id="customCategorySearch" placeholder="Cherche OM, PSG, France, LDC, gardien..." autocomplete="off" />
-
-          <div class="custom-builder-actions">
-            <button id="customAutoBtn" class="secondary-btn" type="button">Compléter automatiquement</button>
-          </div>
-
-          <div id="customSelectedGrid" class="custom-selected-grid"></div>
-          <div id="customSearchResults" class="custom-search-results"></div>
-
-          <p class="hint custom-hint">Tu peux choisir 1 à 20 cases. Si tu n’en mets pas 20, le jeu complète automatiquement la grille.</p>
-        </div>
-
-        <button id="createRoomBtn" class="primary-btn" type="button">Créer une room</button>
+        <button id="createRoomBtn" class="primary-btn" type="button">Créer une partie</button>
 
         <div class="separator"><span>ou</span></div>
-
-        <button id="joinLiveRoomBtn" class="secondary-btn live-room-btn hidden" type="button">Rejoindre la room du live</button>
 
         <div class="join-row">
           <input id="joinCode" maxlength="6" placeholder="Code room" />
           <button id="joinRoomBtn" class="secondary-btn" type="button">Rejoindre</button>
         </div>
 
-        <p class="hint">La partie démarre seulement quand le créateur clique sur “Lancer la partie”.</p>
-        <div class="quick-links">
-          <a href="./classement.html">Voir le classement mensuel</a>
-          <a href="./admin.html">Base admin</a>
-        </div>
+        <p class="hint">Le créateur doit garder l’onglet ouvert pour le défilement automatique.</p>
       </div>
-    </section>
-
-    <section id="waitingView" class="waiting-screen hidden">
-      <div class="waiting-hero">
-        <p class="mini-title">Salle d'attente</p>
-        <h1>Room <span id="waitingRoomCodeDisplay">----</span></h1>
-        <p id="waitingHostHint">En attente du créateur de la room.</p>
-
-        <div class="waiting-actions">
-          <button id="copyWaitingRoomBtn" class="secondary-btn" type="button">Copier le code</button>
-          <button id="startGameBtn" class="primary-btn hidden" type="button">Lancer la partie</button>
-        </div>
-
-        <div class="waiting-stats">
-          <div>
-            <span>Joueurs</span>
-            <strong id="waitingPlayerCount">0 joueur</strong>
-          </div>
-          <div>
-            <span>Grille</span>
-            <strong id="waitingGridInfo">20 cases</strong>
-          </div>
-          <div>
-            <span>Deck</span>
-            <strong id="waitingDeckInfo">75 joueurs</strong>
-          </div>
-          <div>
-            <span>Minimum</span>
-            <strong id="waitingPlayableInfo">65 jouables</strong>
-          </div>
-          <div>
-            <span>Mode</span>
-            <strong id="waitingModeInfo">Kun Challenge</strong>
-          </div>
-        </div>
-      </div>
-
-      <aside class="waiting-card">
-        <p class="side-title">Joueurs dans la room</p>
-        <div id="waitingPlayersList" class="waiting-players-list"></div>
-        <button id="leaveWaitingRoomBtn" class="leave-btn" type="button">Quitter la room</button>
-      </aside>
     </section>
 
     <section id="gameView" class="game-screen hidden">
@@ -180,27 +80,12 @@
             </div>
 
             <div class="current-player-info">
-              <div class="player-card-topline">
-                <span id="playerCounterBadge" class="player-counter-badge">Joueur 1 / 75</span>
-                <span id="compactScoreDisplay" class="compact-score-badge">0/20</span>
-                <span class="live-badge"><span></span> TON TOUR</span>
-              </div>
-
-              <div class="current-player-main">
-                <div id="currentPlayerInitials" class="current-player-initials">?</div>
-                <div>
-                  <p>Joueur actuel</p>
-                  <h2 id="currentPlayerName">—</h2>
-                </div>
-              </div>
-
-              <div id="currentPlayerSubline" class="current-player-subline">
-                Clique une case vide pour placer ce joueur.
-              </div>
+              <p>Joueur actuel</p>
+              <h2 id="currentPlayerName">—</h2>
             </div>
 
             <button id="nextPlayerBtn" class="skip-btn hidden" type="button">
-              PASSER ▶
+              SKIP ▶
             </button>
           </div>
 
@@ -221,7 +106,7 @@
           <p class="side-title">Ta grille</p>
           <div class="side-stat">
             <span>Cases remplies</span>
-            <strong id="myFilled">0 / 20</strong>
+            <strong id="myFilled">0 / 25</strong>
           </div>
 
           <div class="side-stat">
@@ -229,177 +114,63 @@
             <strong id="playersRemaining">75</strong>
           </div>
 
-          <div class="side-stat emphasis-stat">
-            <span>Bingos validés</span>
-            <strong id="liveBingos">0</strong>
-          </div>
-
-          <div class="side-stat emphasis-stat">
-            <span>Rang live</span>
-            <strong id="myRank">#-</strong>
-          </div>
-
           <div id="hiddenResultBox" class="locked-box">
             <span>🔒</span>
-            <p>Le score reste caché jusqu’à la fin. Les combos valent 3 points.</p>
+            <p>Le résultat reste caché jusqu’à ce que tu remplisses les 25 cases.</p>
           </div>
 
           <div id="finalResultBox" class="final-box hidden">
-            <div class="final-box-row hero">
-              <span>Score final</span>
-              <strong id="myResult">0 / 20</strong>
+            <div>
+              <span>Résultat final</span>
+              <strong id="myResult">0 / 25</strong>
             </div>
-            <div class="final-box-grid">
-              <div>
-                <span>Bingos validés</span>
-                <strong id="myBingos">0</strong>
-              </div>
-              <div>
-                <span>Fausses cases</span>
-                <strong id="myWrong">0</strong>
-              </div>
-              <div>
-                <span>Rang final</span>
-                <strong id="myFinalRank">#-</strong>
-              </div>
-              <div>
-                <span>Précision</span>
-                <strong id="myAccuracy">0%</strong>
-              </div>
+            <div>
+              <span>Bingos validés</span>
+              <strong id="myBingos">0</strong>
             </div>
           </div>
 
           <p id="gameMessage" class="message">Clique une case vide pour placer le joueur.</p>
         </div>
 
-        <div class="side-card history-card">
-          <button id="openFinishRecapBtn" class="side-title history-title-btn" type="button">
-            Tes joueurs passés
-            <span id="historyReopenHint" class="history-reopen-hint hidden">Revoir le récap</span>
-          </button>
-          <div id="playedPlayersList" class="played-players-list"></div>
-        </div>
 
-        <div id="adminDashboardCard" class="side-card admin-dashboard-card hidden">
-          <p class="side-title">Dashboard streamer</p>
-          <div class="admin-live-grid">
-            <div><span>Connectés</span><strong id="adminLivePlayers">0</strong></div>
-            <div><span>Ont fini</span><strong id="adminFinishedPlayers">0</strong></div>
-            <div><span>Score max</span><strong id="adminBestScore">0/20</strong></div>
-            <div><span>Proches bingo</span><strong id="adminNearBingo">0</strong></div>
-          </div>
-          <div id="adminLiveList" class="admin-live-list"></div>
+
+        <div id="adminPanel" class="side-card admin-card hidden">
+          <p class="side-title">Admin live</p>
+
+          <label for="gameModeSelect">Mode de jeu</label>
+          <select id="gameModeSelect">
+            <option value="bingo">Bingo</option>
+            <option value="suddenDeath">Mort subite</option>
+          </select>
+
+          <label for="bingoSecondsInput">Temps Bingo</label>
+          <input id="bingoSecondsInput" type="number" min="3" max="120" step="1" value="15" />
+
+          <label for="suddenDeathSecondsInput">Temps mort subite</label>
+          <input id="suddenDeathSecondsInput" type="number" min="3" max="120" step="1" value="7" />
+
+          <button id="applySettingsBtn" class="secondary-action admin-apply" type="button">Appliquer</button>
+
+          <div class="admin-divider"></div>
+
+          <button id="refreshLeaderboardBtn" class="secondary-action refresh-ranking-btn" type="button">
+            Mettre à jour le classement
+          </button>
+          <p class="admin-note">
+            Calcule le classement actuel sans clôturer la partie. Tu peux le refaire plusieurs fois.
+          </p>
         </div>
 
         <div class="side-card leaderboard-card">
-          <button id="openFinishRankingBtn" class="side-title history-title-btn" type="button">
-            Classement live
-            <span id="rankingReopenHint" class="history-reopen-hint hidden">Revoir</span>
-          </button>
-          <div id="leaderboard" class="leaderboard-list"></div>
+          <p class="side-title">Classement live</p>
+          <ol id="leaderboard"></ol>
         </div>
 
         <button id="leaveRoomBtn" class="leave-btn" type="button">Quitter la room</button>
       </aside>
     </section>
   </main>
-
-
-  <div id="finishOverlay" class="finish-overlay hidden">
-    <div class="finish-modal finish-modal-ranking">
-      <div class="finish-badge">PARTIE TERMINÉE</div>
-      <h2 id="finishTitle">Classement final</h2>
-      <p id="finishSubtitle">Bravo, ton score final est calculé.</p>
-
-      <div class="finish-stats">
-        <div>
-          <span>Score</span>
-          <strong id="finishScore">0 / 30</strong>
-        </div>
-        <div>
-          <span>Bingos</span>
-          <strong id="finishBingos">0</strong>
-        </div>
-        <div>
-          <span>Fausses cases</span>
-          <strong id="finishWrong">0</strong>
-        </div>
-        <div>
-          <span>Précision</span>
-          <strong id="finishAccuracy">0%</strong>
-        </div>
-      </div>
-
-      <div class="finish-rankline">
-        Tu termines <strong id="finishRank">#-</strong> sur <strong id="finishTotalPlayers">0 joueurs</strong>
-      </div>
-
-      <section class="finish-ranking">
-        <div class="finish-recap-head">
-          <div>
-            <strong>Classement de la room</strong>
-            <span id="finishRankingStats">—</span>
-          </div>
-        </div>
-        <div id="finishRankingList" class="finish-ranking-list"></div>
-      </section>
-
-      <div class="finish-actions">
-        <button id="closeFinishOverlayBtn" class="secondary-btn" type="button">Fermer</button>
-        <button id="showRecapFromRankingBtn" class="secondary-btn" type="button">Voir le récap</button>
-        <button id="finishHomeBtn" class="secondary-btn" type="button">Accueil</button>
-        <button id="finishNewRoomBtn" class="primary-btn" type="button">Recréer une room</button>
-      </div>
-    </div>
-  </div>
-
-  <div id="recapOverlay" class="finish-overlay hidden">
-    <div class="finish-modal finish-modal-recap">
-      <div class="finish-badge">RÉCAP</div>
-      <h2>Récap des joueurs</h2>
-      <p>Les joueurs passés, placés, et les cases où ils pouvaient aller.</p>
-
-      <section class="finish-recap recap-only">
-        <div class="finish-recap-head">
-          <div>
-            <strong>Joueurs de la partie</strong>
-            <span id="finishRecapStats">—</span>
-          </div>
-        </div>
-        <div id="finishRecapList" class="finish-recap-list"></div>
-      </section>
-
-      <div class="finish-actions">
-        <button id="closeRecapOverlayBtn" class="secondary-btn" type="button">Fermer</button>
-        <button id="showRankingFromRecapBtn" class="primary-btn" type="button">Voir le classement</button>
-      </div>
-    </div>
-  </div>
-
-  <div id="adminLoginOverlay" class="admin-login-overlay hidden">
-    <form id="adminLoginForm" class="admin-login-modal">
-      <div class="finish-badge">ADMIN</div>
-      <h2>Connexion Supabase</h2>
-      <p>Connecte-toi avec le compte admin créé dans Supabase Auth.</p>
-
-      <label>
-        Email
-        <input id="adminEmailInput" type="email" autocomplete="email" placeholder="ton@email.fr" required />
-      </label>
-
-      <label>
-        Mot de passe
-        <input id="adminPasswordInput" type="password" autocomplete="current-password" placeholder="Mot de passe" required />
-      </label>
-
-      <p id="adminLoginMessage" class="admin-login-message"></p>
-
-      <div class="finish-actions">
-        <button id="adminLoginCancelBtn" class="secondary-btn" type="button">Annuler</button>
-        <button id="adminLoginSubmitBtn" class="primary-btn" type="submit">Se connecter</button>
-      </div>
-    </form>
-  </div>
 
   <script type="module" src="./app.js"></script>
 </body>
